@@ -19,5 +19,5 @@ INSERT INTO task_type (name) VALUES ('개념');
 INSERT INTO task_type (name) VALUES ('테스트');
 
 -- 테스트 사용자 (개발 환경에서만)
-INSERT INTO user (username, name, phone_number, password)
+INSERT INTO users (username, name, phone_number, password)
 VALUES ('testuser', '테스트 사용자', '010-1234-5678', 'password123');
