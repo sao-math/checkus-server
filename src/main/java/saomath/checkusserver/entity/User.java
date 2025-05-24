@@ -1,5 +1,6 @@
 package saomath.checkusserver.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class User {
     private String phoneNumber;
 
     @Column(length = 255)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(name = "created_at")
