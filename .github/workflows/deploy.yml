@@ -67,8 +67,11 @@ jobs:
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com
             
             # 기존 컨테이너 중지 및 제거
-            cd ~/checkus-server
+            cd ~/checkus-infra
             docker compose down
+            
+            # Git에서 최신 설정 가져오기 (compose-de.yml 포함)
+            git pull origin main
             
             # 최신 이미지 pull
             docker pull 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com/checkus/server:latest
