@@ -21,6 +21,7 @@ public class ProdSecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()  // 헬스체크 허용
                         .requestMatchers("/swagger-ui/**").permitAll() // swagger 허용
+                        .requestMatchers("/v3/api-docs/**").permitAll() // OpenAPI spec 허용
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)  // REST API용 CSRF 비활성화
