@@ -2,3 +2,14 @@
 spring:
   profiles:
     active: prod
+
+# Swagger 설정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html    # Swagger UI 경로
+    tags-sorter: alpha       # 태그 알파벳 순 정렬
+    operations-sorter: alpha # 작업 알파벳 순 정렬
+  api-docs:
+    path: /v3/api-docs      # OpenAPI 3.0 문서 경로
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
