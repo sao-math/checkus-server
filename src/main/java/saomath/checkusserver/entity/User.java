@@ -30,6 +30,7 @@ public class User {
 
     @Column(length = 255)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
     private String password;
 
     @Column(name = "created_at")
