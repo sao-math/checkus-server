@@ -28,3 +28,7 @@ spring:
   sql:
     init:
       mode: never  # ProductionDataInitializer를 사용하므로 data.sql 비활성화
+
+  logging:
+    level:
+      root: DEBUG

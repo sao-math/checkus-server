@@ -2,3 +2,18 @@
 spring:
   profiles:
     active: prod
+
+# Swagger 설정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html                 # Swagger UI 경로
+    tags-sorter: alpha                    # 태그 알파벳 순 정렬
+    operations-sorter: alpha              # 작업 알파벳 순 정렬
+    disable-swagger-default-url: true     # 기본 petstore URL 비활성화
+    display-request-duration: true        # 요청 지속 시간 표시
+  api-docs:
+    path: /v3/api-docs                    # OpenAPI 문서 경로
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**

@@ -1,11 +1,14 @@
 package saomath.checkusserver.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 // Spring Boot 3.0 이후 사용
 import jakarta.persistence.*;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,6 +31,8 @@ public class User {
     private String phoneNumber;
 
     @Column(length = 255)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
     private String password;
 
     @Column(name = "created_at")

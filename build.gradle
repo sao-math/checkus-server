@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.asciidoctor.jvm.convert' version '3.3.2'
 }
 
 group = 'saomath'
@@ -24,37 +23,32 @@ repositories {
     mavenCentral()
 }
 
-ext {
-    set('snippetsDir', file("build/generated-snippets"))
-}
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    //database
+    // Swagger OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+    
+    // Database
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
-    //validation
+    
+    // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    //lombok
+    
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-    outputs.dir snippetsDir
     useJUnitPlatform()
-}
-
-tasks.named('asciidoctor') {
-    inputs.dir snippetsDir
-    dependsOn test
 }

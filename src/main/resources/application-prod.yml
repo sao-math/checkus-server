@@ -21,3 +21,13 @@ spring:
   sql:
     init:
       mode: never  # 운영에서는 스키마 자동 생성 비활성화
+
+  logging:
+    level:
+      root: ERROR
+    file:
+      name: /var/log/application.log
+      max-size: 10MB       # 최대 파일 크기
+      max-history: 30      # 보관할 이전 로그 파일 수
+    pattern:
+      file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
