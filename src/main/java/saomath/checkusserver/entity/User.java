@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 
 // Spring Boot 3.0 이후 사용
 import jakarta.persistence.*;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
 @Entity
