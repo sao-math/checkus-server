@@ -1,0 +1,41 @@
+# .github/workflows/deploy-only.yml
+name: Deploy Only
+
+on:
+  workflow_dispatch:  # 수동 트리거
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # ECR 로그인
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com
+            
+            # 환경 변수 설정
+            export RDS_ENDPOINT="${{ secrets.RDS_ENDPOINT }}"
+            export RDS_USERNAME="${{ secrets.RDS_USERNAME }}"
+            export RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}"
+            export RDS_DATABASE="${{ secrets.RDS_DATABASE }}"
+            
+            # 기존 컨테이너 중지 및 제거
+            cd ~/checkus-infra
+            docker compose down
+            
+            # Git에서 최신 설정 가져오기 (compose-de.yml 포함)
+            git pull origin main
+            
+            # 최신 이미지 pull
+            docker pull 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com/checkus/server:latest
+            
+            # 새 컨테이너 시작
+            docker compose up -d
+            
+            # 사용하지 않는 이미지 정리
+            docker image prune -f
