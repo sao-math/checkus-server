@@ -66,6 +66,12 @@ jobs:
             # ECR 로그인
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com
             
+            # 환경 변수 설정
+            export RDS_ENDPOINT="${{ secrets.RDS_ENDPOINT }}"
+            export RDS_USERNAME="${{ secrets.RDS_USERNAME }}"
+            export RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}"
+            export RDS_DATABASE="${{ secrets.RDS_DATABASE }}"
+            
             # 기존 컨테이너 중지 및 제거
             cd ~/checkus-infra
             docker compose down
