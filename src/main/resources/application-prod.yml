@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # 첫 배포용으로 임시 설정, 테이블 생성 후 validate로 변경 필요
     show-sql: false
     properties:
       hibernate:

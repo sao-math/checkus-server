@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none  # 애플리케이션 시작/종료 시 테이블 생성/삭제
+      ddl-auto: update  # 자동 스키마 생성
     show-sql: true
     defer-datasource-initialization: true
     properties:
@@ -27,6 +27,4 @@ spring:
 
   sql:
     init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
+      mode: never  # ProductionDataInitializer를 사용하므로 data.sql 비활성화

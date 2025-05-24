@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
-@Profile("prod")
+@Profile({"prod", "local"})
 public class ProductionDataInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(ProductionDataInitializer.class);
