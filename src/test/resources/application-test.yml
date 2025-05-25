@@ -19,6 +19,17 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
 
-  sql:
-    init:
-      mode: never
+# Discord 봇 비활성화
+discord:
+  bot:
+    enabled: false  # 테스트에서는 디스코드 봇 비활성화
+    token: dummy-token
+    guild-id: dummy-guild-id
+    client-id: dummy-client-id
+
+# Swagger는 테스트에서 비활성화
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

@@ -23,6 +23,9 @@ jobs:
             export RDS_USERNAME="${{ secrets.RDS_USERNAME }}"
             export RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}"
             export RDS_DATABASE="${{ secrets.RDS_DATABASE }}"
+            export DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}"
+            export DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}"
+            export DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
             
             # 기존 컨테이너 중지 및 제거
             cd ~/checkus-infra
