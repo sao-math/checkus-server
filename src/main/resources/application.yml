@@ -1,7 +1,4 @@
 # application.yml
-spring:
-  profiles:
-    active: prod
 
 # Swagger 설정
 springdoc:

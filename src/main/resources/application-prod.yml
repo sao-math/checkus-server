@@ -4,6 +4,14 @@ spring:
     activate:
       on-profile: prod
 
+  # Discord 설정
+  discord:
+    bot:
+      token: ${DISCORD_TOKEN}  # 환경 변수로 설정
+      guild-id: ${DISCORD_GUILD_ID}
+      client-id: ${DISCORD_CLIENT_ID}
+      enabled: true  # 봇 활성화 여부
+
   datasource:
     url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DATABASE}?useSSL=true&serverTimezone=Asia/Seoul
     username: ${RDS_USERNAME}
