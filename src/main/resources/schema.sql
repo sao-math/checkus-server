@@ -67,31 +67,40 @@ CREATE TABLE student_class (
                                PRIMARY KEY (student_id, class_id)
 );
 
+CREATE TABLE activity (
+                          id bigint AUTO_INCREMENT PRIMARY KEY,
+                          name varchar(255) NOT NULL,
+                          is_study_assignable boolean DEFAULT false
+);
+
 CREATE TABLE weekly_schedule (
                                  id bigint AUTO_INCREMENT PRIMARY KEY,
                                  student_id bigint,
+                                 activity_id bigint,
                                  day_of_week integer,
                                  start_time time,
                                  end_time time,
-                                 activity varchar(255)
+                                 FOREIGN KEY (activity_id) REFERENCES activity(id)
 );
 
 CREATE TABLE assigned_study_time (
                                      id bigint AUTO_INCREMENT PRIMARY KEY,
                                      student_id bigint,
+                                     activity_id bigint,
                                      start_time timestamp,
                                      end_time timestamp,
-                                     activity varchar(255),
-                                     assigned_by bigint
+                                     assigned_by bigint,
+                                     FOREIGN KEY (activity_id) REFERENCES activity(id)
 );
 
 CREATE TABLE actual_study_time (
                                    id bigint AUTO_INCREMENT PRIMARY KEY,
                                    student_id bigint,
+                                   assigned_study_time_id bigint,
                                    start_time timestamp,
                                    end_time timestamp,
-                                   activity varchar(255),
-                                   source varchar(255)
+                                   source varchar(255),
+                                   FOREIGN KEY (assigned_study_time_id) REFERENCES assigned_study_time(id)
 );
 
 CREATE TABLE task_type (
