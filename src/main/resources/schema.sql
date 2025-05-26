@@ -120,7 +120,7 @@ CREATE TABLE task (
 CREATE TABLE material (
                           id bigint AUTO_INCREMENT PRIMARY KEY,
                           task_id bigint,
-                          title varchar(255) NOT NULL,
+                          url varchar(255) NOT NULL,
                           is_video boolean,
                           completion_condition varchar(255)
 );
