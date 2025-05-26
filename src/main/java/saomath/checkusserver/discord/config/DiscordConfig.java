@@ -30,7 +30,8 @@ public class DiscordConfig {
         JDABuilder builder = JDABuilder.createDefault(discordProperties.getToken())
                 .enableIntents(
                         GatewayIntent.GUILD_MESSAGES,
-                        GatewayIntent.MESSAGE_CONTENT
+                        GatewayIntent.MESSAGE_CONTENT,
+                        GatewayIntent.GUILD_VOICE_STATES
                 );
 
         // 이벤트 리스너 등록
