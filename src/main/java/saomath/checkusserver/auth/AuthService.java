@@ -67,7 +67,7 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         
         // StudentProfile에 userId 설정 후 저장
-        studentProfile.setUserId(savedUser.getId());
+        studentProfile.setUser(savedUser); //TODO id만 불러오게 리팩토링
         studentProfileRepository.save(studentProfile);
 
         // 학생 역할 할당 (승인 필요)

@@ -12,11 +12,11 @@ import jakarta.persistence.*;
 @AllArgsConstructor
 public class StudentProfile {
     @Id
-    @Column(name = "user_id")
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "student_profile_id")
+    private Long Id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -33,16 +33,6 @@ public class StudentProfile {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Gender gender;
-
-    // Constructor for easier creation
-    public StudentProfile(User user, StudentStatus status, School school, Integer grade, Gender gender) {
-        this.user = user;
-        this.userId = user.getId();
-        this.status = status;
-        this.school = school;
-        this.grade = grade;
-        this.gender = gender;
-    }
 
     public enum StudentStatus {
         INQUIRY("문의"),
