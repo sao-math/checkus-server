@@ -5,19 +5,41 @@ spring:
       on-profile: test
 
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create-drop  # 테스트에서는 JPA가 자동으로 테이블 생성
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+        hbm2ddl:
+          auto: create-drop
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    defer-datasource-initialization: true  # JPA 스키마 생성 후 SQL 스크립트 실행
+
+  # SQL 스크립트 비활성화 (테스트에서는 JPA DDL만 사용)
+  sql:
+    init:
+      mode: never  # 테스트에서는 schema.sql 비활성화
+
+  h2:
+    console:
+      enabled: false  # 테스트에서는 H2 콘솔 비활성화
+
+# JWT 설정 (테스트용)
+jwt:
+  secret: testSecretKey12345678901234567890123456789012345678901234567890
+  access-token-expiration: 3600000  # 1시간
+  refresh-token-expiration: 604800000  # 7일
 
 # Discord 봇 비활성화
 discord:
@@ -33,3 +55,12 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+# 로깅 레벨 조정
+logging:
+  level:
+    saomath.checkusserver: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.boot.autoconfigure.sql.init: DEBUG
