@@ -60,6 +60,7 @@ public class ProductionDataInitializer {
             List<Role> roles = Arrays.asList(
                 new Role(null, "STUDENT"),
                 new Role(null, "TEACHER"),
+                new Role(null, "TUTOR"),
                 new Role(null, "GUARDIAN"),
                 new Role(null, "ADMIN")
             );

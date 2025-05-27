@@ -35,6 +35,9 @@ public class User {
     @ToString.Exclude
     private String password;
 
+    @Column(name = "discord_id", length = 100)
+    private String discordId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

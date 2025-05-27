@@ -53,6 +53,12 @@ CREATE TABLE role (
 CREATE TABLE user_role (
                            user_id bigint,
                            role_id bigint,
+                           status VARCHAR(20) DEFAULT 'PENDING',
+                            -- 가능한 상태값
+                            -- 'PENDING'   : 승인 대기
+                            -- 'ACTIVE'    : 활성화됨
+                            -- 'SUSPENDED' : 일시 정지
+                            -- 'EXPIRED'   : 만료됨
                            PRIMARY KEY (user_id, role_id)
 );
 
@@ -176,6 +182,16 @@ CREATE TABLE notification_history (
                                       status varchar(20), -- 'success', 'failed', 'pending'
                                       error_message text,
                                       FOREIGN KEY (scheduled_notification_id) REFERENCES scheduled_notification (id)
+);
+
+CREATE TABLE refresh_token (
+                               id bigint AUTO_INCREMENT PRIMARY KEY,
+                               token varchar(1000) UNIQUE NOT NULL,
+                               user_id bigint NOT NULL,
+                               expires_at timestamp NOT NULL,
+                               created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               is_revoked boolean NOT NULL DEFAULT false,
+                               FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- Foreign Key 제약조건들

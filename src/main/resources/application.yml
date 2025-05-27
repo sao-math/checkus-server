@@ -1,5 +1,11 @@
 # application.yml
 
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:mySecretKey12345678901234567890123456789012345678901234567890}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}  # 1시간 (밀리초)
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7일 (밀리초)
+
 # Swagger 설정
 springdoc:
   swagger-ui:
