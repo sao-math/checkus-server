@@ -1,6 +1,7 @@
 -- 기본 역할 데이터
 INSERT INTO role (name) VALUES ('STUDENT');
 INSERT INTO role (name) VALUES ('TEACHER');
+INSERT INTO role (name) VALUES ('TUTOR');
 INSERT INTO role (name) VALUES ('GUARDIAN');
 INSERT INTO role (name) VALUES ('ADMIN');
 
