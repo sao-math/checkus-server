@@ -4,20 +4,20 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.Permission;
-import saomath.checkusserver.entity.Role;
-import saomath.checkusserver.entity.School;
-import saomath.checkusserver.entity.TaskType;
-import saomath.checkusserver.entity.User;
+import org.springframework.util.StringUtils;
+import saomath.checkusserver.entity.*;
 import saomath.checkusserver.repository.PermissionRepository;
 import saomath.checkusserver.repository.RoleRepository;
 import saomath.checkusserver.repository.SchoolRepository;
 import saomath.checkusserver.repository.TaskTypeRepository;
 import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.service.UserRoleService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,13 +32,16 @@ import java.util.List;
 public class ProductionDataInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(ProductionDataInitializer.class);
-    
+
+    private final AdminProperties adminProperties;
+    private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final SchoolRepository schoolRepository;
     private final TaskTypeRepository taskTypeRepository;
     private final UserRepository userRepository;
-    
+    private final UserRoleService userRoleService;
+
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void initializeProductionData() {
@@ -48,7 +51,7 @@ public class ProductionDataInitializer {
         initializePermissions();
         initializeSchools();
         initializeTaskTypes();
-        initializeTestUser();
+        initializeAdminUser();
         
         log.info("Production data initialization completed.");
     }
@@ -121,21 +124,52 @@ public class ProductionDataInitializer {
             log.info("Task types already exist, skipping initialization");
         }
     }
-    
-    private void initializeTestUser() {
-        if (userRepository.count() == 0) {
-            log.info("Initializing test user...");
-            
-            User testUser = new User();
-            testUser.setUsername("testuser");
-            testUser.setName("테스트 사용자");
-            testUser.setPhoneNumber("010-1234-5678");
-            testUser.setPassword("password123"); // 실제 환경에서는 암호화 필요
-            
-            userRepository.save(testUser);
-            log.info("Created test user");
-        } else {
-            log.info("Users already exist, skipping initialization");
+
+    private void initializeAdminUser() {
+        String adminPassword = adminProperties.getPasswordAsString();
+        try {
+            // 비밀번호가 설정되지 않았으면 스킵
+            if (!StringUtils.hasText(adminPassword)) {
+                log.warn("Admin password not configured, skipping admin user creation");
+                return;
+            }
+
+            // 이미 관리자가 존재하면 스킵
+            if (userRepository.count() > 0) {
+                log.info("Users already exist, skipping admin user creation");
+                return;
+            }
+
+            // 관리자 역할 조회
+            Role adminRole = roleRepository.findByName("ADMIN")
+                    .orElseThrow(() -> new RuntimeException("ADMIN role not found"));
+
+            log.info("Creating initial admin user...");
+
+            // 관리자 계정 생성
+            User adminUser = User.builder()
+                    .username(adminProperties.getUsername())
+                    .name(adminProperties.getName())
+                    .password(passwordEncoder.encode(adminPassword))
+                    .phoneNumber("000-0000-0000")  // 기본값
+                    .build();
+
+            // 사용자 저장
+            User savedUser = userRepository.save(adminUser);
+
+            // 관리자 역할 할당 (즉시 활성화)
+            userRoleService.assignRole(savedUser, "ADMIN", UserRole.RoleStatus.ACTIVE);
+
+            log.info("Initial admin user '{}' created successfully with ADMIN role",
+                    adminProperties.getUsername());
+
+        } catch (Exception e) {
+            log.error("Failed to create admin user", e);
+            throw new RuntimeException("Admin user creation failed", e);
+        } finally {
+            // 보안을 위해 메모리에서 비밀번호 제거
+            adminProperties.clearPassword();
+            adminPassword = null;
         }
     }
 }
