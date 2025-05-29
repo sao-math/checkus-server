@@ -186,6 +186,8 @@ public class AuthController {
         }
     }
 
+
+    //TODO 로테이션 적용하기
     @Operation(
         summary = "토큰 리프레시", 
         description = "리프레시 토큰으로 새로운 액세스 토큰을 발급받습니다.",
