@@ -31,31 +31,6 @@ public class AuthController {
     private final AuthService authService;
     private final UserRoleService userRoleService;
 
-    @Operation(summary = "회원가입", description = "도메인에 따라 학생/학부모/교사 회원가입을 처리합니다.")
-    @PostMapping("/register")
-    public ResponseEntity<saomath.checkusserver.auth.dto.ApiResponse<RegisterResponse>> register(
-            @RequestBody Object registerRequestJson,
-            HttpServletRequest request) {
-        
-        try {
-            String userType = DomainUtils.getUserTypeFromRequest(request);
-            log.info("회원가입 요청 - 도메인 타입: {}", userType);
-            
-            RegisterResponse response;
-            
-            // JSON을 적절한 DTO로 변환하는 로직은 프론트엔드에서 적절한 엔드포인트를 호출하도록 권장
-            // 여기서는 각 타입별 전용 엔드포인트 사용을 권장하는 메시지 반환
-            return ResponseEntity.badRequest()
-                    .body(saomath.checkusserver.auth.dto.ApiResponse.error(
-                        "회원가입은 타입별 전용 엔드포인트를 사용해주세요. /register/student, /register/guardian, /register/teacher"));
-                    
-        } catch (Exception e) {
-            log.error("회원가입 실패", e);
-            return ResponseEntity.badRequest()
-                    .body(saomath.checkusserver.auth.dto.ApiResponse.error(e.getMessage()));
-        }
-    }
-
     @Operation(summary = "학생 회원가입", description = "학생 전용 회원가입 엔드포인트")
     @PostMapping("/register/student")
     public ResponseEntity<ApiResponse<RegisterResponse>> registerStudent(
