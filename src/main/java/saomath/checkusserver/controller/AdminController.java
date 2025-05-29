@@ -10,10 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
+import saomath.checkusserver.auth.dto.UserRoleResponse;
 import saomath.checkusserver.entity.UserRole;
 import saomath.checkusserver.service.UserRoleService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -28,7 +30,7 @@ public class AdminController {
 
     @Operation(summary = "역할 승인 요청 목록 조회", description = "특정 역할의 승인 대기 중인 사용자 목록 조회")
     @GetMapping("/role-requests")
-    public ResponseEntity<ResponseBase<List<UserRole>>> getRoleRequests(
+    public ResponseEntity<ResponseBase<List<UserRoleResponse>>> getRoleRequests(
             @Parameter(
                 name = "roleName",
                 description = "역할명 (STUDENT, TEACHER, GUARDIAN)",
@@ -38,10 +40,12 @@ public class AdminController {
             @RequestParam(name = "roleName", required = true) String roleName) {
         
         try {
-            List<UserRole> pendingRequests = userRoleService.getPendingRoleRequests(roleName);
+            // 최적화된 DTO 직접 조회 사용
+            List<UserRoleResponse> responseList = userRoleService.getPendingRoleRequestsOptimized(roleName);
+            
             return ResponseEntity.ok(ResponseBase.success(
                     roleName + " 역할 승인 요청 목록을 조회했습니다.", 
-                    pendingRequests));
+                    responseList));
         } catch (Exception e) {
             log.error("역할 승인 요청 목록 조회 실패: {}", roleName, e);
             return ResponseEntity.badRequest()
@@ -111,14 +115,18 @@ public class AdminController {
 
     @Operation(summary = "사용자 역할 조회", description = "특정 사용자의 모든 역할 조회")
     @GetMapping("/user-roles/{userId}")
-    public ResponseEntity<ResponseBase<List<UserRole>>> getUserRoles(
+    public ResponseEntity<ResponseBase<List<UserRoleResponse>>> getUserRoles(
             @Parameter(description = "사용자 ID") @PathVariable Long userId) {
         
         try {
             List<UserRole> userRoles = userRoleService.getAllUserRoles(userId);
+            List<UserRoleResponse> responseList = userRoles.stream()
+                    .map(UserRoleResponse::fromEntity)
+                    .collect(Collectors.toList());
+                    
             return ResponseEntity.ok(ResponseBase.success(
                     "사용자 ID " + userId + "의 역할 목록을 조회했습니다.", 
-                    userRoles));
+                    responseList));
         } catch (Exception e) {
             log.error("사용자 역할 조회 실패: userId={}", userId, e);
             return ResponseEntity.badRequest()

@@ -108,6 +108,14 @@ public class UserRoleService {
     public List<UserRole> getPendingRoleRequests(String roleName) {
         return userRoleRepository.findByRoleNameAndStatus(roleName, UserRole.RoleStatus.PENDING);
     }
+    
+    /**
+     * 최적화된 DTO 직접 조회 - 특정 역할의 승인 대기 중인 사용자 목록
+     */
+    @Transactional(readOnly = true)
+    public List<saomath.checkusserver.auth.dto.UserRoleResponse> getPendingRoleRequestsOptimized(String roleName) {
+        return userRoleRepository.findUserRoleResponsesByRoleNameAndStatus(roleName, UserRole.RoleStatus.PENDING);
+    }
 
     /**
      * 사용자가 특정 역할을 가지고 있는지 확인 (활성 상태만)
