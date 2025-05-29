@@ -17,7 +17,7 @@ public class DomainUtils {
             domain = "https://" + host;
         }
         
-        if (domain != null) {
+        if (domain != null) { //todo enum으로 관리
             if (domain.contains("teacher.checkus.app")) {
                 return "TEACHER";
             } else if (domain.contains("checkus.app")) {
