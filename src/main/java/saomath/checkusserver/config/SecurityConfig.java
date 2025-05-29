@@ -145,8 +145,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "https://checkus.app",
                 "https://teacher.checkus.app",
-                "http://localhost:3000",
-                "http://localhost:3001"
+                "http://localhost:3001",
+                "http://localhost:3002"
         ));
 
         // 허용할 HTTP 메소드
