@@ -112,6 +112,36 @@ public class AdminController {
                     .body(ResponseBase.error(e.getMessage()));
         }
     }
+    
+    @Operation(summary = "역할 직접 할당", description = "관리자가 사용자에게 역할을 직접 할당 (바로 ACTIVE 상태)")
+    @PostMapping("/assign-role")
+    public ResponseEntity<ResponseBase<String>> assignRole(
+            @Parameter(
+                name = "userId",
+                description = "사용자 ID",
+                required = true,
+                example = "1"
+            )
+            @RequestParam(name = "userId", required = true) Long userId,
+            @Parameter(
+                name = "roleName",
+                description = "할당할 역할명 (STUDENT, TEACHER, GUARDIAN)",
+                required = true,
+                example = "STUDENT"
+            )
+            @RequestParam(name = "roleName", required = true) String roleName) {
+        
+        try {
+            userRoleService.assignRoleDirectly(userId, roleName);
+            return ResponseEntity.ok(ResponseBase.success(
+                    "사용자 ID " + userId + "에게 " + roleName + " 역할을 할당했습니다.", 
+                    "success"));
+        } catch (Exception e) {
+            log.error("역할 직접 할당 실패: userId={}, roleName={}", userId, roleName, e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
+        }
+    }
 
     @Operation(summary = "사용자 역할 조회", description = "특정 사용자의 모든 역할 조회")
     @GetMapping("/user-roles/{userId}")

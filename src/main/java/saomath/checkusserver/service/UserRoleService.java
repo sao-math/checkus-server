@@ -9,6 +9,7 @@ import saomath.checkusserver.entity.User;
 import saomath.checkusserver.entity.UserRole;
 import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.repository.RoleRepository;
+import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.repository.UserRoleRepository;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class UserRoleService {
 
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
 
     /**
      * 사용자에게 역할 할당
@@ -115,6 +117,22 @@ public class UserRoleService {
     @Transactional(readOnly = true)
     public List<saomath.checkusserver.auth.dto.UserRoleResponse> getPendingRoleRequestsOptimized(String roleName) {
         return userRoleRepository.findUserRoleResponsesByRoleNameAndStatus(roleName, UserRole.RoleStatus.PENDING);
+    }
+    
+    /**
+     * 관리자가 사용자에게 역할을 직접 할당 (바로 ACTIVE 상태)
+     */
+    @Transactional
+    public UserRole assignRoleDirectly(Long userId, String roleName) {
+        // User 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("존재하지 않는 사용자입니다: " + userId));
+        
+        // 직접 ACTIVE 상태로 역할 할당
+        UserRole userRole = assignRole(user, roleName, UserRole.RoleStatus.ACTIVE);
+        
+        log.info("관리자가 사용자 {}에게 {} 역할을 직접 할당했습니다.", user.getUsername(), roleName);
+        return userRole;
     }
 
     /**
