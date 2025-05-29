@@ -146,7 +146,13 @@ public class AdminController {
     @Operation(summary = "사용자 역할 조회", description = "특정 사용자의 모든 역할 조회")
     @GetMapping("/user-roles/{userId}")
     public ResponseEntity<ResponseBase<List<UserRoleResponse>>> getUserRoles(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
+            @Parameter(
+                name = "userId",
+                description = "사용자 ID",
+                required = true,
+                example = "1"
+            )
+            @PathVariable("userId") Long userId) {
         
         try {
             List<UserRole> userRoles = userRoleService.getAllUserRoles(userId);
