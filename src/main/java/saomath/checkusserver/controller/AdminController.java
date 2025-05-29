@@ -29,8 +29,13 @@ public class AdminController {
     @Operation(summary = "역할 승인 요청 목록 조회", description = "특정 역할의 승인 대기 중인 사용자 목록 조회")
     @GetMapping("/role-requests")
     public ResponseEntity<ResponseBase<List<UserRole>>> getRoleRequests(
-            @Parameter(description = "역할명 (STUDENT, TEACHER, GUARDIAN)") 
-            @RequestParam String roleName) {
+            @Parameter(
+                name = "roleName",
+                description = "역할명 (STUDENT, TEACHER, GUARDIAN)",
+                required = true,
+                example = "STUDENT"
+            )
+            @RequestParam(name = "roleName", required = true) String roleName) {
         
         try {
             List<UserRole> pendingRequests = userRoleService.getPendingRoleRequests(roleName);
@@ -47,8 +52,20 @@ public class AdminController {
     @Operation(summary = "역할 승인", description = "사용자의 역할 승인 (PENDING -> ACTIVE)")
     @PostMapping("/approve-role")
     public ResponseEntity<ResponseBase<String>> approveRole(
-            @Parameter(description = "사용자 ID") @RequestParam Long userId,
-            @Parameter(description = "역할명") @RequestParam String roleName) {
+            @Parameter(
+                name = "userId",
+                description = "사용자 ID",
+                required = true,
+                example = "1"
+            )
+            @RequestParam(name = "userId", required = true) Long userId,
+            @Parameter(
+                name = "roleName",
+                description = "역할명",
+                required = true,
+                example = "STUDENT"
+            )
+            @RequestParam(name = "roleName", required = true) String roleName) {
         
         try {
             userRoleService.approveRole(userId, roleName);
@@ -65,8 +82,20 @@ public class AdminController {
     @Operation(summary = "역할 일시정지", description = "사용자의 역할 일시정지 (ACTIVE -> SUSPENDED)")
     @PostMapping("/suspend-role")
     public ResponseEntity<ResponseBase<String>> suspendRole(
-            @Parameter(description = "사용자 ID") @RequestParam Long userId,
-            @Parameter(description = "역할명") @RequestParam String roleName) {
+            @Parameter(
+                name = "userId",
+                description = "사용자 ID",
+                required = true,
+                example = "1"
+            )
+            @RequestParam(name = "userId", required = true) Long userId,
+            @Parameter(
+                name = "roleName", 
+                description = "역할명",
+                required = true,
+                example = "STUDENT"
+            )
+            @RequestParam(name = "roleName", required = true) String roleName) {
         
         try {
             userRoleService.suspendRole(userId, roleName);
