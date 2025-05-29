@@ -35,18 +35,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String jwt = getJwtFromRequest(request);
-            log.info("JWT from request: {}", jwt != null ? "present" : "absent");
+            log.debug("JWT from request: {}", jwt != null ? "present" : "absent");
 
             if (StringUtils.hasText(jwt)) {
-                log.info("Validating JWT token");
+                log.debug("Validating JWT token");
                 // JWT 검증을 단계별로 수행
                 if (jwtTokenProvider.validateToken(jwt)) {
-                    log.info("JWT token is valid");
+                    log.debug("JWT token is valid");
                     if (jwtTokenProvider.isAccessToken(jwt)) {
-                        log.info("JWT is access token, setting authentication");
+                        log.debug("JWT is access token, setting authentication");
                         setAuthentication(request, jwt);
                     } else {
-                        log.info("JWT is not access token");
+                        log.debug("JWT is not access token");
                         SecurityContextHolder.clearContext();
                     }
                 } else {
@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.clearContext();
                 }
             } else {
-                log.info("No JWT token found in request");
+                log.debug("No JWT token found in request");
             }
 
         } catch (io.jsonwebtoken.JwtException ex) {
