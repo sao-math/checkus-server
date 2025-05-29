@@ -19,6 +19,7 @@ public class CustomUserPrincipal implements UserDetails {
     private final boolean credentialsNonExpired;
     private final boolean accountNonLocked;
 
+    //todo use builder pattern
     public CustomUserPrincipal(Long id, 
                              String username, 
                              String password, 
