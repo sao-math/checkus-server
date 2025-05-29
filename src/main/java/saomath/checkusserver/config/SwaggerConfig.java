@@ -46,15 +46,11 @@ public class SwaggerConfig {
                 .name("Authorization")
                 .in(SecurityScheme.In.HEADER);
 
-        // SecurityRequirement 정의
-        SecurityRequirement securityRequirement = new SecurityRequirement()
-                .addList("bearerAuth");
-
         return new OpenAPI()
                 .servers(List.of(localServer))
                 .info(info)
-                .addSecurityItem(securityRequirement)  // 전역 보안 요구사항 추가
+                // .addSecurityItem(securityRequirement) <- 전역 보안 요구사항 제거
                 .components(new Components()
-                        .addSecuritySchemes("bearerAuth", securityScheme));  // 이름 통일
+                        .addSecuritySchemes("bearerAuth", securityScheme));
     }
 }

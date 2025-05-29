@@ -1,6 +1,7 @@
 package saomath.checkusserver.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import saomath.checkusserver.auth.dto.UserInfoResponse;
 public class UserController {
 
     @Operation(summary = "내 상세 정보 조회", description = "현재 로그인한 사용자의 상세 정보 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getUserProfile() {
         
@@ -50,6 +52,7 @@ public class UserController {
     }
 
     @Operation(summary = "프로필 업데이트", description = "사용자 프로필 정보 업데이트")
+    @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<String>> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request) {
