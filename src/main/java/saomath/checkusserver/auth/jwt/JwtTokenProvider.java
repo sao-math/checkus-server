@@ -22,12 +22,13 @@ public class JwtTokenProvider {
     }
 
     // Access Token 생성
-    public String generateAccessToken(String username, List<String> roles) {
+    public String generateAccessToken(Long userId, String username, List<String> roles) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
 
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .claim("roles", roles)
                 .claim("type", "access")
                 .issuedAt(now)
@@ -54,6 +55,23 @@ public class JwtTokenProvider {
     public String getUsernameFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims.getSubject();
+    }
+    
+    // Token에서 사용자 ID 추출
+    public Long getUserIdFromToken(String token) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            log.info("JWT Claims: {}", claims);
+            Object userId = claims.get("userId");
+            log.info("UserId from token: {} (type: {})", userId, userId != null ? userId.getClass().getSimpleName() : "null");
+            if (userId instanceof Number) {
+                return ((Number) userId).longValue();
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting userId from token", e);
+            return null;
+        }
     }
 
     // Token에서 역할 추출

@@ -2,6 +2,7 @@ package saomath.checkusserver.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -151,16 +152,29 @@ public class AuthController {
 
     @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보 조회")
     @GetMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getCurrentUser() {
         
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            log.debug("Authentication: {}", authentication != null ? authentication.getClass().getSimpleName() : "null");
+            
+            if (authentication != null) {
+                log.debug("Principal type: {}", authentication.getPrincipal().getClass().getSimpleName());
+                log.debug("Principal: {}", authentication.getPrincipal());
+                log.debug("Authorities: {}", authentication.getAuthorities());
+            }
+            
             if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserPrincipal)) {
+                log.warn("Authentication failed - authentication: {}, principal type: {}", 
+                    authentication != null ? "present" : "null",
+                    authentication != null ? authentication.getPrincipal().getClass().getSimpleName() : "null");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("인증되지 않은 사용자입니다."));
             }
 
             CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
+            log.debug("User principal: ID={}, Username={}", userPrincipal.getId(), userPrincipal.getUsername());
             
             // 사용자 역할 조회
             var roles = userRoleService.getActiveRoles(userPrincipal.getId());

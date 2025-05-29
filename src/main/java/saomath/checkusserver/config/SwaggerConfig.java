@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +26,7 @@ public class SwaggerConfig {
                 .name("CheckUS Team")
                 .email("yunjeongiya@gmail.com")
                 .url("https://github.com/sao-math");
-                
+
         License mitLicense = new License()
                 .name("MIT License")
                 .url("https://opensource.org/licenses/MIT");
@@ -37,14 +38,23 @@ public class SwaggerConfig {
                 .contact(contact)
                 .license(mitLicense);
 
+        // SecurityScheme 정의
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("Authorization")
+                .in(SecurityScheme.In.HEADER);
+
+        // SecurityRequirement 정의
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList("bearerAuth");
+
         return new OpenAPI()
                 .servers(List.of(localServer))
                 .info(info)
+                .addSecurityItem(securityRequirement)  // 전역 보안 요구사항 추가
                 .components(new Components()
-                        .addSecuritySchemes("bearer-key",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                        .addSecuritySchemes("bearerAuth", securityScheme));  // 이름 통일
     }
 }

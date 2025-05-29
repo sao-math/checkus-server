@@ -157,7 +157,7 @@ public class AuthService {
             }
 
             // JWT 토큰 생성
-            String accessToken = jwtTokenProvider.generateAccessToken(userPrincipal.getUsername(), roles);
+            String accessToken = jwtTokenProvider.generateAccessToken(userPrincipal.getId(), userPrincipal.getUsername(), roles);
             String refreshToken = jwtTokenProvider.generateRefreshToken(userPrincipal.getUsername());
 
             // 리프레시 토큰 저장
@@ -200,7 +200,7 @@ public class AuthService {
         }
 
         // 새 액세스 토큰 생성
-        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getUsername(), roles);
+        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getUsername(), roles);
 
         log.info("토큰 리프레시 성공: {}", user.getUsername());
 

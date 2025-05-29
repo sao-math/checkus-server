@@ -30,17 +30,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        String requestURI = request.getRequestURI();
+        log.info("Processing request: {} {}", request.getMethod(), requestURI);
+
         try {
             String jwt = getJwtFromRequest(request);
+            log.info("JWT from request: {}", jwt != null ? "present" : "absent");
 
             if (StringUtils.hasText(jwt)) {
+                log.info("Validating JWT token");
                 // JWT 검증을 단계별로 수행
-                if (jwtTokenProvider.validateToken(jwt) && jwtTokenProvider.isAccessToken(jwt)) {
-                    setAuthentication(request, jwt);
+                if (jwtTokenProvider.validateToken(jwt)) {
+                    log.info("JWT token is valid");
+                    if (jwtTokenProvider.isAccessToken(jwt)) {
+                        log.info("JWT is access token, setting authentication");
+                        setAuthentication(request, jwt);
+                    } else {
+                        log.info("JWT is not access token");
+                        SecurityContextHolder.clearContext();
+                    }
                 } else {
-                    log.debug("Invalid or expired JWT token");
+                    log.info("Invalid or expired JWT token");
                     SecurityContextHolder.clearContext();
                 }
+            } else {
+                log.info("No JWT token found in request");
             }
 
         } catch (io.jsonwebtoken.JwtException ex) {
@@ -58,24 +72,64 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void setAuthentication(HttpServletRequest request, String jwt) {
+        log.info("Starting setAuthentication with JWT");
         try {
+            log.info("Extracting data from JWT token");
+            Long userId = jwtTokenProvider.getUserIdFromToken(jwt);
             String username = jwtTokenProvider.getUsernameFromToken(jwt);
             List<String> roles = jwtTokenProvider.getRolesFromToken(jwt);
 
+            log.info("JWT token data: userId={}, username={}, roles={}", userId, username, roles);
+
+            if (userId == null) {
+                log.warn("User ID not found in JWT token, falling back to username-only authentication");
+                // 기존 방식으로 fallback
+                List<SimpleGrantedAuthority> authorities = roles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .collect(Collectors.toList());
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info("Set fallback authentication with username: {}", username);
+                return;
+            }
+
+            log.info("Creating authorities for roles: {}", roles);
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toList());
 
+            log.info("Creating CustomUserPrincipal with userId: {}, username: {}", userId, username);
+            // CustomUserPrincipal 객체 생성
+            saomath.checkusserver.auth.CustomUserPrincipal userPrincipal = 
+                new saomath.checkusserver.auth.CustomUserPrincipal(
+                    userId,
+                    username,
+                    null, // password는 JWT에서 제공하지 않음
+                    null, // name도 JWT에서 제공하지 않음 (필요시 추가 가능)
+                    authorities,
+                    true, // enabled
+                    true, // accountNonExpired
+                    true, // credentialsNonExpired
+                    true  // accountNonLocked
+                );
+
+            log.info("Created CustomUserPrincipal: ID={}, Username={}", userPrincipal.getId(), userPrincipal.getUsername());
+
+            log.info("Creating UsernamePasswordAuthenticationToken");
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    new UsernamePasswordAuthenticationToken(userPrincipal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+            log.info("Setting authentication in SecurityContext");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("Successfully authenticated user: {} with roles: {}", username, roles);
+            log.info("Successfully authenticated user: {} (ID: {}) with roles: {}", username, userId, roles);
 
         } catch (Exception ex) {
-            log.warn("Failed to set authentication: {}", ex.getMessage());
+            log.error("Failed to set authentication: {}", ex.getMessage(), ex);
             SecurityContextHolder.clearContext();
         }
     }
