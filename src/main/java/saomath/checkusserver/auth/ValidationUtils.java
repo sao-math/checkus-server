@@ -14,7 +14,7 @@ public class ValidationUtils {
         "^010-\\d{4}-\\d{4}$"
     );
     
-    // 사용자명: 4-20자, 영문+숫자+언더스코어만
+    // 사용자명: 4-20자, 영문/숫자/언더스코어만 가능
     private static final Pattern USERNAME_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_]{4,20}$"
     );

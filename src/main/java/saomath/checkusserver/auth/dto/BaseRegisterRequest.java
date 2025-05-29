@@ -14,7 +14,7 @@ public abstract class BaseRegisterRequest {
     
     @NotBlank(message = "사용자명은 필수입니다.")
     @ValidUsername
-    @Schema(description = "사용자명 (4-20자, 영문자+숫자+언더바)", example = "student123", required = true)
+    @Schema(description = "사용자명 (4-20자, 영문자/숫자/언더바만 가능)", example = "user", required = true)
     private String username;
     
     @NotBlank(message = "비밀번호는 필수입니다.")
