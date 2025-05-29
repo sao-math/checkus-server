@@ -34,6 +34,16 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
+    private void checkDuplicateUsernameAndPhoneNumber(String username, String phoneNumber) {
+        if (userRepository.existsByUsername(username)) {
+            throw new DuplicateResourceException("이미 사용 중인 사용자명입니다: " + username);
+        }
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new DuplicateResourceException("이미 등록된 전화번호입니다: " + phoneNumber);
+        }
+
+    }
+
     /**
      * 학생 회원가입
      */
@@ -41,13 +51,7 @@ public class AuthService {
     public RegisterResponse registerStudent(StudentRegisterRequest request) {
         validateRegisterRequest(request);
 
-        // 중복 체크
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("이미 사용 중인 사용자명입니다: " + request.getUsername());
-        }
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new DuplicateResourceException("이미 등록된 전화번호입니다: " + request.getPhoneNumber());
-        }
+        checkDuplicateUsernameAndPhoneNumber(request.getUsername(), request.getPhoneNumber());
 
         // 학교 조회 또는 생성
         School school = getOrCreateSchool(request.getSchoolName());
@@ -85,14 +89,7 @@ public class AuthService {
     @Transactional
     public RegisterResponse registerGuardian(GuardianRegisterRequest request) {
         validateRegisterRequest(request);
-
-        // 중복 체크
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("이미 사용 중인 사용자명입니다: " + request.getUsername());
-        }
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new DuplicateResourceException("이미 등록된 전화번호입니다: " + request.getPhoneNumber());
-        }
+        checkDuplicateUsernameAndPhoneNumber(request.getUsername(), request.getPhoneNumber());
 
         // 사용자 생성
         User user = createUser(request);
@@ -114,13 +111,7 @@ public class AuthService {
     public RegisterResponse registerTeacher(TeacherRegisterRequest request) {
         validateRegisterRequest(request);
 
-        // 중복 체크
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("이미 사용 중인 사용자명입니다: " + request.getUsername());
-        }
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new DuplicateResourceException("이미 등록된 전화번호입니다: " + request.getPhoneNumber());
-        }
+        checkDuplicateUsernameAndPhoneNumber(request.getUsername(), request.getPhoneNumber());
 
         // 사용자 생성
         User user = createUser(request);
