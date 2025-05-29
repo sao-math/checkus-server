@@ -42,14 +42,11 @@ public class SwaggerConfig {
         SecurityScheme securityScheme = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
-                .bearerFormat("JWT")
-                .name("Authorization")
-                .in(SecurityScheme.In.HEADER);
+                .bearerFormat("JWT");
 
         return new OpenAPI()
                 .servers(List.of(localServer))
                 .info(info)
-                // .addSecurityItem(securityRequirement) <- 전역 보안 요구사항 제거
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth", securityScheme));
     }

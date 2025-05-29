@@ -151,7 +151,7 @@ public class ProductionDataInitializer {
                     .username(adminProperties.getUsername())
                     .name(adminProperties.getName())
                     .password(passwordEncoder.encode(adminPassword))
-                    .phoneNumber("000-0000-0000")  // 기본값
+                    .phoneNumber("010-0000-0000")  // 기본값
                     .build();
 
             // 사용자 저장
