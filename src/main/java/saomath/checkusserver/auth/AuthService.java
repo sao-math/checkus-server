@@ -174,9 +174,18 @@ public class AuthService {
                 refreshToken
             );
 
-        } catch (Exception e) {
+        } catch (AuthenticationException e) {
+            // 이미 AuthenticationException인 경우 그대로 던지기
+            log.error("로그인 실패: {}", request.getUsername(), e);
+            throw e;
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            // Spring Security 인증 실패 (비밀번호 오류 등)
             log.error("로그인 실패: {}", request.getUsername(), e);
             throw new AuthenticationException("로그인에 실패했습니다. 사용자명과 비밀번호를 확인해주세요.");
+        } catch (Exception e) {
+            // 기타 예외
+            log.error("로그인 실패: {}", request.getUsername(), e);
+            throw new AuthenticationException("로그인 처리 중 오류가 발생했습니다.");
         }
     }
 
