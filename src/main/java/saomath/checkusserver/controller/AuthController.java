@@ -24,7 +24,7 @@ import saomath.checkusserver.service.UserRoleService;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "인증 관련 API")
 public class AuthController {

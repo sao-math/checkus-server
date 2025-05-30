@@ -23,5 +23,3 @@ springdoc:
     path: /v3/api-docs                    # OpenAPI 문서 경로
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-  paths-to-match:
-    - /api/**

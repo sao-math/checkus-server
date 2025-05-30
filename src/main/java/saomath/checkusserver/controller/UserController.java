@@ -16,7 +16,7 @@ import saomath.checkusserver.auth.dto.UserInfoResponse;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 @Tag(name = "User", description = "사용자 관련 API")
 public class UserController {

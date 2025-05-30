@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/public")
 @Tag(name = "Health", description = "헬스체크 API")
 public class HealthController {
 

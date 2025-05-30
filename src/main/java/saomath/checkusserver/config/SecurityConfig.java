@@ -104,8 +104,8 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(authz -> authz
                         // 공개 엔드포인트
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/public/**").permitAll()
 
                         // 헬스체크 및 모니터링
                         .requestMatchers("/actuator/health").permitAll()
@@ -119,11 +119,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html").permitAll()
 
                         // 교사 전용 엔드포인트
-                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 학생/학부모 엔드포인트
-                        .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "GUARDIAN")
+                        .requestMatchers("/student/**").hasAnyRole("STUDENT", "GUARDIAN")
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
