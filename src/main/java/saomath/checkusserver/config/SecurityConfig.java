@@ -162,7 +162,7 @@ public class SecurityConfig {
         ));
 
         // 인증 정보 포함 허용
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
 
         // 노출할 헤더
         configuration.setExposedHeaders(Arrays.asList(
