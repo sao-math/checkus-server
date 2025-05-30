@@ -22,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 import saomath.checkusserver.auth.jwt.JwtAuthenticationEntryPoint;
 import saomath.checkusserver.auth.jwt.JwtAuthenticationFilter;
 
@@ -59,6 +60,9 @@ public class SecurityConfig {
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        
+                        // CORS preflight 요청 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 헬스체크 및 모니터링
                         .requestMatchers("/actuator/health").permitAll()
@@ -107,6 +111,9 @@ public class SecurityConfig {
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        
+                        // CORS preflight 요청 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 헬스체크 및 모니터링
                         .requestMatchers("/actuator/health").permitAll()
