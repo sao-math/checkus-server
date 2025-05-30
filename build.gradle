@@ -13,6 +13,15 @@ java {
     }
 }
 
+// Java 컴파일 옵션 추가 (매개변수 이름 보존)
+compileJava {
+    options.compilerArgs += ["-parameters"]
+}
+
+compileTestJava {
+    options.compilerArgs += ["-parameters"]
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -30,7 +39,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Swagger OpenAPI
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
     
     // Discord Bot
     implementation 'net.dv8tion:JDA:5.0.0-beta.20'  // Java Discord API
@@ -42,6 +51,11 @@ dependencies {
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -49,6 +63,8 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

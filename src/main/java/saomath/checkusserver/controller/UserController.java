@@ -1,108 +1,94 @@
 package saomath.checkusserver.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import saomath.checkusserver.entity.User;
-import saomath.checkusserver.service.UserService;
+import saomath.checkusserver.auth.CustomUserPrincipal;
+import saomath.checkusserver.auth.dto.ResponseBase;
+import saomath.checkusserver.auth.dto.UserInfoResponse;
 
-import java.util.List;
-import java.util.Optional;
-
+@Slf4j
 @RestController
-@RequestMapping("/api/public/users")
-@Tag(name = "User", description = "사용자 관리 API")
+@RequestMapping("/user")
+@RequiredArgsConstructor
+@Tag(name = "User", description = "사용자 관련 API")
 public class UserController {
 
-    private final UserService userService;
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    @Operation(summary = "내 상세 정보 조회", description = "현재 로그인한 사용자의 상세 정보 조회")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/profile")
+    public ResponseEntity<ResponseBase<UserInfoResponse>> getUserProfile() {
+        
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserPrincipal)) {
+                return ResponseEntity.status(401)
+                        .body(ResponseBase.error("인증되지 않은 사용자입니다."));
+            }
 
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+            CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
+            
+            // TODO: UserService를 통해 상세 정보 조회 로직 구현 필요
+            UserInfoResponse userInfo = new UserInfoResponse();
+            userInfo.setId(userPrincipal.getId());
+            userInfo.setUsername(userPrincipal.getUsername());
+            userInfo.setName(userPrincipal.getName());
+            // 추가 정보는 UserService에서 조회
 
-    /**
-     * 모든 사용자 목록을 조회합니다.
-     * GET /api/public/users
-     * @return 전체 사용자 목록
-     */
-    @Operation(summary = "모든 사용자 조회", description = "데이터베이스에 저장된 모든 사용자 정보를 조회합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "성공", 
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = User.class))))
-    })
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        logger.info("getAllUsers: 모든 사용자 목록 조회");
-        List<User> users = userService.getAllUsers();
-        logger.info("Total users found: {}", users.size());
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
-
-    /**
-     * ID로 특정 사용자를 조회합니다.
-     * GET /api/public/users/{id}
-     * @param id 사용자 ID
-     * @return 사용자 정보
-     */
-    @Operation(summary = "ID로 사용자 조회", description = "특정 ID의 사용자 정보를 조회합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "성공", 
-                    content = @Content(schema = @Schema(implementation = User.class))),
-        @ApiResponse(responseCode = "404", description = "사용자 없음")
-    })
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(
-            @Parameter(description = "사용자 ID", required = true, example = "1") 
-            @PathVariable("id") Long id) {
-        logger.info("getUserById: id={}", id);
-        Optional<User> user = userService.getUserById(id);
-        if (user.isPresent()) {
-            logger.info("User found: {}", user.get().getUsername());
-            return new ResponseEntity<>(user.get(), HttpStatus.OK);
-        } else {
-            logger.warn("User not found: id={}", id);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.ok(ResponseBase.success("사용자 정보를 조회했습니다.", userInfo));
+            
+        } catch (Exception e) {
+            log.error("사용자 프로필 조회 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
         }
     }
 
-    /**
-     * 사용자명으로 특정 사용자를 조회합니다.
-     * GET /api/public/users/username/{username}
-     * @param username 사용자명
-     * @return 사용자 정보
-     */
-    @Operation(summary = "사용자명으로 사용자 조회", description = "특정 사용자명을 가진 사용자 정보를 조회합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "성공", 
-                    content = @Content(schema = @Schema(implementation = User.class))),
-        @ApiResponse(responseCode = "404", description = "사용자 없음")
-    })
-    @GetMapping("/username/{username}")
-    public ResponseEntity<User> getUserByUsername(
-            @Parameter(description = "사용자명", required = true, example = "testuser") 
-            @PathVariable("username") String username) {
-        logger.info("getUserByUsername: username={}", username);
-        User user = userService.getUserByUsername(username);
-        if (user != null) {
-            logger.info("User found: id={}", user.getId());
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        } else {
-            logger.warn("User not found: username={}", username);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    @Operation(summary = "프로필 업데이트", description = "사용자 프로필 정보 업데이트")
+    @SecurityRequirement(name = "bearerAuth")
+    @PutMapping("/profile")
+    public ResponseEntity<ResponseBase<String>> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request) {
+        
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserPrincipal)) {
+                return ResponseEntity.status(401)
+                        .body(ResponseBase.error("인증되지 않은 사용자입니다."));
+            }
+
+            CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
+            
+            // TODO: UserService를 통해 프로필 업데이트 로직 구현 필요
+            
+            return ResponseEntity.ok(ResponseBase.success("프로필이 업데이트되었습니다.", "success"));
+            
+        } catch (Exception e) {
+            log.error("프로필 업데이트 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
         }
+    }
+
+    // 프로필 업데이트 요청 DTO (임시)
+    public static class UpdateProfileRequest {
+        private String name;
+        private String phoneNumber;
+        private String discordId;
+        
+        // getters and setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getPhoneNumber() { return phoneNumber; }
+        public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+        public String getDiscordId() { return discordId; }
+        public void setDiscordId(String discordId) { this.discordId = discordId; }
     }
 }

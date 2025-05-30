@@ -1,13 +1,10 @@
 package saomath.checkusserver.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 // Spring Boot 3.0 이후 사용
 import jakarta.persistence.*;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +32,9 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ToString.Exclude
     private String password;
+
+    @Column(name = "discord_id", length = 100)
+    private String discordId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

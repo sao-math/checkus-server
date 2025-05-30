@@ -34,13 +34,4 @@ public class UserService {
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
-
-    /**
-     * 사용자명으로 특정 사용자를 조회합니다.
-     * @param username 사용자명
-     * @return 사용자 정보
-     */
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
 }

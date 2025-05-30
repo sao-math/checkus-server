@@ -1,0 +1,86 @@
+{
+  "info": {
+    "name": "CheckUS API Tests",
+    "description": "CheckUS 서버 API 테스트 컬렉션"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/public/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "public", "health"]
+        }
+      }
+    },
+    {
+      "name": "Check Username",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/check-username?username=testuser",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "check-username"],
+          "query": [
+            {
+              "key": "username",
+              "value": "testuser"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Student Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"student123\",\n  \"password\": \"Test123!@#\",\n  \"name\": \"테스트학생\",\n  \"phoneNumber\": \"010-1234-5678\",\n  \"schoolName\": \"테스트고등학교\",\n  \"grade\": 11,\n  \"gender\": \"MALE\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register/student",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "register", "student"]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"student123\",\n  \"password\": \"Test123!@#\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

@@ -21,28 +21,6 @@ CREATE TABLE school (
                         name varchar(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE role (
-                      id bigint AUTO_INCREMENT PRIMARY KEY,
-                      name varchar(255) UNIQUE
-);
-
-CREATE TABLE user_role (
-                           user_id bigint,
-                           role_id bigint,
-                           PRIMARY KEY (user_id, role_id)
-);
-
-CREATE TABLE permission (
-                            id bigint AUTO_INCREMENT PRIMARY KEY,
-                            name varchar(255) UNIQUE
-);
-
-CREATE TABLE role_permission (
-                                 role_id bigint,
-                                 permission_id bigint,
-                                 PRIMARY KEY (role_id, permission_id)
-);
-
 CREATE TABLE student_guardian (
                                   student_id bigint,
                                   guardian_id bigint,
@@ -67,31 +45,68 @@ CREATE TABLE student_class (
                                PRIMARY KEY (student_id, class_id)
 );
 
+CREATE TABLE role (
+                      id bigint AUTO_INCREMENT PRIMARY KEY,
+                      name varchar(255) UNIQUE
+);
+
+CREATE TABLE user_role (
+                           user_id bigint,
+                           role_id bigint,
+                           status VARCHAR(20) DEFAULT 'PENDING',
+                            -- 가능한 상태값
+                            -- 'PENDING'   : 승인 대기
+                            -- 'ACTIVE'    : 활성화됨
+                            -- 'SUSPENDED' : 일시 정지
+                            -- 'EXPIRED'   : 만료됨
+                           PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE permission (
+                            id bigint AUTO_INCREMENT PRIMARY KEY,
+                            name varchar(255) UNIQUE
+);
+
+CREATE TABLE role_permission (
+                                 role_id bigint,
+                                 permission_id bigint,
+                                 PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE activity (
+                          id bigint AUTO_INCREMENT PRIMARY KEY,
+                          name varchar(255) NOT NULL,
+                          is_study_assignable boolean DEFAULT false
+);
+
 CREATE TABLE weekly_schedule (
                                  id bigint AUTO_INCREMENT PRIMARY KEY,
                                  student_id bigint,
+                                 activity_id bigint,
                                  day_of_week integer,
                                  start_time time,
                                  end_time time,
-                                 activity varchar(255)
+                                 FOREIGN KEY (activity_id) REFERENCES activity(id)
 );
 
 CREATE TABLE assigned_study_time (
                                      id bigint AUTO_INCREMENT PRIMARY KEY,
                                      student_id bigint,
+                                     activity_id bigint,
                                      start_time timestamp,
                                      end_time timestamp,
-                                     activity varchar(255),
-                                     assigned_by bigint
+                                     assigned_by bigint,
+                                     FOREIGN KEY (activity_id) REFERENCES activity(id)
 );
 
 CREATE TABLE actual_study_time (
                                    id bigint AUTO_INCREMENT PRIMARY KEY,
                                    student_id bigint,
+                                   assigned_study_time_id bigint,
                                    start_time timestamp,
                                    end_time timestamp,
-                                   activity varchar(255),
-                                   source varchar(255)
+                                   source varchar(255),
+                                   FOREIGN KEY (assigned_study_time_id) REFERENCES assigned_study_time(id)
 );
 
 CREATE TABLE task_type (
@@ -111,7 +126,7 @@ CREATE TABLE task (
 CREATE TABLE material (
                           id bigint AUTO_INCREMENT PRIMARY KEY,
                           task_id bigint,
-                          title varchar(255) NOT NULL,
+                          url varchar(255) NOT NULL,
                           is_video boolean,
                           completion_condition varchar(255)
 );
@@ -125,6 +140,58 @@ CREATE TABLE assigned_task (
                                description text,
                                assigned_date timestamp DEFAULT CURRENT_TIMESTAMP,
                                due_date timestamp
+);
+
+CREATE TABLE notification_type (
+                                   id bigint AUTO_INCREMENT PRIMARY KEY,
+                                   name varchar(255) NOT NULL UNIQUE,
+                                   description text
+);
+
+CREATE TABLE notification_setting (
+                                      id bigint AUTO_INCREMENT PRIMARY KEY,
+                                      user_id bigint,
+                                      notification_type_id bigint,
+                                      is_enabled boolean DEFAULT true,
+                                      delivery_method varchar(50), -- 'push', 'email', 'sms', 'discord', 'kakao'
+                                      advance_minutes integer DEFAULT 0, -- 몇 분 전에 알림
+                                      FOREIGN KEY (user_id) REFERENCES users (id),
+                                      FOREIGN KEY (notification_type_id) REFERENCES notification_type (id)
+);
+
+CREATE TABLE scheduled_notification (
+                                        id bigint AUTO_INCREMENT PRIMARY KEY,
+                                        user_id bigint,
+                                        notification_type_id bigint,
+                                        title varchar(255) NOT NULL,
+                                        message text,
+                                        scheduled_time timestamp,
+                                        is_sent boolean DEFAULT false,
+                                        related_table varchar(50), -- 'assigned_study_time', 'assigned_task' 등
+                                        related_id bigint, -- 관련 레코드의 ID
+                                        created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                                        FOREIGN KEY (user_id) REFERENCES users (id),
+                                        FOREIGN KEY (notification_type_id) REFERENCES notification_type (id)
+);
+
+CREATE TABLE notification_history (
+                                      id bigint AUTO_INCREMENT PRIMARY KEY,
+                                      scheduled_notification_id bigint,
+                                      sent_at timestamp,
+                                      delivery_method varchar(50),
+                                      status varchar(20), -- 'success', 'failed', 'pending'
+                                      error_message text,
+                                      FOREIGN KEY (scheduled_notification_id) REFERENCES scheduled_notification (id)
+);
+
+CREATE TABLE refresh_token (
+                               id bigint AUTO_INCREMENT PRIMARY KEY,
+                               token varchar(1000) UNIQUE NOT NULL,
+                               user_id bigint NOT NULL,
+                               expires_at timestamp NOT NULL,
+                               created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               is_revoked boolean NOT NULL DEFAULT false,
+                               FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- Foreign Key 제약조건들

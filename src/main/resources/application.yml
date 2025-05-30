@@ -1,4 +1,15 @@
 # application.yml
+app:
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:password}  # 환경변수로만 설정
+    name: ${ADMIN_NAME:관리자}
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:mySecretKey12345678901234567890123456789012345678901234567890}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}  # 1시간 (밀리초)
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7일 (밀리초)
 
 # Swagger 설정
 springdoc:
@@ -12,5 +23,3 @@ springdoc:
     path: /v3/api-docs                    # OpenAPI 문서 경로
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-  paths-to-match:
-    - /api/**

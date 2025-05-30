@@ -1,0 +1,12 @@
+# .github/workflows/pr-ci.yml
+name: PR CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      run-tests: true
