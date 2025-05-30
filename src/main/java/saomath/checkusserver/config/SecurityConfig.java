@@ -57,20 +57,22 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(authz -> authz
+                        // CORS preflight 요청 먼저 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
                         
-                        // CORS preflight 요청 허용
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 헬스체크 및 모니터링
-                        .requestMatchers("/actuator/health").permitAll()
-
-                        // Swagger 문서
+                        // Swagger UI 요청 허용
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+
+                        // 헬스체크 및 모니터링
+                        .requestMatchers("/actuator/health").permitAll()
 
                         // 교사 전용 엔드포인트
                         .requestMatchers("/teacher/**").hasRole("TEACHER")
@@ -108,20 +110,22 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(authz -> authz
+                        // CORS preflight 요청 먼저 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
                         
-                        // CORS preflight 요청 허용
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 헬스체크 및 모니터링
-                        .requestMatchers("/actuator/health").permitAll()
-
-                        // Swagger 문서
+                        // Swagger UI 요청 허용
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+
+                        // 헬스체크 및 모니터링
+                        .requestMatchers("/actuator/health").permitAll()
 
                         // 교사 전용 엔드포인트
                         .requestMatchers("/teacher/**").hasRole("TEACHER")
