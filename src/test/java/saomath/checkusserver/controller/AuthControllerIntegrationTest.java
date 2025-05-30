@@ -64,7 +64,7 @@ class AuthControllerIntegrationTest {
         StudentRegisterRequest request = TestDataFactory.createStudentRegisterRequest();
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -80,7 +80,7 @@ class AuthControllerIntegrationTest {
         StudentRegisterRequest request = TestDataFactory.createInvalidPasswordStudentRequest();
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -91,7 +91,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("사용자명 중복 확인 API 테스트")
     void checkUsername_Test() throws Exception {
         // When & Then - 존재하지 않는 사용자명
-        mockMvc.perform(get("/api/auth/check-username")
+        mockMvc.perform(get("/auth/check-username")
                 .param("username", "newuser"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -102,7 +102,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("전화번호 중복 확인 API 테스트")
     void checkPhoneNumber_Test() throws Exception {
         // When & Then - 존재하지 않는 전화번호
-        mockMvc.perform(get("/api/auth/check-phone")
+        mockMvc.perform(get("/auth/check-phone")
                 .param("phoneNumber", "010-9999-9999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -113,7 +113,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("잘못된 전화번호 형식으로 중복 확인 테스트")
     void checkPhoneNumber_InvalidFormat_Test() throws Exception {
         // When & Then - 잘못된 형식
-        mockMvc.perform(get("/api/auth/check-phone")
+        mockMvc.perform(get("/auth/check-phone")
                 .param("phoneNumber", "01012345678")) // 하이픈 없음
                 .andExpect(status().isBadRequest());
     }
@@ -123,7 +123,7 @@ class AuthControllerIntegrationTest {
     void registerStudent_DuplicateUsername_Fail() throws Exception {
         // Given - 첫 번째 학생 회원가입
         StudentRegisterRequest firstRequest = TestDataFactory.createStudentRegisterRequest();
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(firstRequest)))
                 .andExpect(status().isCreated());
@@ -133,7 +133,7 @@ class AuthControllerIntegrationTest {
         duplicateRequest.setUsername(firstRequest.getUsername()); // 중복 사용자명
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(duplicateRequest)))
                 .andExpect(status().isBadRequest())
@@ -146,7 +146,7 @@ class AuthControllerIntegrationTest {
     void registerStudent_DuplicatePhoneNumber_Fail() throws Exception {
         // Given - 첫 번째 학생 회원가입
         StudentRegisterRequest firstRequest = TestDataFactory.createStudentRegisterRequest();
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(firstRequest)))
                 .andExpect(status().isCreated());
@@ -156,7 +156,7 @@ class AuthControllerIntegrationTest {
         duplicateRequest.setPhoneNumber(firstRequest.getPhoneNumber()); // 중복 전화번호
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register/student")
+        mockMvc.perform(post("/auth/register/student")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(duplicateRequest)))
                 .andExpect(status().isBadRequest())
