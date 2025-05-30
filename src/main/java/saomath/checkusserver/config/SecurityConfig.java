@@ -152,13 +152,22 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         // 허용할 헤더
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-CSRF-TOKEN",
+                "X-Requested-With"
+        ));
 
         // 인증 정보 포함 허용
         configuration.setAllowCredentials(true);
 
         // 노출할 헤더
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "X-Total-Count"));
+        configuration.setExposedHeaders(Arrays.asList(
+                "Authorization",
+                "X-Total-Count",
+                "X-CSRF-TOKEN"
+        ));
 
         // preflight 요청 캐시 시간
         configuration.setMaxAge(3600L);
