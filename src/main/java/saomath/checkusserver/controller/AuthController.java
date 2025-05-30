@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -173,12 +174,32 @@ public class AuthController {
         }
     )
     @PostMapping("/login")
-    public ResponseEntity<ResponseBase<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ResponseBase<LoginResponseSecure>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
         
         try {
-            LoginResponse response = authService.login(request);
-            return ResponseEntity.ok(ResponseBase.success("로그인이 완료되었습니다.", response));
+            LoginResponse loginResponse = authService.login(request);
+            
+            // RefreshToken을 HttpOnly 쿠키로 설정 (SameSite 포함)
+            String refreshTokenCookieValue = String.format(
+                "refreshToken=%s; HttpOnly; Secure; Path=/; Max-Age=%d; SameSite=Strict",
+                loginResponse.getRefreshToken(),
+                7 * 24 * 60 * 60
+            );
+            response.addHeader("Set-Cookie", refreshTokenCookieValue);
+            
+            // AccessToken만 포함된 응답 생성
+            LoginResponseSecure secureResponse = new LoginResponseSecure(
+                loginResponse.getUserId(),
+                loginResponse.getUsername(),
+                loginResponse.getName(),
+                loginResponse.getRoles(),
+                loginResponse.getAccessToken(),
+                "Bearer"
+            );
+            
+            return ResponseEntity.ok(ResponseBase.success("로그인이 완료되었습니다.", secureResponse));
         } catch (Exception e) {
             log.error("로그인 실패: {}", request.getUsername(), e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -187,10 +208,9 @@ public class AuthController {
     }
 
 
-    //TODO 로테이션 적용하기
     @Operation(
         summary = "토큰 리프레시", 
-        description = "리프레시 토큰으로 새로운 액세스 토큰을 발급받습니다.",
+        description = "HttpOnly 쿠키의 리프레시 토큰으로 새로운 액세스 토큰을 발급받습니다.",
         responses = {
             @ApiResponse(
                 responseCode = "200", 
@@ -204,8 +224,7 @@ public class AuthController {
                           "success": true,
                           "message": "토큰이 갱신되었습니다.",
                           "data": {
-                            "accessToken": "eyJhbGciOiJIUzM4NCJ9...",
-                            "refreshToken": "eyJhbGciOiJIUzM4NCJ9..."
+                            "accessToken": "eyJhbGciOiJIUzM4NCJ9..."
                           }
                         }
                         """
@@ -231,14 +250,32 @@ public class AuthController {
             )
         }
     )
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/refresh")
-    public ResponseEntity<ResponseBase<TokenRefreshResponse>> refreshToken(
-            @Valid @RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<ResponseBase<TokenRefreshResponseSecure>> refreshToken(
+            @CookieValue(value = "refreshToken", required = true) String refreshToken,
+            HttpServletResponse response) {
         
         try {
-            TokenRefreshResponse response = authService.refreshToken(request);
-            return ResponseEntity.ok(ResponseBase.success("토큰이 갱신되었습니다.", response));
+            // 기존 TokenRefreshRequest 객체 생성
+            TokenRefreshRequest request = new TokenRefreshRequest();
+            request.setRefreshToken(refreshToken);
+            
+            TokenRefreshResponse tokenResponse = authService.refreshToken(request);
+            
+            // 새로운 RefreshToken을 쿠키로 업데이트 (SameSite 포함)
+            String newRefreshTokenCookieValue = String.format(
+                "refreshToken=%s; HttpOnly; Secure; Path=/; Max-Age=%d; SameSite=Strict",
+                tokenResponse.getRefreshToken(),
+                7 * 24 * 60 * 60
+            );
+            response.addHeader("Set-Cookie", newRefreshTokenCookieValue);
+            
+            // AccessToken만 포함된 응답
+            TokenRefreshResponseSecure secureResponse = new TokenRefreshResponseSecure(
+                tokenResponse.getAccessToken()
+            );
+            
+            return ResponseEntity.ok(ResponseBase.success("토큰이 갱신되었습니다.", secureResponse));
         } catch (Exception e) {
             log.error("토큰 리프레시 실패", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -246,14 +283,22 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃 및 리프레시 토큰 폐기")
+    @Operation(summary = "로그아웃", description = "로그아웃 및 리프레시 토큰 폐기 (HttpOnly 쿠키 제거)")
     @PostMapping("/logout")
     public ResponseEntity<ResponseBase<String>> logout(
-            @RequestBody(required = false) LogoutRequest request) {
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
         
         try {
-            String refreshToken = request != null ? request.getRefreshToken() : null;
-            authService.logout(refreshToken);
+            // RefreshToken이 있으면 서버에서 폐기
+            if (refreshToken != null) {
+                authService.logout(refreshToken);
+            }
+            
+            // RefreshToken 쿠키 제거 (SameSite 포함)
+            String expiredCookieValue = "refreshToken=; HttpOnly; Secure; Path=/; Max-Age=0; SameSite=Strict";
+            response.addHeader("Set-Cookie", expiredCookieValue);
+            
             return ResponseEntity.ok(ResponseBase.success("로그아웃이 완료되었습니다.", "success"));
         } catch (Exception e) {
             log.error("로그아웃 실패", e);
