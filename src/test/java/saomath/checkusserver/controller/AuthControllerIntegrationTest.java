@@ -27,8 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @Rollback
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@DisplayName("AuthController 통합 테스트")
+@DisplayName("인증 컨트롤러 통합 테스트")
 class AuthControllerIntegrationTest {
 
     @Autowired

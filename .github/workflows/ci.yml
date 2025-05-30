@@ -19,6 +19,9 @@ jobs:
     outputs:
       build-success: ${{ steps.build.outcome == 'success' }}
     
+    env:
+      GRADLE_OPTS: -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.configureondemand=true
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,17 +36,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
-
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Compile check
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew compileJava compileTestJava --parallel --daemon
 
       - name: Run tests
         if: ${{ inputs.run-tests }}
-        run: ./gradlew test
+        run: ./gradlew test --parallel --daemon
 
       - name: Build with Gradle
         id: build
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test --parallel --daemon
