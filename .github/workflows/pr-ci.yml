@@ -1,5 +1,5 @@
-# .github/workflows/pr-ci.yml
-name: PR CI
+# .github/workflows/pr.yml
+name: PR Check
 
 on:
   pull_request:
