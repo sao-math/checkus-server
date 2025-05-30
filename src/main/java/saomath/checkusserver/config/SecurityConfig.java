@@ -139,15 +139,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
+        configuration.setAllowedOrigins(Arrays.asList("*"));
         // 허용할 도메인 설정
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://checkus.app",
-                "https://teacher.checkus.app",
-                "http://localhost:3001",
-                "http://localhost:3002"
-        ));
-
+//        configuration.setAllowedOriginPatterns(Arrays.asList(
+//                "https://checkus.app",
+//                "https://teacher.checkus.app",
+//                "http://localhost:3001",
+//                "http://localhost:3002"
+//        ));
+        
         // 허용할 HTTP 메소드
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
@@ -156,7 +156,9 @@ public class SecurityConfig {
                 "Authorization",
                 "Content-Type",
                 "X-CSRF-TOKEN",
-                "X-Requested-With"
+                "X-Requested-With",
+                "Accept",
+                "Origin"
         ));
 
         // 인증 정보 포함 허용
@@ -166,7 +168,8 @@ public class SecurityConfig {
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "X-Total-Count",
-                "X-CSRF-TOKEN"
+                "X-CSRF-TOKEN",
+                "Set-Cookie"
         ));
 
         // preflight 요청 캐시 시간
