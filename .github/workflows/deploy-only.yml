@@ -4,6 +4,10 @@ name: Deploy Only
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     uses: ./.github/workflows/cd.yml
