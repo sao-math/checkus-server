@@ -29,15 +29,15 @@ public class SwaggerConfig {
     @Bean
     @Profile("prod")
     public OpenAPI prodOpenAPI() {
-        Server prodServer = new Server();
-        prodServer.setUrl("https://api.checkus.com");
-        prodServer.setDescription("Production Server");
+        Server currentServer = new Server();
+        currentServer.setUrl("");  // 빈 문자열 = 현재 도메인 사용
+        currentServer.setDescription("Current Server (api.checkus.app)");
 
         Server localServer = new Server();
         localServer.setUrl("http://localhost:8080");
         localServer.setDescription("Local Development Server");
 
-        return createOpenAPI(List.of(prodServer, localServer));
+        return createOpenAPI(List.of(currentServer, localServer));
     }
 
     private OpenAPI createOpenAPI(List<Server> servers) {
