@@ -5,15 +5,11 @@ on:
   push:
     branches: [ main ]
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
     with:
-      run-tests: false  # 빠른 배포를 위해 테스트 스킵 (선택사항)
+      run-tests: false
 
   cd:
     needs: ci

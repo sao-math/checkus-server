@@ -38,7 +38,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,30 +74,24 @@ jobs:
             # ECR 로그인
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com
             
-            # 환경 변수 설정
-            export RDS_ENDPOINT="${{ secrets.RDS_ENDPOINT }}"
-            export RDS_USERNAME="${{ secrets.RDS_USERNAME }}"
-            export RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}"
-            export RDS_DATABASE="${{ secrets.RDS_DATABASE }}"
-            export DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}"
-            export DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}"
-            export DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
-            export ADMIN_USERNAME="${{ secrets.ADMIN_USERNAME }}"
-            export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
-            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-            
-            # 기존 컨테이너 중지 및 제거
+            # .env 파일 생성
             cd ~/checkus-infra
+            cat > .env << EOF
+            RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
+            RDS_USERNAME=${{ secrets.RDS_USERNAME }}
+            RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
+            RDS_DATABASE=${{ secrets.RDS_DATABASE }}
+            DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+            DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}
+            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+            
+            # 배포
             docker compose down
-            
-            # Git에서 최신 설정 가져오기
             git pull origin main
-            
-            # 최신 이미지 pull
             docker pull 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com/checkus/server:latest
-            
-            # 새 컨테이너 시작
             docker compose up -d
-            
-            # 사용하지 않는 이미지 정리
             docker image prune -f

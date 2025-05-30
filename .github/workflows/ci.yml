@@ -1,3 +1,4 @@
+# .github/workflows/ci.yml
 name: CI
 
 on:
@@ -16,7 +17,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     outputs:
-      build-success: ${{ steps.build.outcome == 'success' }}
+      build-success: ${{ steps.build.conclusion == 'success' }}
 
     env:
       GRADLE_OPTS: >-
@@ -40,8 +41,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          cache-write-only: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
