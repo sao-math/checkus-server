@@ -1,16 +1,24 @@
-name: CI Pipeline
+# .github/workflows/ci.yml
+name: CI
 
 on:
-  pull_request: #pr 발생 시 test, build 만 수행
-    branches: [ main ]
-
-permissions:
-  contents: read
+  workflow_call:
+    inputs:
+      run-tests:
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      build-success:
+        description: "Build success status"
+        value: ${{ jobs.ci.outputs.build-success }}
 
 jobs:
-  test-and-build:
+  ci:
     runs-on: ubuntu-latest
-
+    outputs:
+      build-success: ${{ steps.build.outcome == 'success' }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,11 +37,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Compile check #빠른 실패 전략
+      - name: Compile check
         run: ./gradlew compileJava compileTestJava
 
       - name: Run tests
+        if: ${{ inputs.run-tests }}
         run: ./gradlew test
 
       - name: Build with Gradle
+        id: build
         run: ./gradlew build -x test

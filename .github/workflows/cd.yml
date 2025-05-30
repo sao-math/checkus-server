@@ -1,0 +1,103 @@
+# .github/workflows/cd.yml
+name: CD
+
+on:
+  workflow_call:
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      EC2_HOST:
+        required: true
+      EC2_SSH_KEY:
+        required: true
+      RDS_ENDPOINT:
+        required: true
+      RDS_USERNAME:
+        required: true
+      RDS_PASSWORD:
+        required: true
+      RDS_DATABASE:
+        required: true
+      DISCORD_TOKEN:
+        required: true
+      DISCORD_GUILD_ID:
+        required: true
+      DISCORD_CLIENT_ID:
+        required: true
+      ADMIN_USERNAME:
+        required: true
+      ADMIN_PASSWORD:
+        required: true
+      JWT_SECRET:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: checkus/server
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # ECR 로그인
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com
+            
+            # 환경 변수 설정
+            export RDS_ENDPOINT="${{ secrets.RDS_ENDPOINT }}"
+            export RDS_USERNAME="${{ secrets.RDS_USERNAME }}"
+            export RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}"
+            export RDS_DATABASE="${{ secrets.RDS_DATABASE }}"
+            export DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}"
+            export DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}"
+            export DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
+            export ADMIN_USERNAME="${{ secrets.ADMIN_USERNAME }}"
+            export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            
+            # 기존 컨테이너 중지 및 제거
+            cd ~/checkus-infra
+            docker compose down
+            
+            # Git에서 최신 설정 가져오기
+            git pull origin main
+            
+            # 최신 이미지 pull
+            docker pull 855673866113.dkr.ecr.ap-northeast-2.amazonaws.com/checkus/server:latest
+            
+            # 새 컨테이너 시작
+            docker compose up -d
+            
+            # 사용하지 않는 이미지 정리
+            docker image prune -f
