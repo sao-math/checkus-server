@@ -1,31 +1,15 @@
-# .github/workflows/ci.yml
-name: CI
+name: CI Pipeline
 
 on:
-  workflow_call:
-    inputs:
-      run-tests:
-        required: false
-        type: boolean
-        default: true
-    outputs:
-      build-success:
-        description: "Build success status"
-        value: ${{ jobs.ci.outputs.build-success }}
+  pull_request: #pr 발생 시 test, build 만 수행
+    branches: [ main ]
+
+permissions:
+  contents: read
 
 jobs:
-  ci:
+  test-and-build:
     runs-on: ubuntu-latest
-    outputs:
-      build-success: ${{ steps.build.conclusion == 'success' }}
-
-    env:
-      GRADLE_OPTS: >-
-        -Dorg.gradle.daemon=true
-        -Dorg.gradle.parallel=true
-        -Dorg.gradle.caching=true
-        -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m -XX:+UseG1GC"
-        -Dorg.gradle.workers.max=2
 
     steps:
       - name: Checkout code
@@ -40,18 +24,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          cache-read-only: true
+          cache-read-only: false
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Compile check
+      - name: Compile check #빠른 실패 전략
         run: ./gradlew compileJava compileTestJava
 
       - name: Run tests
-        if: ${{ inputs.run-tests }}
         run: ./gradlew test
 
       - name: Build with Gradle
-        id: build
         run: ./gradlew build -x test
