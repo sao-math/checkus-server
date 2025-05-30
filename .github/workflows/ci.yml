@@ -21,10 +21,10 @@ jobs:
           java-version: '21'
           distribution: 'corretto'
 
-      - name: Setup Gradle
+      - name: Setup Gradle # 캐싱 비활성화 (네트워크 이슈로 인해)
         uses: gradle/actions/setup-gradle@v3
         with:
-          cache-read-only: true
+          cache-disabled: true
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
