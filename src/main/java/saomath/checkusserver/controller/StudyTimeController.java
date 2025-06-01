@@ -96,7 +96,7 @@ public class StudyTimeController {
             // 현재 인증된 사용자 정보 가져오기
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
-            Long teacherId = principal.getUserId();
+            Long teacherId = principal.getId();
             
             AssignedStudyTime result = studyTimeService.assignStudyTime(
                     request.getStudentId(),
