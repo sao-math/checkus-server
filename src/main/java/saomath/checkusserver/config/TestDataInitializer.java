@@ -5,14 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.repository.*;
-import saomath.checkusserver.auth.AuthService;
-import saomath.checkusserver.auth.dto.StudentRegisterRequest;
-import saomath.checkusserver.auth.dto.TeacherRegisterRequest;
-import saomath.checkusserver.auth.dto.GuardianRegisterRequest;
 import saomath.checkusserver.service.UserRoleService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -33,11 +28,11 @@ public class TestDataInitializer implements CommandLineRunner {
     private final SchoolRepository schoolRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final TaskTypeRepository taskTypeRepository;
-    private final AuthService authService;
     private final UserRoleService userRoleService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
         log.info("테스트 데이터 초기화 시작...");
         
@@ -48,119 +43,95 @@ public class TestDataInitializer implements CommandLineRunner {
             return;
         }
 
-        // 각 단계를 별도 트랜잭션으로 실행
-        try {
-            initializeRolesAndPermissions();
-            initializeSchools();
-            initializeTaskTypes();
-            initializeUsers();
-            
-            // 생성 결과 로그
-            log.info("데이터 초기화 완료!");
-            log.info("생성된 사용자 수: {}", userRepository.count());
-            log.info("생성된 역할 수: {}", roleRepository.count());
-            log.info("생성된 권한 수: {}", permissionRepository.count());
-            log.info("생성된 학교 수: {}", schoolRepository.count());
-            log.info("테스트 데이터 초기화 완료!");
-            
-        } catch (Exception e) {
-            log.error("테스트 데이터 초기화 중 오류 발생", e);
-            throw e;
-        }
+        initializeRolesAndPermissions();
+        initializeSchools();
+        initializeTaskTypes();
+        initializeUsers();
+        
+        // 생성 결과 로그
+        log.info("데이터 초기화 완료!");
+        log.info("생성된 사용자 수: {}", userRepository.count());
+        log.info("생성된 역할 수: {}", roleRepository.count());
+        log.info("생성된 권한 수: {}", permissionRepository.count());
+        log.info("생성된 학교 수: {}", schoolRepository.count());
+        log.info("테스트 데이터 초기화 완료!");
     }
 
-    @Transactional
-    protected void initializeRolesAndPermissions() {
+    private void initializeRolesAndPermissions() {
         log.info("역할 및 권한 초기화...");
         
-        try {
-            // 역할 생성
-            Role adminRole = createRole("ADMIN");
-            Role teacherRole = createRole("TEACHER");
-            Role studentRole = createRole("STUDENT");
-            Role guardianRole = createRole("GUARDIAN");
+        // 역할 생성
+        Role adminRole = createRole("ADMIN");
+        Role teacherRole = createRole("TEACHER");
+        Role studentRole = createRole("STUDENT");
+        Role guardianRole = createRole("GUARDIAN");
 
-            // 권한 생성
-            Permission teacherManagement = createPermission("TEACHER_MANAGEMENT");
-            Permission studentManagement = createPermission("STUDENT_MANAGEMENT");
-            Permission classManagement = createPermission("CLASS_MANAGEMENT");
-            Permission taskDbManagement = createPermission("TASK_DB_MANAGEMENT");
-            Permission taskSubmit = createPermission("TASK_SUBMIT");
+        // 권한 생성
+        Permission teacherManagement = createPermission("TEACHER_MANAGEMENT");
+        Permission studentManagement = createPermission("STUDENT_MANAGEMENT");
+        Permission classManagement = createPermission("CLASS_MANAGEMENT");
+        Permission taskDbManagement = createPermission("TASK_DB_MANAGEMENT");
+        Permission taskSubmit = createPermission("TASK_SUBMIT");
 
-            // 역할별 권한 할당
-            assignPermissionsToRole(adminRole, Arrays.asList(
-                teacherManagement, studentManagement, classManagement, taskDbManagement, taskSubmit
-            ));
-            
-            assignPermissionsToRole(teacherRole, Arrays.asList(
-                studentManagement, classManagement, taskDbManagement, taskSubmit
-            ));
-            
-            assignPermissionsToRole(studentRole, Arrays.asList(taskSubmit));
-            assignPermissionsToRole(guardianRole, Arrays.asList());
-            
-            log.info("역할 및 권한 초기화 완료");
-        } catch (Exception e) {
-            log.error("역할 및 권한 초기화 실패", e);
-            throw e;
-        }
+        // 역할별 권한 할당
+        assignPermissionsToRole(adminRole, Arrays.asList(
+            teacherManagement, studentManagement, classManagement, taskDbManagement, taskSubmit
+        ));
+        
+        assignPermissionsToRole(teacherRole, Arrays.asList(
+            studentManagement, classManagement, taskDbManagement, taskSubmit
+        ));
+        
+        assignPermissionsToRole(studentRole, Arrays.asList(taskSubmit));
+        assignPermissionsToRole(guardianRole, Arrays.asList());
     }
 
-    @Transactional
-    protected void initializeSchools() {
+    private void initializeSchools() {
         log.info("학교 데이터 초기화...");
         
-        try {
-            String[] schools = {"이현중", "손곡중", "신봉중", "수지중", "서원중", "홍천중", 
-                              "성서중", "상현중", "정평중", "한빛중", "성복중", "문정중", "소현중", "계원예중"};
-            
-            for (String schoolName : schools) {
-                createSchool(schoolName);
-            }
-            
-            log.info("학교 데이터 초기화 완료");
-        } catch (Exception e) {
-            log.error("학교 데이터 초기화 실패", e);
-            throw e;
+        String[] schools = {"이현중", "손곡중", "신봉중", "수지중", "서원중", "홍천중", 
+                          "성서중", "상현중", "정평중", "한빛중", "성복중", "문정중", "소현중", "계원예중"};
+        
+        for (String schoolName : schools) {
+            createSchool(schoolName);
         }
     }
 
-    @Transactional
-    protected void initializeTaskTypes() {
+    private void initializeTaskTypes() {
         log.info("과제 유형 초기화...");
         
-        try {
-            createTaskType("테스트");
-            createTaskType("개념");
-            log.info("과제 유형 초기화 완료");
-        } catch (Exception e) {
-            log.error("과제 유형 초기화 실패", e);
-            throw e;
-        }
+        createTaskType("테스트");
+        createTaskType("개념");
     }
 
-    protected void initializeUsers() {
+    private void initializeUsers() {
         log.info("사용자 데이터 초기화...");
         
-        // 관리자 계정 (별도 트랜잭션)
-        createAdminAccount();
+        // 학교 조회
+        School ihyeon = schoolRepository.findByName("이현중").orElseThrow();
+        School songok = schoolRepository.findByName("손곡중").orElseThrow();
         
-        // 교사 계정들 (각각 별도 트랜잭션)
-        createSingleTeacher("teacher2", "이선생", "010-1111-2222", "Password123!", "teacher2#5678");
-        createSingleTeacher("teacher1", "김선생", "010-1111-1111", "Password123!", "teacher1#1234");
-
-        // 학생 계정들 (각각 별도 트랜잭션)
-        createSingleStudent("student1", "박학생", "010-2222-1111", "Password123!", "student1#1234", "이현중", 2, StudentProfile.Gender.MALE);
-        createSingleStudent("student2", "최학생", "010-2222-2222", "Password123!", "student2#5678", "이현중", 2, StudentProfile.Gender.FEMALE);
-        createSingleStudent("student3", "정학생", "010-2222-3333", "Password123!", "student3#9012", "손곡중", 1, StudentProfile.Gender.MALE);
+        // 관리자 계정
+        User admin = createUserWithRole("admin", "관리자", "010-0000-0000", "admin123", "admin#1234", RoleConstants.ADMIN);
         
-        // 학부모 계정들 (각각 별도 트랜잭션)
-        createSingleGuardian("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234");
-        createSingleGuardian("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678");
-        createSingleGuardian("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012");
+        // 교사 계정들
+        User teacher1 = createUserWithRole("teacher1", "김선생", "010-1111-1111", "teacher123", "teacher1#1234", RoleConstants.TEACHER);
+        User teacher2 = createUserWithRole("teacher2", "이선생", "010-1111-2222", "teacher123", "teacher2#5678", RoleConstants.TEACHER);
         
-        // 테스트 계정들을 승인 상태로 변경
-        approveTestAccounts();
+        // 학생 계정들 + 프로필
+        User student1 = createUserWithRole("student1", "박학생", "010-2222-1111", "student123", "student1#1234", RoleConstants.STUDENT);
+        createStudentProfile(student1, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.MALE);
+        
+        User student2 = createUserWithRole("student2", "최학생", "010-2222-2222", "student123", "student2#5678", RoleConstants.STUDENT);
+        createStudentProfile(student2, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.FEMALE);
+        
+        User student3 = createUserWithRole("student3", "정학생", "010-2222-3333", "student123", "student3#9012", RoleConstants.STUDENT);
+        createStudentProfile(student3, StudentProfile.StudentStatus.ENROLLED, songok, 1, StudentProfile.Gender.MALE);
+        
+        // 학부모 계정들
+        User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "parent123", "parent1#1234", RoleConstants.GUARDIAN);
+        User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "parent123", "parent2#5678", RoleConstants.GUARDIAN);
+        User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "parent123", "parent3#9012", RoleConstants.GUARDIAN);
         
         log.info("=== 테스트 계정 정보 ===");
         log.info("관리자: admin / admin123");
@@ -175,124 +146,35 @@ public class TestDataInitializer implements CommandLineRunner {
         log.info("======================");
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void createAdminAccount() {
-        try {
-            log.info("관리자 계정 생성 시작...");
-            User admin = createAdminUser("admin", "관리자", "010-0000-0000", "Password123!", "admin#1234");
-            userRoleService.assignRole(admin, RoleConstants.ADMIN, UserRole.RoleStatus.ACTIVE);
-            log.info("관리자 계정 생성 완료: {}", admin.getUsername());
-        } catch (Exception e) {
-            log.error("관리자 계정 생성 실패", e);
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void createSingleTeacher(String username, String name, String phoneNumber, String password, String discordId) {
-        try {
-            log.info("교사 계정 생성 시작: {}", username);
-            
-            TeacherRegisterRequest request = new TeacherRegisterRequest();
-            request.setUsername(username);
-            request.setName(name);
-            request.setPhoneNumber(phoneNumber);
-            request.setPassword(password);
-            request.setDiscordId(discordId);
-            
-            authService.registerTeacher(request);
-            log.info("교사 계정 생성 완료: {}", username);
-        } catch (Exception e) {
-            log.error("교사 계정 생성 실패: {}", username, e);
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void createSingleStudent(String username, String name, String phoneNumber, String password, String discordId, 
-                                     String schoolName, int grade, StudentProfile.Gender gender) {
-        try {
-            log.info("학생 계정 생성 시작: {}", username);
-            
-            StudentRegisterRequest request = new StudentRegisterRequest();
-            request.setUsername(username);
-            request.setName(name);
-            request.setPhoneNumber(phoneNumber);
-            request.setPassword(password);
-            request.setDiscordId(discordId);
-            request.setSchoolName(schoolName);
-            request.setGrade(grade);
-            request.setGender(gender);
-            
-            authService.registerStudent(request);
-            log.info("학생 계정 생성 완료: {}", username);
-        } catch (Exception e) {
-            log.error("학생 계정 생성 실패: {}", username, e);
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void createSingleGuardian(String username, String name, String phoneNumber, String password, String discordId) {
-        try {
-            log.info("학부모 계정 생성 시작: {}", username);
-            
-            GuardianRegisterRequest request = new GuardianRegisterRequest();
-            request.setUsername(username);
-            request.setName(name);
-            request.setPhoneNumber(phoneNumber);
-            request.setPassword(password);
-            request.setDiscordId(discordId);
-            
-            authService.registerGuardian(request);
-            log.info("학부모 계정 생성 완료: {}", username);
-        } catch (Exception e) {
-            log.error("학부모 계정 생성 실패: {}", username, e);
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void approveTestAccounts() {
-        log.info("테스트 계정 승인 처리 시작...");
+    // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성
+    private User createUserWithRole(String username, String name, String phoneNumber, String password, String discordId, String roleName) {
+        // 1. 사용자 생성 (비밀번호 암호화 포함)
+        User user = User.builder()
+            .username(username)
+            .name(name)
+            .phoneNumber(phoneNumber)
+            .password(passwordEncoder.encode(password)) // 암호화는 유지
+            .discordId(discordId)
+            .build();
+        user = userRepository.save(user);
         
-        String[] testUsernames = {"teacher1", "teacher2", "student1", "student2", "student3", "parent1", "parent2", "parent3"};
+        // 2. 역할 할당 (바로 ACTIVE 상태)
+        userRoleService.assignRole(user, roleName, UserRole.RoleStatus.ACTIVE);
         
-        for (String username : testUsernames) {
-            try {
-                User user = userRepository.findByUsername(username).orElse(null);
-                if (user != null) {
-                    log.info("계정 승인 처리 중: {}", username);
-                    
-                    // PENDING 상태의 UserRole을 ACTIVE로 변경
-                    List<UserRole> userRoles = userRoleRepository.findByUserId(user.getId());
-                    for (UserRole ur : userRoles) {
-                        if (UserRole.RoleStatus.PENDING.equals(ur.getStatus())) {
-                            ur.setStatus(UserRole.RoleStatus.ACTIVE);
-                            userRoleRepository.save(ur);
-                            log.info("UserRole 상태 변경 완료: {} -> ACTIVE", username);
-                        }
-                    }
-                    
-                    // 학생의 경우 StudentProfile 상태도 ENROLLED로 변경
-                    if (username.startsWith("student")) {
-                        studentProfileRepository.findByUserId(user.getId())
-                            .ifPresent(profile -> {
-                                profile.setStatus(StudentProfile.StudentStatus.ENROLLED);
-                                studentProfileRepository.save(profile);
-                                log.info("StudentProfile 상태 변경 완료: {} -> ENROLLED", username);
-                            });
-                    }
-                    
-                    log.info("계정 승인 완료: {}", username);
-                } else {
-                    log.warn("사용자를 찾을 수 없음: {}", username);
-                }
-            } catch (Exception e) {
-                log.error("계정 승인 실패: {}", username, e);
-            }
-        }
-        
-        log.info("테스트 계정 승인 처리 완료");
+        log.info("{} 계정 생성 완료: {}", roleName, username);
+        return user;
     }
 
-    // Helper methods
+    private void createStudentProfile(User student, StudentProfile.StudentStatus status, School school, int grade, StudentProfile.Gender gender) {
+        StudentProfile profile = new StudentProfile();
+        profile.setUser(student);
+        profile.setStatus(status);
+        profile.setSchool(school);
+        profile.setGrade(grade);
+        profile.setGender(gender);
+        studentProfileRepository.save(profile);
+    }
+
     private Role createRole(String name) {
         Role role = new Role();
         role.setName(name);
@@ -330,16 +212,5 @@ public class TestDataInitializer implements CommandLineRunner {
         TaskType taskType = new TaskType();
         taskType.setName(name);
         return taskTypeRepository.save(taskType);
-    }
-
-    private User createAdminUser(String username, String name, String phoneNumber, String password, String discordId) {
-        User user = User.builder()
-            .username(username)
-            .name(name)
-            .phoneNumber(phoneNumber)
-            .password(passwordEncoder.encode(password))
-            .discordId(discordId)
-            .build();
-        return userRepository.save(user);
     }
 }
