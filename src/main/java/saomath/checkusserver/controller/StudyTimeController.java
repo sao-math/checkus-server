@@ -22,6 +22,7 @@ import saomath.checkusserver.dto.*;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
+import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
@@ -95,7 +96,15 @@ public class StudyTimeController {
         try {
             // 현재 인증된 사용자 정보 가져오기
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
+            CustomUserPrincipal principal;
+            
+            if (authentication.getPrincipal() instanceof CustomUserPrincipal) {
+                principal = (CustomUserPrincipal) authentication.getPrincipal();
+            } else {
+                // 테스트 환경에서 @WithMockUser 사용 시 대응
+                throw new BusinessException("인증 정보가 올바르지 않습니다.");
+            }
+            
             Long teacherId = principal.getId();
             
             AssignedStudyTime result = studyTimeService.assignStudyTime(

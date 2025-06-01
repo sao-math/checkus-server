@@ -1,6 +1,7 @@
 package saomath.checkusserver.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import saomath.checkusserver.auth.CustomUserPrincipal;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,11 +82,17 @@ class StudyTimeControllerIntegrationTest {
         activity = createTestActivity("수학 공부", true);
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 시간 배정 API 테스트")
     void assignStudyTime_Success() throws Exception {
-        // Given
+        // Given - 인증 정보 설정
+        setSecurityContext(teacher, "TEACHER");
+        
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
         request.setActivityId(activity.getId());
@@ -117,9 +130,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 시간 배정 실패 - 시간 겹침")
     void assignStudyTime_TimeOverlap_Fail() throws Exception {
+        // Given - 인증 정보 설정
+        setSecurityContext(teacher, "TEACHER");
+        
         // Given - 기존 배정 시간 생성
         LocalDateTime baseTime = LocalDateTime.now().plusHours(1);
         AssignedStudyTime existing = AssignedStudyTime.builder()
@@ -366,5 +381,26 @@ class StudyTimeControllerIntegrationTest {
                 .isStudyAssignable(isStudyAssignable)
                 .build();
         return activityRepository.save(activity);
+    }
+
+    private void setSecurityContext(User user, String role) {
+        CustomUserPrincipal principal = new CustomUserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                user.getName(),
+                java.util.List.of(new SimpleGrantedAuthority("ROLE_" + role)),
+                true, // enabled
+                true, // accountNonExpired
+                true, // credentialsNonExpired
+                true  // accountNonLocked
+        );
+        
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+        
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 }
