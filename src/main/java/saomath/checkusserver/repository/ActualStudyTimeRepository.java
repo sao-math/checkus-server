@@ -12,17 +12,7 @@ import java.util.List;
 @Repository
 public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime, Long> {
     
-    List<ActualStudyTime> findByStudentId(Long studentId);
-    
-    List<ActualStudyTime> findByStudentIdAndStartTimeBetween(
-            Long studentId, 
-            LocalDateTime startDate, 
-            LocalDateTime endDate
-    );
-    
     List<ActualStudyTime> findByAssignedStudyTimeId(Long assignedStudyTimeId);
-    
-    List<ActualStudyTime> findBySource(String source);
     
     @Query("SELECT ast FROM ActualStudyTime ast WHERE ast.studentId = :studentId " +
            "AND ast.startTime >= :fromDate AND ast.startTime < :toDate " +
@@ -33,12 +23,5 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
             @Param("toDate") LocalDateTime toDate
     );
     
-    @Query("SELECT SUM(TIMESTAMPDIFF(MINUTE, ast.startTime, ast.endTime)) " +
-           "FROM ActualStudyTime ast WHERE ast.studentId = :studentId " +
-           "AND ast.startTime >= :fromDate AND ast.startTime < :toDate")
-    Long calculateTotalStudyMinutes(
-            @Param("studentId") Long studentId,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate
-    );
+    List<ActualStudyTime> findByStudentIdAndAssignedStudyTimeIdIsNull(Long studentId);
 }
