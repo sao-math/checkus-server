@@ -179,7 +179,7 @@ public class TestDataInitializer implements CommandLineRunner {
     protected void createAdminAccount() {
         try {
             log.info("관리자 계정 생성 시작...");
-            User admin = createAdminUser("admin", "관리자", "010-0000-0000", "admin123", "admin#1234");
+            User admin = createAdminUser("admin", "관리자", "010-0000-0000", "Password123!", "admin#1234");
             userRoleService.assignRole(admin, RoleConstants.ADMIN, UserRole.RoleStatus.ACTIVE);
             log.info("관리자 계정 생성 완료: {}", admin.getUsername());
         } catch (Exception e) {
