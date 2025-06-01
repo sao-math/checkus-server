@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import saomath.checkusserver.config.SecurityConfig;
+import saomath.checkusserver.auth.CustomUserDetailsService;
+import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
@@ -29,7 +29,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(StudentController.class)
-@Import(SecurityConfig.class)
 class StudentControllerTest {
 
     @Autowired
@@ -37,6 +36,12 @@ class StudentControllerTest {
 
     @MockBean
     private StudentService studentService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;

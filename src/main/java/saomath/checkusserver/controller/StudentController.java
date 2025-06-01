@@ -33,12 +33,6 @@ public class StudentController {
     @Operation(
             summary = "학생 목록 조회",
             description = "필터링 옵션을 사용하여 학생 목록을 조회합니다. 모든 필터는 선택사항입니다.",
-            parameters = {
-                    @Parameter(name = "classId", description = "반 ID로 필터링"),
-                    @Parameter(name = "grade", description = "학년으로 필터링 (1-6)"),
-                    @Parameter(name = "status", description = "학생 상태로 필터링 (INQUIRY, COUNSELING_SCHEDULED, ENROLLED, WAITING, WITHDRAWN, UNREGISTERED)"),
-                    @Parameter(name = "schoolId", description = "학교 ID로 필터링")
-            },
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -97,10 +91,14 @@ public class StudentController {
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ResponseBase<List<StudentListResponse>>> getStudents(
-            @RequestParam(required = false) Long classId,
-            @RequestParam(required = false) Integer grade,
-            @RequestParam(required = false) StudentProfile.StudentStatus status,
-            @RequestParam(required = false) Long schoolId) {
+            @RequestParam(name = "classId", required = false) 
+            @Parameter(name = "classId", description = "반 ID로 필터링") Long classId,
+            @RequestParam(name = "grade", required = false) 
+            @Parameter(name = "grade", description = "학년으로 필터링 (1-6)") Integer grade,
+            @RequestParam(name = "status", required = false) 
+            @Parameter(name = "status", description = "학생 상태로 필터링") StudentProfile.StudentStatus status,
+            @RequestParam(name = "schoolId", required = false) 
+            @Parameter(name = "schoolId", description = "학교 ID로 필터링") Long schoolId) {
 
         try {
             log.info("학생 목록 조회 요청 - classId: {}, grade: {}, status: {}, schoolId: {}", 
