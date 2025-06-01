@@ -4,13 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
 import saomath.checkusserver.dto.RecordStudyStartRequest;
 import saomath.checkusserver.entity.Activity;
@@ -27,11 +33,16 @@ import java.util.Collections;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = StudyTimeController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class})
+            excludeAutoConfiguration = {
+                    SecurityAutoConfiguration.class, 
+                    UserDetailsServiceAutoConfiguration.class,
+                    SecurityFilterAutoConfiguration.class
+            })
 @DisplayName("StudyTimeController 단위 테스트")
 class StudyTimeControllerTest {
 
@@ -44,12 +55,27 @@ class StudyTimeControllerTest {
     @MockitoBean
     private StudyTimeService studyTimeService;
 
+    // JWT 관련 Mock Bean 추가 (보안 설정 때문에 필요)
+    @MockitoBean
+    private saomath.checkusserver.auth.jwt.JwtTokenProvider jwtTokenProvider;
+
     private AssignedStudyTime mockAssignedStudyTime;
     private ActualStudyTime mockActualStudyTime;
     private Activity mockActivity;
 
     @BeforeEach
     void setUp() {
+        // Mock SecurityContext 설정
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        CustomUserPrincipal principal = mock(CustomUserPrincipal.class);
+        
+        when(principal.getId()).thenReturn(1L); // 테스트용 사용자 ID
+        when(authentication.getPrincipal()).thenReturn(principal);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        
+        // Mock 데이터 설정
         mockAssignedStudyTime = AssignedStudyTime.builder()
                 .id(1L)
                 .studentId(1L)
@@ -73,6 +99,11 @@ class StudyTimeControllerTest {
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
+    }
+    
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
