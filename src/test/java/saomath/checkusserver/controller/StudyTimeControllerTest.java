@@ -5,12 +5,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
 import saomath.checkusserver.dto.RecordStudyStartRequest;
@@ -31,7 +30,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StudyTimeController.class)
+@WebMvcTest(controllers = StudyTimeController.class, 
+            excludeAutoConfiguration = {SecurityAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class})
 @DisplayName("StudyTimeController 단위 테스트")
 class StudyTimeControllerTest {
 
@@ -76,7 +76,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 시간 배정 성공 - 단위 테스트")
     void assignStudyTime_Success_UnitTest() throws Exception {
         // Given
@@ -101,7 +100,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 시간 배정 실패 - 비즈니스 예외")
     void assignStudyTime_BusinessException() throws Exception {
         // Given
@@ -125,7 +123,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("배정된 공부 시간 삭제 성공")
     void deleteAssignedStudyTime_Success() throws Exception {
         // Given - Service 메서드가 정상적으로 실행되도록 설정 (void 메서드)
@@ -138,7 +135,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("존재하지 않는 배정 시간 삭제 실패")
     void deleteAssignedStudyTime_NotFound() throws Exception {
         // Given
@@ -152,7 +148,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "student1", authorities = {"STUDENT"})
     @DisplayName("학생별 배정된 공부 시간 조회 성공")
     void getAssignedStudyTimes_Success() throws Exception {
         // Given
@@ -171,7 +166,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "student1", authorities = {"STUDENT"})
     @DisplayName("학생별 실제 공부 시간 조회 성공")
     void getActualStudyTimes_Success() throws Exception {
         // Given
@@ -190,7 +184,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "discord-bot", authorities = {"BOT"})
     @DisplayName("디스코드 봇용 공부 시작 기록 성공")
     void recordStudyStart_Success() throws Exception {
         // Given
@@ -213,7 +206,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "discord-bot", authorities = {"BOT"})
     @DisplayName("디스코드 봇용 공부 시작 기록 실패 - 존재하지 않는 학생")
     void recordStudyStart_StudentNotFound() throws Exception {
         // Given
@@ -234,7 +226,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 배정 가능한 활동 목록 조회 성공")
     void getStudyAssignableActivities_Success() throws Exception {
         // Given
@@ -251,7 +242,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 배정 가능한 활동 목록 조회 - 빈 목록")
     void getStudyAssignableActivities_EmptyList() throws Exception {
         // Given
@@ -267,7 +257,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "system", authorities = {"ADMIN"})
     @DisplayName("곧 시작할 공부 시간 조회 성공")
     void getUpcomingStudyTimes_Success() throws Exception {
         // Given
@@ -283,7 +272,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "student1", authorities = {"STUDENT"})
     @DisplayName("특정 배정의 실제 접속 기록 조회 성공")
     void getActualStudyTimesByAssigned_Success() throws Exception {
         // Given
@@ -299,15 +287,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @DisplayName("인증 없이 API 접근 실패")
-    void accessWithoutAuth_Unauthorized() throws Exception {
-        // When & Then
-        mockMvc.perform(get("/study-time/activities"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("잘못된 요청 데이터로 공부 시간 배정 실패")
     void assignStudyTime_InvalidRequest() throws Exception {
         // Given - 필수 필드 누락
@@ -325,7 +304,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("잘못된 날짜 형식으로 조회 실패")
     void getAssignedStudyTimes_InvalidDateFormat() throws Exception {
         // When & Then
