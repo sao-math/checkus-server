@@ -174,38 +174,42 @@ public class AuthController {
         }
     )
     @PostMapping("/login")
-    public ResponseEntity<ResponseBase<LoginResponseSecure>> login(
-            @Valid @RequestBody LoginRequest request,
-            HttpServletResponse response) {
-        
-        try {
-            LoginResponse loginResponse = authService.login(request);
-            
-            // RefreshToken을 HttpOnly 쿠키로 설정 (SameSite 포함)
-            String refreshTokenCookieValue = String.format(
-                "refreshToken=%s; HttpOnly; Secure; Path=/; Max-Age=%d; SameSite=Strict",
-                loginResponse.getRefreshToken(),
-                7 * 24 * 60 * 60
-            );
-            response.addHeader("Set-Cookie", refreshTokenCookieValue);
-            
-            // AccessToken만 포함된 응답 생성
-            LoginResponseSecure secureResponse = new LoginResponseSecure(
-                loginResponse.getUserId(),
-                loginResponse.getUsername(),
-                loginResponse.getName(),
-                loginResponse.getRoles(),
-                loginResponse.getAccessToken(),
-                "Bearer"
-            );
-            
-            return ResponseEntity.ok(ResponseBase.success("로그인이 완료되었습니다.", secureResponse));
-        } catch (Exception e) {
-            log.error("로그인 실패: {}", request.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ResponseBase.error(e.getMessage()));
-        }
+public ResponseEntity<ResponseBase<LoginResponseSecure>> login(
+    @Valid @RequestBody LoginRequest request,
+    HttpServletResponse response) {
+    
+    log.debug("로그인 요청 수신: username={}", request.getUsername ());
+    
+    try {
+    LoginResponse loginResponse = authService.login(request);
+    
+    log.debug("로그인 성공: username={}, userId={}", request.getUsername(), loginResponse.getUserId());
+    
+    // RefreshToken을 HttpOnly 쿠키로 설정 (SameSite 포함)
+    String refreshTokenCookieValue = String.format(
+        "refreshToken=%s; HttpOnly; Secure; Path=/; Max-Age=%d; SameSite=Strict",
+        loginResponse.getRefreshToken(),
+        7 * 24 * 60 * 60
+    );
+    response.addHeader("Set-Cookie", refreshTokenCookieValue);
+    
+    // AccessToken만 포함된 응답 생성
+    LoginResponseSecure secureResponse = new LoginResponseSecure(
+    loginResponse.getUserId(),
+    loginResponse.getUsername(),
+        loginResponse.getName(),
+        loginResponse.getRoles(),
+        loginResponse.getAccessToken(),
+            "Bearer"
+    );
+    
+    return ResponseEntity.ok(ResponseBase.success("로그인이 완료되었습니다.", secureResponse));
+    } catch (Exception e) {
+        log.error("로그인 실패: username={}, error={}", request.getUsername(), e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ResponseBase.error(e.getMessage()));
     }
+}
 
 
     @Operation(
