@@ -5,8 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +27,7 @@ import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,7 +41,7 @@ class StudyTimeControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private StudyTimeService studyTimeService;
 
     private AssignedStudyTime mockAssignedStudyTime;
@@ -139,8 +142,8 @@ class StudyTimeControllerTest {
     @DisplayName("존재하지 않는 배정 시간 삭제 실패")
     void deleteAssignedStudyTime_NotFound() throws Exception {
         // Given
-        when(studyTimeService.deleteAssignedStudyTime(999L))
-                .thenThrow(new ResourceNotFoundException("배정된 공부 시간을 찾을 수 없습니다."));
+        doThrow(new ResourceNotFoundException("배정된 공부 시간을 찾을 수 없습니다."))
+                .when(studyTimeService).deleteAssignedStudyTime(999L);
 
         // When & Then
         mockMvc.perform(delete("/study-time/999"))
