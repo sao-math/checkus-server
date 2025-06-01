@@ -20,8 +20,8 @@ public class StudentRegisterRequest extends BaseRegisterRequest {
     
     @NotNull(message = "학년은 필수입니다.")
     @Min(value = 1, message = "학년은 1 이상이어야 합니다.")
-    @Max(value = 12, message = "학년은 12 이하여야 합니다.")
-    @Schema(description = "학년 (1-12)", example = "11", required = true, minimum = "1", maximum = "12")
+    @Max(value = 13, message = "학년은 13 이하여야 합니다.")
+    @Schema(description = "학년 (1-13)", example = "11", required = true, minimum = "1", maximum = "12")
     private Integer grade;
     
     @NotNull(message = "성별은 필수입니다.")
