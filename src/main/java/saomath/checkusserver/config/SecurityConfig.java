@@ -154,6 +154,7 @@ public class SecurityConfig {
         // 허용할 도메인 설정
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "https://checkus.app",
+                "https://api.checkus.app",
                 "https://teacher.checkus.app",
                 "http://localhost:3001",
                 "http://localhost:3002"
