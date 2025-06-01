@@ -27,12 +27,11 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
     );
     
     @Query("SELECT ast FROM AssignedStudyTime ast WHERE " +
-           "(ast.startTime BETWEEN :tenMinutesBefore AND :now) OR " +
-           "(ast.startTime BETWEEN :now AND :oneMinuteAfter) " +
+           "ast.startTime BETWEEN :tenMinutesBefore AND :tenMinutesAfter " +
            "ORDER BY ast.startTime")
-    List<AssignedStudyTime> findUpcomingStudyTimes(
+    List<AssignedStudyTime> findUpcomingStudyTimesV2(
             @Param("tenMinutesBefore") LocalDateTime tenMinutesBefore,
             @Param("now") LocalDateTime now,
-            @Param("oneMinuteAfter") LocalDateTime oneMinuteAfter
+            @Param("tenMinutesAfter") LocalDateTime tenMinutesAfter
     );
 }

@@ -228,10 +228,10 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getUpcomingStudyTimes() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime tenMinutesBefore = now.minusMinutes(10);
-        LocalDateTime oneMinuteAfter = now.plusMinutes(1);
+        LocalDateTime tenMinutesAfter = now.plusMinutes(10);
         
-        return assignedStudyTimeRepository.findUpcomingStudyTimes(
-                tenMinutesBefore, now, oneMinuteAfter);
+        return assignedStudyTimeRepository.findUpcomingStudyTimesV2(
+                tenMinutesBefore, now, tenMinutesAfter);
     }
 
     /**
