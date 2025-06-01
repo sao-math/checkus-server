@@ -49,61 +49,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile("prod")
     public SecurityFilterChain prodFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-                .authorizeHttpRequests(authz -> authz
-                        // CORS preflight 요청 먼저 허용
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        
-                        // 공개 엔드포인트
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/public/**").permitAll()
-                        
-                        // Swagger UI 요청 허용
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/swagger-resources/**").permitAll()
-                        .requestMatchers("/webjars/**").permitAll()
-
-                        // 헬스체크 및 모니터링
-                        .requestMatchers("/actuator/health").permitAll()
-
-                        // 교사 전용 엔드포인트
-                        .requestMatchers("/teacher/**").hasRole("TEACHER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // 학생/학부모 엔드포인트
-                        .requestMatchers("/student/**").hasAnyRole("STUDENT", "GUARDIAN")
-                        .requestMatchers("/user/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN")
-
-                        // 나머지는 인증 필요
-                        .anyRequest().authenticated()
-                )
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                        .contentTypeOptions(contentTypeOptions -> {})
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "spring.h2.console.enabled",havingValue = "true")
-    public WebSecurityCustomizer configureH2ConsoleEnable() {
-        return web -> web.ignoring()
-                .requestMatchers(PathRequest.toH2Console());
-    }
-
-    @Bean
-    @Profile("!prod")
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
@@ -145,6 +91,13 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.h2.console.enabled",havingValue = "true")
+    public WebSecurityCustomizer configureH2ConsoleEnable() {
+        return web -> web.ignoring()
+                .requestMatchers(PathRequest.toH2Console());
     }
 
     @Bean
