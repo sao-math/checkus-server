@@ -7,16 +7,16 @@ import lombok.Builder;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "school")
+@Table(name = "class")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class School {
+public class ClassEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, length = 255)
     private String name;
 }

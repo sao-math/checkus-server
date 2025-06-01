@@ -3,6 +3,7 @@ package saomath.checkusserver.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,14 +11,15 @@ import jakarta.persistence.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class StudentProfile {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "student_profile_id")
-    private Long Id;
+    @Column(name = "user_id")
+    private Long userId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @MapsId
     private User user;
 
     @Enumerated(EnumType.STRING)
