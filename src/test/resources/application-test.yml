@@ -61,8 +61,7 @@ springdoc:
 # 로깅 레벨 조정
 logging:
   level:
-    saomath.checkusserver: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.boot.autoconfigure.sql.init: DEBUG
+    saomath.checkusserver: INFO  # DEBUG -> INFO로 변경하여 로그 줄이기
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN  # SQL 로그 줄이기
+    org.springframework.boot.autoconfigure.sql.init: WARN

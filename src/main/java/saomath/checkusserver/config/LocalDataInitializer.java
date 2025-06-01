@@ -16,9 +16,9 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Profile({"test", "local"}) // test, local 프로파일에서만 실행
+@Profile({"local"}) // test 프로파일 제거 - 테스트에서는 실행하지 않음
 @RequiredArgsConstructor
-public class TestDataInitializer implements CommandLineRunner {
+public class LocalDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
