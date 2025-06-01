@@ -125,7 +125,7 @@ public class StudyTimeController {
     )
     @PutMapping("/{id}")
     public ResponseEntity<ResponseBase<AssignedStudyTimeResponse>> updateAssignedStudyTime(
-            @Parameter(description = "배정 ID") @PathVariable Long id,
+            @Parameter(description = "배정 ID") @PathVariable("id") Long id,
             @Valid @RequestBody UpdateStudyTimeRequest request) {
         
         try {
@@ -155,7 +155,7 @@ public class StudyTimeController {
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseBase<String>> deleteAssignedStudyTime(
-            @Parameter(description = "배정 ID") @PathVariable Long id) {
+            @Parameter(description = "배정 ID") @PathVariable("id") Long id) {
         
         try {
             studyTimeService.deleteAssignedStudyTime(id);
@@ -177,11 +177,11 @@ public class StudyTimeController {
     )
     @GetMapping("/assigned/student/{studentId}")
     public ResponseEntity<ResponseBase<List<AssignedStudyTimeResponse>>> getAssignedStudyTimes(
-            @Parameter(description = "학생 ID") @PathVariable Long studentId,
+            @Parameter(description = "학생 ID") @PathVariable("studentId") Long studentId,
             @Parameter(description = "시작 날짜 (yyyy-MM-dd'T'HH:mm:ss)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @Parameter(description = "종료 날짜 (yyyy-MM-dd'T'HH:mm:ss)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         
         try {
             List<AssignedStudyTime> results = studyTimeService.getAssignedStudyTimesByStudentAndDateRange(
@@ -208,11 +208,11 @@ public class StudyTimeController {
     )
     @GetMapping("/actual/student/{studentId}")
     public ResponseEntity<ResponseBase<List<ActualStudyTimeResponse>>> getActualStudyTimes(
-            @Parameter(description = "학생 ID") @PathVariable Long studentId,
+            @Parameter(description = "학생 ID") @PathVariable("studentId") Long studentId,
             @Parameter(description = "시작 날짜 (yyyy-MM-dd'T'HH:mm:ss)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @Parameter(description = "종료 날짜 (yyyy-MM-dd'T'HH:mm:ss)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         
         try {
             List<ActualStudyTime> results = studyTimeService.getActualStudyTimesByStudentAndDateRange(
@@ -239,7 +239,7 @@ public class StudyTimeController {
     )
     @GetMapping("/actual/assigned/{assignedId}")
     public ResponseEntity<ResponseBase<List<ActualStudyTimeResponse>>> getActualStudyTimesByAssigned(
-            @Parameter(description = "배정 ID") @PathVariable Long assignedId) {
+            @Parameter(description = "배정 ID") @PathVariable("assignedId") Long assignedId) {
         
         try {
             List<ActualStudyTime> results = studyTimeService.getActualStudyTimesByAssignedId(assignedId);
@@ -293,7 +293,7 @@ public class StudyTimeController {
     )
     @PutMapping("/record/{actualStudyTimeId}/end")
     public ResponseEntity<ResponseBase<ActualStudyTimeResponse>> recordStudyEnd(
-            @Parameter(description = "실제 공부 시간 기록 ID") @PathVariable Long actualStudyTimeId,
+            @Parameter(description = "실제 공부 시간 기록 ID") @PathVariable("actualStudyTimeId") Long actualStudyTimeId,
             @Valid @RequestBody RecordStudyEndRequest request) {
         
         try {
