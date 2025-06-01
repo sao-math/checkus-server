@@ -22,7 +22,6 @@ public class LocalDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final UserRoleRepository userRoleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final SchoolRepository schoolRepository;
@@ -112,26 +111,26 @@ public class LocalDataInitializer implements CommandLineRunner {
         School songok = schoolRepository.findByName("손곡중").orElseThrow();
         
         // 관리자 계정
-        User admin = createUserWithRole("admin", "관리자", "010-0000-0000", "admin123", "admin#1234", RoleConstants.ADMIN);
+        User admin = createUserWithRole("admin", "관리자", "010-0000-0000", "Password123!", "admin#1234", RoleConstants.ADMIN);
         
         // 교사 계정들
-        User teacher1 = createUserWithRole("teacher1", "김선생", "010-1111-1111", "teacher123", "teacher1#1234", RoleConstants.TEACHER);
-        User teacher2 = createUserWithRole("teacher2", "이선생", "010-1111-2222", "teacher123", "teacher2#5678", RoleConstants.TEACHER);
+        User teacher1 = createUserWithRole("teacher1", "김선생", "010-1111-1111", "Password123!", "teacher1#1234", RoleConstants.TEACHER);
+        User teacher2 = createUserWithRole("teacher2", "이선생", "010-1111-2222", "Password123!", "teacher2#5678", RoleConstants.TEACHER);
         
         // 학생 계정들 + 프로필
-        User student1 = createUserWithRole("student1", "박학생", "010-2222-1111", "student123", "student1#1234", RoleConstants.STUDENT);
+        User student1 = createUserWithRole("student1", "박학생", "010-2222-1111", "Password123!", "student1#1234", RoleConstants.STUDENT);
         createStudentProfile(student1, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.MALE);
         
-        User student2 = createUserWithRole("student2", "최학생", "010-2222-2222", "student123", "student2#5678", RoleConstants.STUDENT);
+        User student2 = createUserWithRole("student2", "최학생", "010-2222-2222", "Password123!", "student2#5678", RoleConstants.STUDENT);
         createStudentProfile(student2, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.FEMALE);
         
-        User student3 = createUserWithRole("student3", "정학생", "010-2222-3333", "student123", "student3#9012", RoleConstants.STUDENT);
+        User student3 = createUserWithRole("student3", "정학생", "010-2222-3333", "Password123!", "student3#9012", RoleConstants.STUDENT);
         createStudentProfile(student3, StudentProfile.StudentStatus.ENROLLED, songok, 1, StudentProfile.Gender.MALE);
         
         // 학부모 계정들
-        User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "parent123", "parent1#1234", RoleConstants.GUARDIAN);
-        User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "parent123", "parent2#5678", RoleConstants.GUARDIAN);
-        User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "parent123", "parent3#9012", RoleConstants.GUARDIAN);
+        User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
+        User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
+        User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
         
         log.info("=== 테스트 계정 정보 ===");
         log.info("관리자: admin / admin123");

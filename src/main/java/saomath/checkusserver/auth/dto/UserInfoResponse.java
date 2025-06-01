@@ -34,4 +34,20 @@ public class UserInfoResponse {
     
     @Schema(description = "계정 생성일시", example = "2024-01-15T10:30:00")
     private LocalDateTime createdAt;
+    
+    @Schema(description = "학생 프로필 정보 (학생인 경우에만 포함)", nullable = true)
+    private StudentProfileResponse studentProfile;
+
+    // 기존 생성자 (연결 정보 없이)
+    public UserInfoResponse(Long id, String username, String name, String phoneNumber,
+                           String discordId, List<String> roles, LocalDateTime createdAt) {
+        this.id = id;
+        this.username = username;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.discordId = discordId;
+        this.roles = roles;
+        this.createdAt = createdAt;
+        this.studentProfile = null;
+    }
 }
