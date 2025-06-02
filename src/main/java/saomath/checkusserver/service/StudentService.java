@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
-import saomath.checkusserver.dto.common.StudentProfileInfo;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.*;
@@ -108,20 +107,11 @@ public class StudentService {
         response.setPhoneNumber(student.getPhoneNumber());
         response.setDiscordId(student.getDiscordId());
         response.setCreatedAt(student.getCreatedAt());
-        
-        // 학생 프로필 정보 설정
-        StudentProfileInfo.SchoolInfo schoolInfo = new StudentProfileInfo.SchoolInfo(
-                studentProfile.getSchool().getId(),
-                studentProfile.getSchool().getName()
-        );
-        
-        StudentProfileInfo profileInfo = new StudentProfileInfo();
-        profileInfo.setStatus(studentProfile.getStatus());
-        profileInfo.setSchool(schoolInfo);
-        profileInfo.setGrade(studentProfile.getGrade());
-        profileInfo.setGender(studentProfile.getGender());
-        
-        response.setProfile(profileInfo);
+        response.setStatus(studentProfile.getStatus());
+        response.setSchool(studentProfile.getSchool().getName());
+        response.setSchoolId(studentProfile.getSchool().getId());
+        response.setGrade(studentProfile.getGrade());
+        response.setGender(studentProfile.getGender());
         response.setClasses(classes);
         response.setGuardians(guardians);
 

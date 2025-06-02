@@ -18,7 +18,6 @@ import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.auth.dto.StudentProfileResponse;
 import saomath.checkusserver.auth.dto.UserInfoResponse;
-import saomath.checkusserver.dto.common.StudentProfileInfo;
 import saomath.checkusserver.entity.RoleConstants;
 import saomath.checkusserver.entity.StudentProfile;
 import saomath.checkusserver.entity.User;
@@ -175,16 +174,17 @@ public class UserController {
             if (roles.contains(RoleConstants.STUDENT)) {
                 studentProfileRepository.findByUserId(user.getId())
                         .ifPresent(studentProfile -> {
-                            StudentProfileInfo.SchoolInfo schoolInfo = new StudentProfileInfo.SchoolInfo(
+                            StudentProfileResponse.SchoolResponse schoolResponse = new StudentProfileResponse.SchoolResponse(
                                     studentProfile.getSchool().getId(),
                                     studentProfile.getSchool().getName()
                             );
 
-                            StudentProfileResponse profileResponse = new StudentProfileResponse();
-                            profileResponse.setStatus(studentProfile.getStatus());
-                            profileResponse.setSchool(schoolInfo);
-                            profileResponse.setGrade(studentProfile.getGrade());
-                            profileResponse.setGender(studentProfile.getGender());
+                            StudentProfileResponse profileResponse = new StudentProfileResponse(
+                                    studentProfile.getStatus(),
+                                    schoolResponse,
+                                    studentProfile.getGrade(),
+                                    studentProfile.getGender()
+                            );
 
                             userInfo.setStudentProfile(profileResponse);
                             log.debug("학생 프로필 정보 추가: userId={}, school={}, grade={}",

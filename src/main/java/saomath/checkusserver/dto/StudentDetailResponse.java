@@ -3,7 +3,7 @@ package saomath.checkusserver.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import saomath.checkusserver.dto.common.StudentProfileInfo;
+import saomath.checkusserver.entity.StudentProfile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,8 +19,12 @@ public class StudentDetailResponse {
     private String discordId;
     private LocalDateTime createdAt;
     
-    // 학생 프로필 정보 (공통 구조 사용)
-    private StudentProfileInfo profile;
+    // 학생 프로필 정보
+    private StudentProfile.StudentStatus status;
+    private String school;
+    private Long schoolId;
+    private Integer grade;
+    private StudentProfile.Gender gender;
     
     // 소속 반 정보
     private List<ClassResponse> classes;
