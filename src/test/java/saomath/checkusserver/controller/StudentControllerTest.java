@@ -15,6 +15,7 @@ import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
+import saomath.checkusserver.dto.common.StudentProfileInfo;
 import saomath.checkusserver.entity.StudentProfile;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.service.StudentService;
@@ -76,14 +77,22 @@ class StudentControllerTest {
                 "010-2222-1111",
                 "student1#1234",
                 LocalDateTime.of(2024, 1, 1, 0, 0, 0),
-                StudentProfile.StudentStatus.ENROLLED,
-                "이현중",
-                1L,
-                2,
-                StudentProfile.Gender.MALE,
+                createMockStudentProfileInfo(),
                 Arrays.asList(classResponse1, classResponse2),
                 Arrays.asList(guardian)
         );
+    }
+
+    private StudentProfileInfo createMockStudentProfileInfo() {
+        StudentProfileInfo.SchoolInfo schoolInfo = new StudentProfileInfo.SchoolInfo(1L, "이현중");
+        
+        StudentProfileInfo profileInfo = new StudentProfileInfo();
+        profileInfo.setStatus(StudentProfile.StudentStatus.ENROLLED);
+        profileInfo.setSchool(schoolInfo);
+        profileInfo.setGrade(2);
+        profileInfo.setGender(StudentProfile.Gender.MALE);
+        
+        return profileInfo;
     }
 
     @Test
@@ -145,7 +154,7 @@ class StudentControllerTest {
                 .andExpect(jsonPath("$.data.id").value(4))
                 .andExpect(jsonPath("$.data.username").value("student1"))
                 .andExpect(jsonPath("$.data.name").value("박학생"))
-                .andExpect(jsonPath("$.data.school").value("이현중"))
+                .andExpect(jsonPath("$.data.profile.school.name").value("이현중"))
                 .andExpect(jsonPath("$.data.classes").isArray())
                 .andExpect(jsonPath("$.data.classes[0].name").value("수학심화반"))
                 .andExpect(jsonPath("$.data.guardians").isArray())
