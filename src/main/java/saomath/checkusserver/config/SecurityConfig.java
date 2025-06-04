@@ -56,9 +56,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(authz -> authz
+                        //TODO role 말고 permit 기준으로 수정
+
                         // CORS preflight 요청 먼저 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        
+
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
@@ -74,12 +76,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
 
                         // 교사 전용 엔드포인트
-                        .requestMatchers("/teacher/**").hasRole("TEACHER")
-                        .requestMatchers("/student/**").hasAnyRole("TEACHER")
+                        .requestMatchers("/teachers/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/students/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 학생/학부모 엔드포인트
-                        .requestMatchers("/user/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN", "ADMIN")
+                        .requestMatchers("/users/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN", "ADMIN")
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()

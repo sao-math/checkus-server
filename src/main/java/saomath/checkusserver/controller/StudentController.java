@@ -23,7 +23,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/student")
+@RequestMapping("/students")
 @RequiredArgsConstructor
 @Tag(name = "Student", description = "학생 관련 API")
 public class StudentController {
