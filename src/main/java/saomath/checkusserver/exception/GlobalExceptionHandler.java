@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import saomath.checkusserver.auth.dto.ResponseBase;
 
 import java.util.HashMap;
@@ -19,6 +20,25 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 메서드 인자 타입 불일치 예외 처리 (날짜 형식 오류 등)
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ResponseBase<Object>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+        
+        String parameterName = ex.getName();
+        String parameterType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String message = String.format("파라미터 '%s'의 값이 올바르지 않습니다. %s 형식이어야 합니다.", 
+                parameterName, parameterType);
+        
+        log.warn("Method argument type mismatch: parameter={}, requiredType={}, value={}", 
+                parameterName, parameterType, ex.getValue());
+        
+        return ResponseEntity.badRequest()
+                .body(ResponseBase.error(message));
+    }
 
     /**
      * 비즈니스 로직 예외 처리

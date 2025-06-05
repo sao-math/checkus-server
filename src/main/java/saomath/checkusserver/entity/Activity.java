@@ -1,22 +1,23 @@
 package saomath.checkusserver.entity;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "school")
+@Table(name = "activity")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class School {
+public class Activity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, length = 255)
     private String name;
+
+    @Column(name = "is_study_assignable")
+    @Builder.Default
+    private Boolean isStudyAssignable = false;
 }
