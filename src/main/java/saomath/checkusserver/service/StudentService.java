@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
+import saomath.checkusserver.dto.StudentUpdateRequest;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.*;
@@ -24,6 +25,8 @@ public class StudentService {
     private final StudentProfileRepository studentProfileRepository;
     private final StudentClassRepository studentClassRepository;
     private final StudentGuardianRepository studentGuardianRepository;
+    private final SchoolRepository schoolRepository;
+    private final ClassRepository classRepository;
     private final UserRoleService userRoleService;
 
     /**
@@ -119,6 +122,172 @@ public class StudentService {
                 studentId, student.getName(), classes.size(), guardians.size());
 
         return response;
+    }
+
+    /**
+     * 학생 정보를 수정합니다.
+     * 
+     * @param studentId 학생 ID
+     * @param updateRequest 수정할 학생 정보
+     * @return 수정된 학생 상세 정보
+     * @throws ResourceNotFoundException 학생을 찾을 수 없는 경우
+     */
+    @Transactional
+    public StudentDetailResponse updateStudent(Long studentId, StudentUpdateRequest updateRequest) {
+        log.debug("학생 정보 수정 - studentId: {}", studentId);
+
+        // 학생 존재 여부 확인
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: " + studentId));
+
+        // 학생 역할 확인
+        List<String> roles = userRoleService.getActiveRoles(studentId);
+        if (!roles.contains(RoleConstants.STUDENT)) {
+            throw new ResourceNotFoundException("해당 사용자는 학생이 아닙니다. ID: " + studentId);
+        }
+
+        // 학생 프로필 조회
+        StudentProfile studentProfile = studentProfileRepository.findByUserId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("학생 프로필을 찾을 수 없습니다. ID: " + studentId));
+
+        // 기본 정보 업데이트
+        updateBasicInfo(student, updateRequest);
+
+        // 프로필 정보 업데이트
+        updateProfileInfo(studentProfile, updateRequest.getProfile());
+
+        // 반 정보 업데이트
+        updateClassInfo(studentId, updateRequest.getClassIds());
+
+        // 학부모 정보 업데이트
+        updateGuardianInfo(studentId, updateRequest.getGuardians());
+
+        // 저장
+        userRepository.save(student);
+        studentProfileRepository.save(studentProfile);
+
+        log.info("학생 정보 수정 성공 - studentId: {}, name: {}", studentId, student.getName());
+
+        // 수정된 정보 반환
+        return getStudentDetail(studentId);
+    }
+
+    /**
+     * 기본 정보 업데이트
+     */
+    private void updateBasicInfo(User student, StudentUpdateRequest updateRequest) {
+        if (updateRequest.getName() != null) {
+            student.setName(updateRequest.getName());
+        }
+        if (updateRequest.getPhoneNumber() != null) {
+            student.setPhoneNumber(updateRequest.getPhoneNumber());
+        }
+        if (updateRequest.getDiscordId() != null) {
+            student.setDiscordId(updateRequest.getDiscordId());
+        }
+    }
+
+    /**
+     * 프로필 정보 업데이트
+     */
+    private void updateProfileInfo(StudentProfile studentProfile, StudentUpdateRequest.StudentProfileUpdateRequest profileRequest) {
+        if (profileRequest == null) {
+            return;
+        }
+
+        if (profileRequest.getStatus() != null) {
+            studentProfile.setStatus(profileRequest.getStatus());
+        }
+        if (profileRequest.getSchoolId() != null) {
+            School school = schoolRepository.findById(profileRequest.getSchoolId())
+                    .orElseThrow(() -> new ResourceNotFoundException("학교를 찾을 수 없습니다. ID: " + profileRequest.getSchoolId()));
+            studentProfile.setSchool(school);
+        }
+        if (profileRequest.getGrade() != null) {
+            studentProfile.setGrade(profileRequest.getGrade());
+        }
+        if (profileRequest.getGender() != null) {
+            studentProfile.setGender(profileRequest.getGender());
+        }
+    }
+
+    /**
+     * 반 정보 업데이트
+     */
+    private void updateClassInfo(Long studentId, List<Long> classIds) {
+        if (classIds == null) {
+            return;
+        }
+
+        // 기존 반 정보 삭제
+        List<StudentClass> existingClasses = studentClassRepository.findByStudentId(studentId);
+        studentClassRepository.deleteAll(existingClasses);
+
+        // 새로운 반 정보 추가
+        for (Long classId : classIds) {
+            ClassEntity classEntity = classRepository.findById(classId)
+                    .orElseThrow(() -> new ResourceNotFoundException("반을 찾을 수 없습니다. ID: " + classId));
+            
+            StudentClass.StudentClassId id = new StudentClass.StudentClassId(studentId, classId);
+            StudentClass studentClass = StudentClass.builder()
+                    .id(id)
+                    .student(userRepository.findById(studentId).orElseThrow())
+                    .classEntity(classEntity)
+                    .build();
+            
+            studentClassRepository.save(studentClass);
+        }
+    }
+
+    /**
+     * 학부모 정보 업데이트
+     */
+    private void updateGuardianInfo(Long studentId, List<StudentUpdateRequest.GuardianUpdateRequest> guardianRequests) {
+        if (guardianRequests == null) {
+            return;
+        }
+
+        // 기존 학부모 정보 삭제
+        List<StudentGuardian> existingGuardians = studentGuardianRepository.findByStudentId(studentId);
+        studentGuardianRepository.deleteAll(existingGuardians);
+
+        // 새로운 학부모 정보 추가
+        for (StudentUpdateRequest.GuardianUpdateRequest guardianRequest : guardianRequests) {
+            User guardian;
+            
+            if (guardianRequest.getId() != null) {
+                // 기존 학부모 수정
+                guardian = userRepository.findById(guardianRequest.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("학부모를 찾을 수 없습니다. ID: " + guardianRequest.getId()));
+                
+                // 학부모 정보 업데이트
+                if (guardianRequest.getName() != null) {
+                    guardian.setName(guardianRequest.getName());
+                }
+                if (guardianRequest.getPhoneNumber() != null) {
+                    guardian.setPhoneNumber(guardianRequest.getPhoneNumber());
+                }
+                userRepository.save(guardian);
+            } else {
+                // 새로운 학부모 생성 (간단한 구현 - 실제로는 더 복잡한 로직 필요)
+                guardian = User.builder()
+                        .name(guardianRequest.getName())
+                        .phoneNumber(guardianRequest.getPhoneNumber())
+                        .build();
+                guardian = userRepository.save(guardian);
+            }
+
+            // 학생-학부모 관계 생성
+            StudentGuardian.StudentGuardianId id = new StudentGuardian.StudentGuardianId(studentId, guardian.getId());
+            StudentGuardian studentGuardian = StudentGuardian.builder()
+                    .id(id)
+                    .student(userRepository.findById(studentId).orElseThrow())
+                    .guardian(guardian)
+                    .relationship(guardianRequest.getRelationship())
+                    .build();
+            
+            studentGuardianRepository.save(studentGuardian);
+        }
     }
 
     /**

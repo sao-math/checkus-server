@@ -6,26 +6,28 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.auth.CustomUserDetailsService;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
+import saomath.checkusserver.dto.StudentUpdateRequest;
 import saomath.checkusserver.entity.StudentProfile;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.service.StudentService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(StudentController.class)
@@ -34,13 +36,13 @@ class StudentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private StudentService studentService;
 
-    @MockBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-    @MockBean
+    @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
@@ -184,5 +186,104 @@ class StudentControllerTest {
         mockMvc.perform(get("/students/4")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("학생 정보 수정 - 성공")
+    @WithMockUser(roles = "TEACHER")
+    void updateStudent_Success() throws Exception {
+        // Given
+        StudentUpdateRequest updateRequest = createMockUpdateRequest();
+        when(studentService.updateStudent(eq(4L), any(StudentUpdateRequest.class)))
+                .thenReturn(mockStudentDetailResponse);
+
+        // When & Then
+        mockMvc.perform(put("/students/4")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("학생 정보 수정 성공"))
+                .andExpect(jsonPath("$.data.id").value(4))
+                .andExpect(jsonPath("$.data.name").value("박학생"));
+    }
+
+    @Test
+    @DisplayName("학생 정보 수정 - 학생을 찾을 수 없음")
+    @WithMockUser(roles = "TEACHER")
+    void updateStudent_NotFound() throws Exception {
+        // Given
+        StudentUpdateRequest updateRequest = createMockUpdateRequest();
+        when(studentService.updateStudent(eq(999L), any(StudentUpdateRequest.class)))
+                .thenThrow(new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: 999"));
+
+        // When & Then
+        mockMvc.perform(put("/students/999")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("학생을 찾을 수 없습니다. ID: 999"));
+    }
+
+    @Test
+    @DisplayName("학생 정보 수정 - 인증 없음")
+    void updateStudent_Unauthorized() throws Exception {
+        // Given
+        StudentUpdateRequest updateRequest = createMockUpdateRequest();
+
+        // When & Then
+        mockMvc.perform(put("/students/4")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("학생 정보 수정 - 유효성 검증 실패")
+    @WithMockUser(roles = "TEACHER")
+    void updateStudent_ValidationFailed() throws Exception {
+        // Given - 잘못된 전화번호 형식
+        StudentUpdateRequest invalidRequest = new StudentUpdateRequest();
+        invalidRequest.setName("");
+        invalidRequest.setPhoneNumber("invalid-phone");
+
+        // When & Then
+        mockMvc.perform(put("/students/4")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    private StudentUpdateRequest createMockUpdateRequest() {
+        StudentUpdateRequest updateRequest = new StudentUpdateRequest();
+        updateRequest.setName("박학생_수정");
+        updateRequest.setPhoneNumber("010-3333-3333");
+        updateRequest.setDiscordId("updated#1234");
+        
+        // 프로필 정보
+        StudentUpdateRequest.StudentProfileUpdateRequest profile = new StudentUpdateRequest.StudentProfileUpdateRequest();
+        profile.setStatus(StudentProfile.StudentStatus.ENROLLED);
+        profile.setSchoolId(1L);
+        profile.setGrade(3);
+        profile.setGender(StudentProfile.Gender.MALE);
+        updateRequest.setProfile(profile);
+        
+        // 반 정보
+        updateRequest.setClassIds(Arrays.asList(1L, 2L));
+        
+        // 학부모 정보
+        StudentUpdateRequest.GuardianUpdateRequest guardian = new StudentUpdateRequest.GuardianUpdateRequest();
+        guardian.setId(5L);
+        guardian.setName("박학부모_수정");
+        guardian.setPhoneNumber("010-4444-4444");
+        guardian.setRelationship("모");
+        updateRequest.setGuardians(Arrays.asList(guardian));
+        
+        return updateRequest;
     }
 }

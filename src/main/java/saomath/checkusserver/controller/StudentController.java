@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
+import saomath.checkusserver.dto.StudentUpdateRequest;
 import saomath.checkusserver.entity.StudentProfile;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.service.StudentService;
@@ -224,6 +226,129 @@ public class StudentController {
             log.error("학생 상세 정보 조회 실패 - studentId: {}", studentId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseBase.error("학생 상세 정보 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "학생 정보 수정",
+            description = "특정 학생의 정보를 수정합니다. null이 아닌 필드만 업데이트됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "학생 정보 수정 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "학생 정보 수정 응답",
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "학생 정보 수정 성공",
+                                  "data": {
+                                    "id": 4,
+                                    "username": "student1",
+                                    "name": "박학생",
+                                    "phoneNumber": "010-2222-1111",
+                                    "discordId": "student1#1234",
+                                    "createdAt": "2024-01-01T00:00:00",
+                                    "status": "ENROLLED",
+                                    "school": "이현중",
+                                    "schoolId": 1,
+                                    "grade": 2,
+                                    "gender": "MALE",
+                                    "classes": [
+                                      {
+                                        "id": 1,
+                                        "name": "수학심화반"
+                                      }
+                                    ],
+                                    "guardians": [
+                                      {
+                                        "id": 5,
+                                        "name": "박학부모",
+                                        "phoneNumber": "010-1111-2222",
+                                        "relationship": "모"
+                                      }
+                                    ]
+                                  }
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "유효하지 않은 요청데이터입니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "학생을 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "학생을 찾을 수 없습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "인증이 필요합니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @PutMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ResponseBase<StudentDetailResponse>> updateStudent(
+            @PathVariable("id") Long studentId,
+            @RequestBody @Valid StudentUpdateRequest updateRequest) {
+
+        try {
+            log.info("학생 정보 수정 요청 - studentId: {}", studentId);
+
+            StudentDetailResponse updatedStudent = studentService.updateStudent(studentId, updateRequest);
+
+            log.info("학생 정보 수정 성공 - studentId: {}, name: {}", studentId, updatedStudent.getName());
+            
+            return ResponseEntity.ok(ResponseBase.success("학생 정보 수정 성공", updatedStudent));
+
+        } catch (ResourceNotFoundException e) {
+            log.warn("학생 정보 수정 실패 - studentId: {}, 이유: {}", studentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("학생 정보 수정 실패 - studentId: {}", studentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("학생 정보 수정에 실패했습니다: " + e.getMessage()));
         }
     }
 }
