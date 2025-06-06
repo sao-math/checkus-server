@@ -131,18 +131,6 @@ public class LocalDataInitializer implements CommandLineRunner {
         User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
-        
-        log.info("=== 테스트 계정 정보 ===");
-        log.info("관리자: admin / admin123");
-        log.info("교사1: teacher1 / teacher123 (김선생)");
-        log.info("교사2: teacher2 / teacher123 (이선생)");
-        log.info("학생1: student1 / student123 (박학생)");
-        log.info("학생2: student2 / student123 (최학생)");
-        log.info("학생3: student3 / student123 (정학생)");
-        log.info("학부모1: parent1 / parent123 (박학부모)");
-        log.info("학부모2: parent2 / parent123 (최학부모)");
-        log.info("학부모3: parent3 / parent123 (정학부모)");
-        log.info("======================");
     }
 
     // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성

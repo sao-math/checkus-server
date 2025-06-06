@@ -82,6 +82,7 @@ public class SecurityConfig {
 
                         // 학생/학부모 엔드포인트
                         .requestMatchers("/users/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN", "ADMIN")
+                        .requestMatchers("/study-time/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN", "ADMIN")
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
