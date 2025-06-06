@@ -9,13 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import saomath.checkusserver.auth.CustomUserPrincipal;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +26,7 @@ import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.util.JwtTestUtils;
 
 import java.time.LocalDateTime;
 
@@ -64,6 +59,9 @@ class StudyTimeControllerIntegrationTest {
     @Autowired
     private ActualStudyTimeRepository actualStudyTimeRepository;
 
+    @Autowired
+    private JwtTestUtils jwtTestUtils;
+
     private User student;
     private User teacher;
     private Activity activity;
@@ -90,8 +88,8 @@ class StudyTimeControllerIntegrationTest {
     @Test
     @DisplayName("공부 시간 배정 API 테스트")
     void assignStudyTime_Success() throws Exception {
-        // Given - 인증 정보 설정
-        setSecurityContext(teacher, "TEACHER");
+        // Given
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
         
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
@@ -101,6 +99,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(post("/study-time/assign")
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -111,10 +110,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 시간 배정 실패 - 잘못된 입력")
     void assignStudyTime_InvalidInput_Fail() throws Exception {
         // Given - 종료 시간이 시작 시간보다 이른 경우
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
+        
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
         request.setActivityId(activity.getId());
@@ -123,6 +123,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(post("/study-time/assign")
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -132,8 +133,8 @@ class StudyTimeControllerIntegrationTest {
     @Test
     @DisplayName("공부 시간 배정 실패 - 시간 겹침")
     void assignStudyTime_TimeOverlap_Fail() throws Exception {
-        // Given - 인증 정보 설정
-        setSecurityContext(teacher, "TEACHER");
+        // Given
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
         
         // Given - 기존 배정 시간 생성
         LocalDateTime baseTime = LocalDateTime.now().plusHours(1);
@@ -155,6 +156,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(post("/study-time/assign")
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -163,10 +165,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("배정된 공부 시간 수정 API 테스트")
     void updateAssignedStudyTime_Success() throws Exception {
         // Given - 기존 배정 시간 생성
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
+        
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
                 .activityId(activity.getId())
@@ -184,6 +187,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(put("/study-time/" + saved.getId())
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -192,10 +196,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("배정된 공부 시간 삭제 API 테스트")
     void deleteAssignedStudyTime_Success() throws Exception {
         // Given - 기존 배정 시간 생성
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
+        
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
                 .activityId(activity.getId())
@@ -206,27 +211,31 @@ class StudyTimeControllerIntegrationTest {
         AssignedStudyTime saved = assignedStudyTimeRepository.save(existing);
 
         // When & Then
-        mockMvc.perform(delete("/study-time/" + saved.getId()))
+        mockMvc.perform(delete("/study-time/" + saved.getId())
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("공부 시간이 성공적으로 삭제되었습니다."));
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("존재하지 않는 배정 시간 삭제 실패 테스트")
     void deleteAssignedStudyTime_NotFound_Fail() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/study-time/999"))
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
+        
+        mockMvc.perform(delete("/study-time/999")
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
-    @WithMockUser(username = "student1", authorities = {"STUDENT"})
     @DisplayName("학생별 배정된 공부 시간 조회 API 테스트")
     void getAssignedStudyTimes_Success() throws Exception {
         // Given - 배정 시간 생성
+        String studentToken = jwtTestUtils.generateStudentToken(student.getId(), student.getUsername());
+        
         LocalDateTime startDate = LocalDateTime.now();
         AssignedStudyTime assigned = AssignedStudyTime.builder()
                 .studentId(student.getId())
@@ -239,6 +248,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(get("/study-time/assigned/student/" + student.getId())
+                .header("Authorization", jwtTestUtils.toBearerToken(studentToken))
                 .param("startDate", startDate.toString())
                 .param("endDate", startDate.plusDays(1).toString()))
                 .andExpect(status().isOk())
@@ -249,10 +259,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "student1", authorities = {"STUDENT"})
     @DisplayName("학생별 실제 공부 시간 조회 API 테스트")
     void getActualStudyTimes_Success() throws Exception {
         // Given - 실제 공부 시간 생성
+        String studentToken = jwtTestUtils.generateStudentToken(student.getId(), student.getUsername());
+        
         LocalDateTime startDate = LocalDateTime.now();
         ActualStudyTime actual = ActualStudyTime.builder()
                 .studentId(student.getId())
@@ -264,6 +275,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(get("/study-time/actual/student/" + student.getId())
+                .header("Authorization", jwtTestUtils.toBearerToken(studentToken))
                 .param("startDate", startDate.toString())
                 .param("endDate", startDate.plusDays(1).toString()))
                 .andExpect(status().isOk())
@@ -274,10 +286,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "discord-bot", authorities = {"BOT"})
     @DisplayName("디스코드 봇용 공부 시작 기록 API 테스트")
     void recordStudyStart_Success() throws Exception {
         // Given
+        String adminToken = jwtTestUtils.generateAdminToken(1L, "discord-bot");
+        
         RecordStudyStartRequest request = new RecordStudyStartRequest();
         request.setStudentId(student.getId());
         request.setStartTime(LocalDateTime.now());
@@ -285,6 +298,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(post("/study-time/record/start")
+                .header("Authorization", jwtTestUtils.toBearerToken(adminToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -295,10 +309,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "discord-bot", authorities = {"BOT"})
     @DisplayName("디스코드 봇용 공부 종료 기록 API 테스트")
     void recordStudyEnd_Success() throws Exception {
         // Given - 공부 시작 기록 생성
+        String adminToken = jwtTestUtils.generateAdminToken(1L, "discord-bot");
+        
         ActualStudyTime actual = ActualStudyTime.builder()
                 .studentId(student.getId())
                 .startTime(LocalDateTime.now().minusHours(1))
@@ -312,6 +327,7 @@ class StudyTimeControllerIntegrationTest {
 
         // When & Then
         mockMvc.perform(put("/study-time/record/" + saved.getId() + "/end")
+                .header("Authorization", jwtTestUtils.toBearerToken(adminToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -320,11 +336,13 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "teacher1", authorities = {"TEACHER"})
     @DisplayName("공부 배정 가능한 활동 목록 조회 API 테스트")
     void getStudyAssignableActivities_Success() throws Exception {
         // When & Then
-        mockMvc.perform(get("/study-time/activities"))
+        String teacherToken = jwtTestUtils.generateTeacherToken(teacher.getId(), teacher.getUsername());
+        
+        mockMvc.perform(get("/study-time/activities")
+                .header("Authorization", jwtTestUtils.toBearerToken(teacherToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("활동 목록을 성공적으로 조회했습니다."))
@@ -334,10 +352,11 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "system", authorities = {"ADMIN"})
     @DisplayName("곧 시작할 공부 시간 조회 API 테스트")
     void getUpcomingStudyTimes_Success() throws Exception {
         // Given - 곧 시작할 배정 시간 생성
+        String adminToken = jwtTestUtils.generateAdminToken(1L, "system");
+        
         LocalDateTime now = LocalDateTime.now();
         AssignedStudyTime upcoming = AssignedStudyTime.builder()
                 .studentId(student.getId())
@@ -349,7 +368,8 @@ class StudyTimeControllerIntegrationTest {
         assignedStudyTimeRepository.save(upcoming);
 
         // When & Then
-        mockMvc.perform(get("/study-time/upcoming"))
+        mockMvc.perform(get("/study-time/upcoming")
+                .header("Authorization", jwtTestUtils.toBearerToken(adminToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("곧 시작할 공부 시간을 성공적으로 조회했습니다."))
@@ -381,26 +401,5 @@ class StudyTimeControllerIntegrationTest {
                 .isStudyAssignable(isStudyAssignable)
                 .build();
         return activityRepository.save(activity);
-    }
-
-    private void setSecurityContext(User user, String role) {
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-                user.getId(),
-                user.getUsername(),
-                user.getPassword(),
-                user.getName(),
-                java.util.List.of(new SimpleGrantedAuthority("ROLE_" + role)),
-                true, // enabled
-                true, // accountNonExpired
-                true, // credentialsNonExpired
-                true  // accountNonLocked
-        );
-        
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                principal, null, principal.getAuthorities());
-        
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 }
