@@ -93,6 +93,7 @@ class StudyTimeServiceTest {
         verify(assignedStudyTimeRepository).save(any(AssignedStudyTime.class));
     }
 
+
     @Test
     @DisplayName("공부 시간 배정 실패 - 시간 겹침")
     void assignStudyTime_Fail_TimeOverlap() {
@@ -447,5 +448,107 @@ class StudyTimeServiceTest {
         });
 
         verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("과거 시간으로 공부 시간 배정 실패")
+    void assignStudyTime_Fail_PastTime() {
+        // Given
+        Long studentId = 1L;
+        Long activityId = 1L;
+        Long teacherId = 2L;
+        LocalDateTime startTime = LocalDateTime.now().minusDays(2); // 과거 시간
+        LocalDateTime endTime = startTime.plusHours(2);
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+        when(userRepository.existsById(teacherId)).thenReturn(true);
+
+        Activity activity = Activity.builder()
+                .id(activityId)
+                .name("수학 공부")
+                .isStudyAssignable(true)
+                .build();
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+        });
+        assertEquals("과거 시간으로는 공부 시간을 배정할 수 없습니다.", exception.getMessage());
+
+        verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("과거 시간 조회 성공 - 조회는 과거 시간 허용")
+    void getAssignedStudyTimesByStudentAndDateRange_Success_PastTime() {
+        // Given
+        Long studentId = 1L;
+        LocalDateTime startDate = LocalDateTime.now().minusDays(30); // 과거 30일
+        LocalDateTime endDate = LocalDateTime.now().minusDays(23);
+
+        List<AssignedStudyTime> expectedResult = List.of(
+                AssignedStudyTime.builder().studentId(studentId).build()
+        );
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(studentId, startDate, endDate))
+                .thenReturn(expectedResult);
+
+        // When
+        List<AssignedStudyTime> result = studyTimeService.getAssignedStudyTimesByStudentAndDateRange(
+                studentId, startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(userRepository).existsById(studentId);
+        verify(assignedStudyTimeRepository).findByStudentIdAndStartTimeBetween(studentId, startDate, endDate);
+    }
+
+    @Test
+    @DisplayName("너무 오래된 데이터 조회 실패 - 1년 이상 과거")
+    void getAssignedStudyTimesByStudentAndDateRange_Fail_TooOld() {
+        // Given
+        Long studentId = 1L;
+        LocalDateTime startDate = LocalDateTime.now().minusYears(2); // 2년 전
+        LocalDateTime endDate = LocalDateTime.now().minusYears(1).minusDays(1);
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studyTimeService.getAssignedStudyTimesByStudentAndDateRange(studentId, startDate, endDate);
+        });
+        assertEquals("조회 가능한 기간을 초과했습니다. 최대 1년 전까지 조회 가능합니다.", exception.getMessage());
+
+        verify(assignedStudyTimeRepository, never()).findByStudentIdAndStartTimeBetween(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("실제 공부 시간 과거 조회 성공")
+    void getActualStudyTimesByStudentAndDateRange_Success_PastTime() {
+        // Given
+        Long studentId = 1L;
+        LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+        LocalDateTime endDate = LocalDateTime.now().minusDays(23);
+
+        List<ActualStudyTime> expectedResult = List.of(
+                ActualStudyTime.builder().studentId(studentId).build()
+        );
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+        when(actualStudyTimeRepository.findByStudentIdAndDateRange(studentId, startDate, endDate))
+                .thenReturn(expectedResult);
+
+        // When
+        List<ActualStudyTime> result = studyTimeService.getActualStudyTimesByStudentAndDateRange(
+                studentId, startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(userRepository).existsById(studentId);
+        verify(actualStudyTimeRepository).findByStudentIdAndDateRange(studentId, startDate, endDate);
     }
 }

@@ -93,7 +93,7 @@ public class StudyTimeService {
 
         // 시간 검증 및 겹침 체크
         if (startTime != null && endTime != null) {
-            validateTimeRange(startTime, endTime);
+            validateTimeRangeForAssignment(startTime, endTime);
             
             // 본인 제외하고 겹침 체크
             List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -133,7 +133,7 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getAssignedStudyTimesByStudentAndDateRange(
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
-        validateTimeRange(startDate, endDate);
+        validateTimeRangeForQuery(startDate, endDate);
         return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(
                 studentId, startDate, endDate);
     }
@@ -149,7 +149,7 @@ public class StudyTimeService {
     public List<ActualStudyTime> getActualStudyTimesByStudentAndDateRange(
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
-        validateTimeRange(startDate, endDate);
+        validateTimeRangeForQuery(startDate, endDate);
         return actualStudyTimeRepository.findByStudentIdAndDateRange(
                 studentId, startDate, endDate);
     }
@@ -278,7 +278,7 @@ public class StudyTimeService {
         validateUser(studentId);
         validateUser(assignedBy);
         validateActivity(activityId);
-        validateTimeRange(startTime, endTime);
+        validateTimeRangeForAssignment(startTime, endTime);
     }
 
     private void validateUser(Long userId) {
@@ -296,13 +296,25 @@ public class StudyTimeService {
         }
     }
 
-    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+    private void validateTimeRangeForAssignment(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime.isAfter(endTime)) {
             throw new BusinessException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
         }
         
         if (startTime.isBefore(LocalDateTime.now().minusDays(1))) {
             throw new BusinessException("과거 시간으로는 공부 시간을 배정할 수 없습니다.");
+        }
+    }
+
+    private void validateTimeRangeForQuery(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
+        }
+        
+        // 조회용이므로 과거 시간 제한 없음
+        // 단, 너무 오래된 데이터 조회 방지 (1년 전까지만)
+        if (startTime.isBefore(LocalDateTime.now().minusYears(1))) {
+            throw new BusinessException("조회 가능한 기간을 초과했습니다. 최대 1년 전까지 조회 가능합니다.");
         }
     }
 }
