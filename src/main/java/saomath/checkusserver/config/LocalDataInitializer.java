@@ -160,6 +160,7 @@ public class LocalDataInitializer implements CommandLineRunner {
         // 예시: 월요일(1) 16:00~18:00 수학 학원, 수요일(3) 18:00~19:00 수학 숙제, 수요일(3) 16:00~18:00 영어 학원, 금요일(5) 18:00~19:00 영어 숙제
         weeklyScheduleRepository.save(WeeklySchedule.builder()
             .studentId(student1.getId())
+            .title("수학 학원")
             .activityId(academy.getId())
             .dayOfWeek(1)
             .startTime(java.time.LocalTime.of(16, 0))
@@ -167,6 +168,7 @@ public class LocalDataInitializer implements CommandLineRunner {
             .build());
         weeklyScheduleRepository.save(WeeklySchedule.builder()
             .studentId(student1.getId())
+            .title("수학 숙제")
             .activityId(academy.getId())
             .dayOfWeek(3)
             .startTime(java.time.LocalTime.of(18, 0))
@@ -174,6 +176,7 @@ public class LocalDataInitializer implements CommandLineRunner {
             .build());
         weeklyScheduleRepository.save(WeeklySchedule.builder()
             .studentId(student1.getId())
+            .title("영어 자습")
             .activityId(selfStudy.getId())
             .dayOfWeek(3)
             .startTime(java.time.LocalTime.of(16, 0))
@@ -181,6 +184,7 @@ public class LocalDataInitializer implements CommandLineRunner {
             .build());
         weeklyScheduleRepository.save(WeeklySchedule.builder()
             .studentId(student1.getId())
+            .title("영어 숙제")
             .activityId(selfStudy.getId())
             .dayOfWeek(5)
             .startTime(java.time.LocalTime.of(18, 0))
