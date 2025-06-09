@@ -68,6 +68,7 @@ public class WeeklyScheduleService {
         // 시간표 생성
         WeeklySchedule schedule = WeeklySchedule.builder()
                 .studentId(request.getStudentId())
+                .title(request.getTitle())
                 .activityId(request.getActivityId())
                 .dayOfWeek(request.getDayOfWeek())
                 .startTime(request.getStartTime())
@@ -105,6 +106,7 @@ public class WeeklyScheduleService {
 
         // 시간표 업데이트
         existingSchedule.setStudentId(request.getStudentId());
+        existingSchedule.setTitle(request.getTitle());
         existingSchedule.setActivityId(request.getActivityId());
         existingSchedule.setDayOfWeek(request.getDayOfWeek());
         existingSchedule.setStartTime(request.getStartTime());
@@ -206,6 +208,7 @@ public class WeeklyScheduleService {
         WeeklyScheduleResponse response = new WeeklyScheduleResponse();
         response.setId(schedule.getId());
         response.setStudentId(schedule.getStudentId());
+        response.setTitle(schedule.getTitle());
         response.setActivityId(schedule.getActivityId());
         response.setDayOfWeek(schedule.getDayOfWeek());
         response.setStartTime(schedule.getStartTime());
@@ -215,11 +218,9 @@ public class WeeklyScheduleService {
         response.setDayOfWeekName(WeeklySchedule.DayOfWeek.fromValue(schedule.getDayOfWeek()).getKorean());
 
         // 연관 엔티티 정보 설정
-        if (schedule.getStudent() != null) {
-            response.setStudentName(schedule.getStudent().getName());
-        }
         if (schedule.getActivity() != null) {
             response.setActivityName(schedule.getActivity().getName());
+            response.setIsStudyAssignable(schedule.getActivity().getIsStudyAssignable());
         }
 
         return response;
@@ -232,6 +233,7 @@ public class WeeklyScheduleService {
         WeeklySchedulePeriodResponse response = new WeeklySchedulePeriodResponse();
         response.setId(schedule.getId());
         response.setStudentId(schedule.getStudentId());
+        response.setTitle(schedule.getTitle());
         response.setActivityId(schedule.getActivityId());
         response.setDayOfWeek(schedule.getDayOfWeek());
 
@@ -248,6 +250,7 @@ public class WeeklyScheduleService {
         }
         if (schedule.getActivity() != null) {
             response.setActivityName(schedule.getActivity().getName());
+            response.setIsStudyAssignable(schedule.getActivity().getIsStudyAssignable());
         }
 
         return response;

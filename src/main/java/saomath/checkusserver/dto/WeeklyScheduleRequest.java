@@ -18,6 +18,11 @@ public class WeeklyScheduleRequest {
     @Schema(description = "학생 ID", example = "1")
     private Long studentId;
 
+    @NotBlank(message = "일정 제목은 필수입니다")
+    @Size(max = 255, message = "일정 제목은 255자를 초과할 수 없습니다")
+    @Schema(description = "일정 제목", example = "수학 공부")
+    private String title;
+
     @NotNull(message = "활동 ID는 필수입니다")
     @Schema(description = "활동 ID", example = "1")
     private Long activityId;
