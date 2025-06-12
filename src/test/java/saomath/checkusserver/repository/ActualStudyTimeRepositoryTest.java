@@ -53,6 +53,7 @@ class ActualStudyTimeRepositoryTest {
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusHours(2))
@@ -171,6 +172,7 @@ class ActualStudyTimeRepositoryTest {
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusHours(2))
