@@ -93,6 +93,7 @@ class StudyTimeControllerIntegrationTest {
         
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
+        request.setTitle("수학 공부");
         request.setActivityId(activity.getId());
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
@@ -117,6 +118,7 @@ class StudyTimeControllerIntegrationTest {
         
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
+        request.setTitle("수학 공부");
         request.setActivityId(activity.getId());
         request.setStartTime(LocalDateTime.now().plusHours(3));
         request.setEndTime(LocalDateTime.now().plusHours(1)); // 잘못된 시간
@@ -140,6 +142,7 @@ class StudyTimeControllerIntegrationTest {
         LocalDateTime baseTime = LocalDateTime.now().plusHours(1);
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(baseTime)
                 .endTime(baseTime.plusHours(2))
@@ -150,6 +153,7 @@ class StudyTimeControllerIntegrationTest {
         // Given - 겹치는 시간으로 새로운 배정 시도
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(student.getId());
+        request.setTitle("영어 공부");
         request.setActivityId(activity.getId());
         request.setStartTime(baseTime.plusHours(1)); // 겹치는 시간
         request.setEndTime(baseTime.plusHours(3));
@@ -172,6 +176,7 @@ class StudyTimeControllerIntegrationTest {
         
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(LocalDateTime.now().plusHours(1))
                 .endTime(LocalDateTime.now().plusHours(3))
@@ -203,6 +208,7 @@ class StudyTimeControllerIntegrationTest {
         
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(LocalDateTime.now().plusHours(1))
                 .endTime(LocalDateTime.now().plusHours(3))
@@ -239,6 +245,7 @@ class StudyTimeControllerIntegrationTest {
         LocalDateTime startDate = LocalDateTime.now();
         AssignedStudyTime assigned = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(startDate.plusHours(1))
                 .endTime(startDate.plusHours(3))
@@ -360,6 +367,7 @@ class StudyTimeControllerIntegrationTest {
         LocalDateTime now = LocalDateTime.now();
         AssignedStudyTime upcoming = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(now.plusMinutes(5)) // 5분 후 시작
                 .endTime(now.plusHours(1))

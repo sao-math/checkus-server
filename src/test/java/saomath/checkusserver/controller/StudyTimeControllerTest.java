@@ -79,6 +79,7 @@ class StudyTimeControllerTest {
         mockAssignedStudyTime = AssignedStudyTime.builder()
                 .id(1L)
                 .studentId(1L)
+                .title("수학 공부")
                 .activityId(1L)
                 .startTime(LocalDateTime.now().plusHours(1))
                 .endTime(LocalDateTime.now().plusHours(3))
@@ -112,11 +113,12 @@ class StudyTimeControllerTest {
         // Given
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(1L);
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
 
-        when(studyTimeService.assignStudyTime(any(Long.class), any(Long.class), 
+        when(studyTimeService.assignStudyTime(any(Long.class), any(String.class), any(Long.class), 
                 any(LocalDateTime.class), any(LocalDateTime.class), any(Long.class)))
                 .thenReturn(mockAssignedStudyTime);
 
@@ -136,11 +138,12 @@ class StudyTimeControllerTest {
         // Given
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(1L);
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
 
-        when(studyTimeService.assignStudyTime(any(Long.class), any(Long.class), 
+        when(studyTimeService.assignStudyTime(any(Long.class), any(String.class), any(Long.class), 
                 any(LocalDateTime.class), any(LocalDateTime.class), any(Long.class)))
                 .thenThrow(new BusinessException("해당 시간대에 이미 배정된 공부 시간이 있습니다."));
 
@@ -323,6 +326,7 @@ class StudyTimeControllerTest {
         // Given - 필수 필드 누락
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(null); // 필수 필드 누락
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
