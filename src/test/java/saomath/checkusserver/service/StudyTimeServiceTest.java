@@ -62,6 +62,7 @@ class StudyTimeServiceTest {
 
         AssignedStudyTime expectedResult = AssignedStudyTime.builder()
                 .studentId(studentId)
+                .title("수학 공부")
                 .activityId(activityId)
                 .startTime(startTime)
                 .endTime(endTime)
@@ -232,6 +233,7 @@ class StudyTimeServiceTest {
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .id(assignedId)
                 .studentId(1L)
+                .title("수학 공부")
                 .activityId(1L)
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusHours(1))
@@ -299,7 +301,7 @@ class StudyTimeServiceTest {
         LocalDateTime endDate = startDate.plusDays(7);
 
         List<AssignedStudyTime> expectedResult = List.of(
-                AssignedStudyTime.builder().studentId(studentId).build()
+                AssignedStudyTime.builder().studentId(studentId).title("수학 공부").build()
         );
 
         when(userRepository.existsById(studentId)).thenReturn(true);
@@ -381,8 +383,8 @@ class StudyTimeServiceTest {
     void getUpcomingStudyTimes_Success() {
         // Given
         List<AssignedStudyTime> expectedResult = List.of(
-                AssignedStudyTime.builder().id(1L).build(),
-                AssignedStudyTime.builder().id(2L).build()
+                AssignedStudyTime.builder().id(1L).title("수학 공부").build(),
+                AssignedStudyTime.builder().id(2L).title("영어 공부").build()
         );
 
         when(assignedStudyTimeRepository.findUpcomingStudyTimesV2(
@@ -532,7 +534,7 @@ class StudyTimeServiceTest {
         LocalDateTime endDate = LocalDateTime.now().minusDays(23);
 
         List<AssignedStudyTime> expectedResult = List.of(
-                AssignedStudyTime.builder().studentId(studentId).build()
+                AssignedStudyTime.builder().studentId(studentId).title("수학 공부").build()
         );
 
         when(userRepository.existsById(studentId)).thenReturn(true);
@@ -578,7 +580,7 @@ class StudyTimeServiceTest {
         LocalDateTime endDate = LocalDateTime.now().minusDays(23);
 
         List<ActualStudyTime> expectedResult = List.of(
-                ActualStudyTime.builder().studentId(studentId).build()
+                ActualStudyTime.builder().studentId(studentId).startTime(startDate).source("discord").build()
         );
 
         when(userRepository.existsById(studentId)).thenReturn(true);
