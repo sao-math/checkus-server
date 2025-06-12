@@ -53,6 +53,7 @@ class AssignedStudyTimeRepositoryTest {
         LocalDateTime now = LocalDateTime.now();
         AssignedStudyTime studyTime1 = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(now.plusHours(1))
                 .endTime(now.plusHours(3))
@@ -61,6 +62,7 @@ class AssignedStudyTimeRepositoryTest {
 
         AssignedStudyTime studyTime2 = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("영어 공부")
                 .activityId(activity.getId())
                 .startTime(now.plusDays(1))
                 .endTime(now.plusDays(1).plusHours(2))
@@ -114,6 +116,7 @@ class AssignedStudyTimeRepositoryTest {
         // 10:00 ~ 12:00 기존 배정
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(baseTime)
                 .endTime(baseTime.plusHours(2))
@@ -165,6 +168,7 @@ class AssignedStudyTimeRepositoryTest {
         // 10:00 ~ 12:00 기존 배정
         AssignedStudyTime existing = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(baseTime)
                 .endTime(baseTime.plusHours(2))
@@ -215,6 +219,7 @@ class AssignedStudyTimeRepositoryTest {
         // 5분 후 시작 (10분 전 알림 범위)
         AssignedStudyTime upcomingIn5Min = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("수학 공부")
                 .activityId(activity.getId())
                 .startTime(now.plusMinutes(5))
                 .endTime(now.plusMinutes(65))
@@ -224,6 +229,7 @@ class AssignedStudyTimeRepositoryTest {
         // 지금 시작
         AssignedStudyTime startingNow = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("영어 공부")
                 .activityId(activity.getId())
                 .startTime(now)
                 .endTime(now.plusHours(1))
@@ -233,6 +239,7 @@ class AssignedStudyTimeRepositoryTest {
         // 1시간 후 시작 (범위 밖)
         AssignedStudyTime futureStudy = AssignedStudyTime.builder()
                 .studentId(student.getId())
+                .title("과학 공부")
                 .activityId(activity.getId())
                 .startTime(now.plusHours(1))
                 .endTime(now.plusHours(2))
