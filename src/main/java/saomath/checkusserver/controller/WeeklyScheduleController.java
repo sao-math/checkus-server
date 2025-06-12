@@ -310,6 +310,8 @@ public class WeeklyScheduleController {
                     )
             }
     )
+
+    //todo 이거 필요성 재고해보기 필요없어보임
     @GetMapping("/student/{studentId}/period")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ResponseBase<List<WeeklySchedulePeriodResponse>>> getWeeklyScheduleForPeriod(
