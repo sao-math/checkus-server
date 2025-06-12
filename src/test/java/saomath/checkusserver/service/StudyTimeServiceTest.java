@@ -76,11 +76,12 @@ class StudyTimeServiceTest {
         when(assignedStudyTimeRepository.save(any(AssignedStudyTime.class))).thenReturn(expectedResult);
 
         // When
-        AssignedStudyTime result = studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+        AssignedStudyTime result = studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
 
         // Then
         assertNotNull(result);
         assertEquals(studentId, result.getStudentId());
+        assertEquals("수학 공부", result.getTitle());
         assertEquals(activityId, result.getActivityId());
         assertEquals(startTime, result.getStartTime());
         assertEquals(endTime, result.getEndTime());
@@ -122,7 +123,50 @@ class StudyTimeServiceTest {
 
         // When & Then
         assertThrows(BusinessException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+            studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
+        });
+
+        verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("공부 시간 배정 실패 - 빈 제목")
+    void assignStudyTime_Fail_EmptyTitle() {
+        // Given
+        Long studentId = 1L;
+        Long activityId = 1L;
+        Long teacherId = 2L;
+        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime endTime = startTime.plusHours(2);
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+        when(userRepository.existsById(teacherId)).thenReturn(true);
+
+        // When & Then
+        assertThrows(BusinessException.class, () -> {
+            studyTimeService.assignStudyTime(studentId, "", activityId, startTime, endTime, teacherId);
+        });
+
+        verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("공부 시간 배정 실패 - 너무 긴 제목")
+    void assignStudyTime_Fail_TooLongTitle() {
+        // Given
+        Long studentId = 1L;
+        Long activityId = 1L;
+        Long teacherId = 2L;
+        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime endTime = startTime.plusHours(2);
+        String longTitle = "a".repeat(256); // 256자 제목
+
+        when(userRepository.existsById(studentId)).thenReturn(true);
+        when(userRepository.existsById(teacherId)).thenReturn(true);
+
+        // When & Then
+        assertThrows(BusinessException.class, () -> {
+            studyTimeService.assignStudyTime(studentId, longTitle, activityId, startTime, endTime, teacherId);
         });
 
         verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
@@ -142,7 +186,7 @@ class StudyTimeServiceTest {
 
         // When & Then
         assertThrows(ResourceNotFoundException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+            studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
         });
 
         verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
@@ -170,7 +214,7 @@ class StudyTimeServiceTest {
 
         // When & Then
         assertThrows(BusinessException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+            studyTimeService.assignStudyTime(studentId, "휴식", activityId, startTime, endTime, teacherId);
         });
 
         verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
@@ -207,7 +251,7 @@ class StudyTimeServiceTest {
         when(assignedStudyTimeRepository.save(any(AssignedStudyTime.class))).thenReturn(existing);
 
         // When
-        AssignedStudyTime result = studyTimeService.updateAssignedStudyTime(assignedId, activityId, startTime, endTime);
+        AssignedStudyTime result = studyTimeService.updateAssignedStudyTime(assignedId, "영어 공부", activityId, startTime, endTime);
 
         // Then
         assertNotNull(result);
@@ -444,7 +488,7 @@ class StudyTimeServiceTest {
 
         // When & Then
         assertThrows(BusinessException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+            studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
         });
 
         verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
@@ -472,7 +516,7 @@ class StudyTimeServiceTest {
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, activityId, startTime, endTime, teacherId);
+            studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
         });
         assertEquals("과거 시간으로는 공부 시간을 배정할 수 없습니다.", exception.getMessage());
 

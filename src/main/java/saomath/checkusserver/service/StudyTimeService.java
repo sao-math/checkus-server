@@ -47,11 +47,11 @@ public class StudyTimeService {
      * @param assignedBy 배정한 선생님 ID
      * @return 배정된 공부 시간
      */
-    public AssignedStudyTime assignStudyTime(Long studentId, Long activityId, 
+    public AssignedStudyTime assignStudyTime(Long studentId, String title, Long activityId, 
                                            LocalDateTime startTime, LocalDateTime endTime, 
                                            Long assignedBy) {
         // 입력 검증
-        validateStudyTimeInput(studentId, activityId, startTime, endTime, assignedBy);
+        validateStudyTimeInput(studentId, title, activityId, startTime, endTime, assignedBy);
         
         // 시간 겹침 체크
         List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -63,6 +63,7 @@ public class StudyTimeService {
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(studentId)
+                .title(title)
                 .activityId(activityId)
                 .startTime(startTime)
                 .endTime(endTime)
@@ -80,10 +81,15 @@ public class StudyTimeService {
      * @param endTime 종료 시간
      * @return 수정된 공부 시간
      */
-    public AssignedStudyTime updateAssignedStudyTime(Long id, Long activityId, 
+    public AssignedStudyTime updateAssignedStudyTime(Long id, String title, Long activityId, 
                                                    LocalDateTime startTime, LocalDateTime endTime) {
         AssignedStudyTime existing = assignedStudyTimeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("배정된 공부 시간을 찾을 수 없습니다."));
+
+        // 제목 업데이트
+        if (title != null && !title.trim().isEmpty()) {
+            existing.setTitle(title.trim());
+        }
 
         // 활동 검증
         if (activityId != null) {
@@ -272,11 +278,12 @@ public class StudyTimeService {
     }
 
     // 검증 메서드들
-    private void validateStudyTimeInput(Long studentId, Long activityId, 
+    private void validateStudyTimeInput(Long studentId, String title, Long activityId, 
                                       LocalDateTime startTime, LocalDateTime endTime, 
                                       Long assignedBy) {
         validateUser(studentId);
         validateUser(assignedBy);
+        validateTitle(title);
         validateActivity(activityId);
         validateTimeRangeForAssignment(startTime, endTime);
     }
@@ -284,6 +291,15 @@ public class StudyTimeService {
     private void validateUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId);
+        }
+    }
+
+    private void validateTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new BusinessException("일정 제목은 필수입니다.");
+        }
+        if (title.length() > 255) {
+            throw new BusinessException("일정 제목은 255자를 초과할 수 없습니다.");
         }
     }
 
