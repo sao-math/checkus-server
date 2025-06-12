@@ -137,7 +137,7 @@ public class LocalDataInitializer implements CommandLineRunner {
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
 
         // 활동 종류(학원, 자습)
-        Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(true).build());
+        Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(false).build());
         Activity selfStudy = activityRepository.save(Activity.builder().name("자습").isStudyAssignable(true).build());
 
 //        // 반 정보(월수반)
