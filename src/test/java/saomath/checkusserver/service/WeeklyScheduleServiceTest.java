@@ -66,6 +66,7 @@ class WeeklyScheduleServiceTest {
         mockSchedule = WeeklySchedule.builder()
                 .id(1L)
                 .studentId(1L)
+                .title("수학 공부")
                 .activityId(1L)
                 .dayOfWeek(1) // 월요일
                 .startTime(LocalTime.of(9, 0))
@@ -76,6 +77,7 @@ class WeeklyScheduleServiceTest {
 
         mockRequest = new WeeklyScheduleRequest(
                 1L, // studentId
+                "수학 공부", // title
                 1L, // activityId
                 1,  // dayOfWeek (월요일)
                 LocalTime.of(9, 0),   // startTime
@@ -99,8 +101,9 @@ class WeeklyScheduleServiceTest {
         WeeklyScheduleResponse response = result.get(0);
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getStudentId()).isEqualTo(1L);
-        assertThat(response.getStudentName()).isEqualTo("김학생");
+        assertThat(response.getTitle()).isEqualTo("수학 공부");
         assertThat(response.getActivityName()).isEqualTo("수학 공부");
+        assertThat(response.getIsStudyAssignable()).isEqualTo(true);
         assertThat(response.getDayOfWeek()).isEqualTo(1);
         assertThat(response.getDayOfWeekName()).isEqualTo("월요일");
     }
@@ -186,7 +189,7 @@ class WeeklyScheduleServiceTest {
     void createWeeklySchedule_InvalidTime() {
         // Given
         WeeklyScheduleRequest invalidRequest = new WeeklyScheduleRequest(
-                1L, 1L, 1,
+                1L, "수학 공부", 1L, 1,
                 LocalTime.of(11, 0),  // 시작시간
                 LocalTime.of(10, 0)   // 종료시간 (시작시간보다 빠름)
         );

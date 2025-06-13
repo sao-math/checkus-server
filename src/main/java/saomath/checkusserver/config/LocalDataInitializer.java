@@ -29,6 +29,10 @@ public class LocalDataInitializer implements CommandLineRunner {
     private final TaskTypeRepository taskTypeRepository;
     private final UserRoleService userRoleService;
     private final PasswordEncoder passwordEncoder;
+    private final ActivityRepository activityRepository;
+    private final StudentClassRepository studentClassRepository;
+    private final StudentGuardianRepository studentGuardianRepository;
+    private final WeeklyScheduleRepository weeklyScheduleRepository;
 
     @Override
     @Transactional
@@ -131,6 +135,61 @@ public class LocalDataInitializer implements CommandLineRunner {
         User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
+
+        // 활동 종류(학원, 자습)
+        Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(false).build());
+        Activity selfStudy = activityRepository.save(Activity.builder().name("자습").isStudyAssignable(true).build());
+
+//        // 반 정보(월수반)
+//        ClassEntity monWedClass = classEntityRepository.save(ClassEntity.builder().name("월수반").build());
+//        studentClassRepository.save(StudentClass.builder()
+//            .id(new StudentClass.StudentClassId(student1.getId(), monWedClass.getId()))
+//            .student(student1)
+//            .classEntity(monWedClass)
+//            .build());
+
+        // 학부모 정보(guardian1을 father로 연결)
+        studentGuardianRepository.save(StudentGuardian.builder()
+            .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
+            .student(student1)
+            .guardian(guardian1)
+            .relationship("father")
+            .build());
+
+        // 주간 고정 일정(수학 학원, 수학 숙제, 영어 학원, 영어 숙제)
+        // 예시: 월요일(1) 16:00~18:00 수학 학원, 수요일(3) 18:00~19:00 수학 숙제, 수요일(3) 16:00~18:00 영어 학원, 금요일(5) 18:00~19:00 영어 숙제
+        weeklyScheduleRepository.save(WeeklySchedule.builder()
+            .studentId(student1.getId())
+            .title("수학 학원")
+            .activityId(academy.getId())
+            .dayOfWeek(1)
+            .startTime(java.time.LocalTime.of(16, 0))
+            .endTime(java.time.LocalTime.of(18, 0))
+            .build());
+        weeklyScheduleRepository.save(WeeklySchedule.builder()
+            .studentId(student1.getId())
+            .title("수학 숙제")
+            .activityId(academy.getId())
+            .dayOfWeek(3)
+            .startTime(java.time.LocalTime.of(18, 0))
+            .endTime(java.time.LocalTime.of(19, 0))
+            .build());
+        weeklyScheduleRepository.save(WeeklySchedule.builder()
+            .studentId(student1.getId())
+            .title("영어 자습")
+            .activityId(selfStudy.getId())
+            .dayOfWeek(3)
+            .startTime(java.time.LocalTime.of(16, 0))
+            .endTime(java.time.LocalTime.of(18, 0))
+            .build());
+        weeklyScheduleRepository.save(WeeklySchedule.builder()
+            .studentId(student1.getId())
+            .title("영어 숙제")
+            .activityId(selfStudy.getId())
+            .dayOfWeek(5)
+            .startTime(java.time.LocalTime.of(18, 0))
+            .endTime(java.time.LocalTime.of(19, 0))
+            .build());
     }
 
     // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성

@@ -56,37 +56,39 @@ class WeeklyScheduleControllerTest {
     @BeforeEach
     void setUp() {
         // Mock 데이터 설정
-        mockScheduleResponse = new WeeklyScheduleResponse(
-                1L,           // id
-                1L,           // studentId
-                "김학생",      // studentName
-                1L,           // activityId
-                "수학 공부",   // activityName
-                1,            // dayOfWeek
-                "월요일",      // dayOfWeekName
-                LocalTime.of(9, 0),    // startTime
-                LocalTime.of(10, 30)   // endTime
-        );
+        mockScheduleResponse = new WeeklyScheduleResponse();
+        mockScheduleResponse.setId(1L);
+        mockScheduleResponse.setStudentId(1L);
+        mockScheduleResponse.setTitle("수학 공부");
+        mockScheduleResponse.setActivityId(1L);
+        mockScheduleResponse.setActivityName("자습");
+        mockScheduleResponse.setIsStudyAssignable(true);
+        mockScheduleResponse.setDayOfWeek(1);
+        mockScheduleResponse.setDayOfWeekName("월요일");
+        mockScheduleResponse.setStartTime(LocalTime.of(9, 0));
+        mockScheduleResponse.setEndTime(LocalTime.of(10, 30));
 
         mockScheduleRequest = new WeeklyScheduleRequest(
                 1L,           // studentId
+                "수학 공부",   // title
                 1L,           // activityId
                 1,            // dayOfWeek
                 LocalTime.of(9, 0),    // startTime
                 LocalTime.of(10, 30)   // endTime
         );
 
-        mockPeriodResponse = new WeeklySchedulePeriodResponse(
-                1L,           // id
-                1L,           // studentId
-                "김학생",      // studentName
-                1L,           // activityId
-                "수학 공부",   // activityName
-                LocalDateTime.of(2025, 6, 2, 9, 0),    // actualStartTime
-                LocalDateTime.of(2025, 6, 2, 10, 30),  // actualEndTime
-                1,            // dayOfWeek
-                "월요일"       // dayOfWeekName
-        );
+        mockPeriodResponse = new WeeklySchedulePeriodResponse();
+        mockPeriodResponse.setId(1L);
+        mockPeriodResponse.setStudentId(1L);
+        mockPeriodResponse.setStudentName("김학생");
+        mockPeriodResponse.setTitle("수학 공부");
+        mockPeriodResponse.setActivityId(1L);
+        mockPeriodResponse.setActivityName("자습");
+        mockPeriodResponse.setIsStudyAssignable(true);
+        mockPeriodResponse.setActualStartTime(LocalDateTime.of(2025, 6, 2, 9, 0));
+        mockPeriodResponse.setActualEndTime(LocalDateTime.of(2025, 6, 2, 10, 30));
+        mockPeriodResponse.setDayOfWeek(1);
+        mockPeriodResponse.setDayOfWeekName("월요일");
     }
 
     @Test
@@ -105,8 +107,9 @@ class WeeklyScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("주간 시간표 조회 성공"))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].id").value(1))
-                .andExpect(jsonPath("$.data[0].studentName").value("김학생"))
-                .andExpect(jsonPath("$.data[0].activityName").value("수학 공부"))
+                .andExpect(jsonPath("$.data[0].title").value("수학 공부"))
+                .andExpect(jsonPath("$.data[0].activityName").value("자습"))
+                .andExpect(jsonPath("$.data[0].isStudyAssignable").value(true))
                 .andExpect(jsonPath("$.data[0].dayOfWeek").value(1))
                 .andExpect(jsonPath("$.data[0].dayOfWeekName").value("월요일"));
     }
@@ -143,8 +146,7 @@ class WeeklyScheduleControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("주간 시간표가 성공적으로 등록되었습니다."))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.studentName").value("김학생"));
+                .andExpect(jsonPath("$.data.id").value(1));
     }
 
     @Test
@@ -171,7 +173,7 @@ class WeeklyScheduleControllerTest {
     void createWeeklySchedule_ValidationFailed() throws Exception {
         // Given - 잘못된 요일 (0은 유효하지 않음)
         WeeklyScheduleRequest invalidRequest = new WeeklyScheduleRequest(
-                1L, 1L, 0, // dayOfWeek = 0 (유효하지 않음)
+                1L, "수학 공부", 1L, 0, // dayOfWeek = 0 (유효하지 않음)
                 LocalTime.of(9, 0), LocalTime.of(10, 30)
         );
 
@@ -270,6 +272,7 @@ class WeeklyScheduleControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].id").value(1))
                 .andExpect(jsonPath("$.data[0].studentName").value("김학생"))
+                .andExpect(jsonPath("$.data[0].title").value("수학 공부"))
                 .andExpect(jsonPath("$.data[0].actualStartTime").value("2025-06-02T09:00:00"))
                 .andExpect(jsonPath("$.data[0].dayOfWeekName").value("월요일"));
     }

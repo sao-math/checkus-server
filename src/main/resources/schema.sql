@@ -81,6 +81,7 @@ CREATE TABLE activity (
 
 CREATE TABLE weekly_schedule (
                                  id bigint AUTO_INCREMENT PRIMARY KEY,
+                                 title varchar(255) NOT NULL,
                                  student_id bigint,
                                  activity_id bigint,
                                  day_of_week integer,
@@ -91,6 +92,7 @@ CREATE TABLE weekly_schedule (
 
 CREATE TABLE assigned_study_time (
                                      id bigint AUTO_INCREMENT PRIMARY KEY,
+                                     title varchar(255) NOT NULL,
                                      student_id bigint,
                                      activity_id bigint,
                                      start_time timestamp,

@@ -54,8 +54,10 @@ public class WeeklyScheduleController {
                                                   "id": 1,
                                                   "studentId": 1,
                                                   "studentName": "김학생",
+                                                  "title": "수학 공부",
                                                   "activityId": 1,
-                                                  "activityName": "수학 공부",
+                                                  "activityName": "자습",
+                                                  "isStudyAssignable": true,
                                                   "dayOfWeek": 1,
                                                   "dayOfWeekName": "월요일",
                                                   "startTime": "09:00:00",
@@ -129,8 +131,10 @@ public class WeeklyScheduleController {
                                                 "id": 1,
                                                 "studentId": 1,
                                                 "studentName": "김학생",
+                                                "title": "수학 공부",
                                                 "activityId": 1,
-                                                "activityName": "수학 공부",
+                                                "activityName": "자습",
+                                                "isStudyAssignable": true,
                                                 "dayOfWeek": 1,
                                                 "dayOfWeekName": "월요일",
                                                 "startTime": "09:00:00",
@@ -289,8 +293,10 @@ public class WeeklyScheduleController {
                                                   "id": 1,
                                                   "studentId": 1,
                                                   "studentName": "김학생",
+                                                  "title": "수학 공부",
                                                   "activityId": 1,
-                                                  "activityName": "수학 공부",
+                                                  "activityName": "자습",
+                                                  "isStudyAssignable": true,
                                                   "actualStartTime": "2025-06-02T09:00:00",
                                                   "actualEndTime": "2025-06-02T10:30:00",
                                                   "dayOfWeek": 1,
@@ -304,6 +310,8 @@ public class WeeklyScheduleController {
                     )
             }
     )
+
+    //todo 이거 필요성 재고해보기 필요없어보임
     @GetMapping("/student/{studentId}/period")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ResponseBase<List<WeeklySchedulePeriodResponse>>> getWeeklyScheduleForPeriod(

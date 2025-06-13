@@ -79,6 +79,7 @@ class StudyTimeControllerTest {
         mockAssignedStudyTime = AssignedStudyTime.builder()
                 .id(1L)
                 .studentId(1L)
+                .title("수학 공부")
                 .activityId(1L)
                 .startTime(LocalDateTime.now().plusHours(1))
                 .endTime(LocalDateTime.now().plusHours(3))
@@ -112,11 +113,12 @@ class StudyTimeControllerTest {
         // Given
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(1L);
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
 
-        when(studyTimeService.assignStudyTime(any(Long.class), any(Long.class), 
+        when(studyTimeService.assignStudyTime(any(Long.class), any(String.class), any(Long.class), 
                 any(LocalDateTime.class), any(LocalDateTime.class), any(Long.class)))
                 .thenReturn(mockAssignedStudyTime);
 
@@ -136,11 +138,12 @@ class StudyTimeControllerTest {
         // Given
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(1L);
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
 
-        when(studyTimeService.assignStudyTime(any(Long.class), any(Long.class), 
+        when(studyTimeService.assignStudyTime(any(Long.class), any(String.class), any(Long.class), 
                 any(LocalDateTime.class), any(LocalDateTime.class), any(Long.class)))
                 .thenThrow(new BusinessException("해당 시간대에 이미 배정된 공부 시간이 있습니다."));
 
@@ -323,6 +326,7 @@ class StudyTimeControllerTest {
         // Given - 필수 필드 누락
         AssignStudyTimeRequest request = new AssignStudyTimeRequest();
         request.setStudentId(null); // 필수 필드 누락
+        request.setTitle("수학 공부");
         request.setActivityId(1L);
         request.setStartTime(LocalDateTime.now().plusHours(1));
         request.setEndTime(LocalDateTime.now().plusHours(3));
@@ -342,5 +346,58 @@ class StudyTimeControllerTest {
                 .param("startDate", "invalid-date")
                 .param("endDate", "2025-06-02T00:00:00"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("과거 날짜로 배정된 공부 시간 조회 성공")
+    void getAssignedStudyTimes_PastDates_Success() throws Exception {
+        // Given
+        when(studyTimeService.getAssignedStudyTimesByStudentAndDateRange(
+                any(Long.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(mockAssignedStudyTime));
+
+        // When & Then
+        mockMvc.perform(get("/study-time/assigned/student/1")
+                .param("startDate", "2025-05-01T00:00:00") // 과거 날짜
+                .param("endDate", "2025-05-02T00:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(1));
+    }
+
+    @Test
+    @DisplayName("너무 오래된 데이터 조회 시 비즈니스 예외 발생")
+    void getAssignedStudyTimes_TooOldDates_BusinessException() throws Exception {
+        // Given
+        when(studyTimeService.getAssignedStudyTimesByStudentAndDateRange(
+                any(Long.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenThrow(new BusinessException("조회 가능한 기간을 초과했습니다. 최대 1년 전까지 조회 가능합니다."));
+
+        // When & Then
+        mockMvc.perform(get("/study-time/assigned/student/1")
+                .param("startDate", "2023-01-01T00:00:00") // 2년 전
+                .param("endDate", "2023-01-02T00:00:00"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("조회 가능한 기간을 초과했습니다. 최대 1년 전까지 조회 가능합니다."));
+    }
+
+    @Test
+    @DisplayName("실제 공부 시간 과거 날짜 조회 성공")
+    void getActualStudyTimes_PastDates_Success() throws Exception {
+        // Given
+        when(studyTimeService.getActualStudyTimesByStudentAndDateRange(
+                any(Long.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(mockActualStudyTime));
+
+        // When & Then
+        mockMvc.perform(get("/study-time/actual/student/1")
+                .param("startDate", "2025-05-01T00:00:00") // 과거 날짜
+                .param("endDate", "2025-05-02T00:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(1));
     }
 }

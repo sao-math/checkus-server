@@ -47,11 +47,11 @@ public class StudyTimeService {
      * @param assignedBy 배정한 선생님 ID
      * @return 배정된 공부 시간
      */
-    public AssignedStudyTime assignStudyTime(Long studentId, Long activityId, 
+    public AssignedStudyTime assignStudyTime(Long studentId, String title, Long activityId, 
                                            LocalDateTime startTime, LocalDateTime endTime, 
                                            Long assignedBy) {
         // 입력 검증
-        validateStudyTimeInput(studentId, activityId, startTime, endTime, assignedBy);
+        validateStudyTimeInput(studentId, title, activityId, startTime, endTime, assignedBy);
         
         // 시간 겹침 체크
         List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -63,6 +63,7 @@ public class StudyTimeService {
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(studentId)
+                .title(title)
                 .activityId(activityId)
                 .startTime(startTime)
                 .endTime(endTime)
@@ -80,10 +81,15 @@ public class StudyTimeService {
      * @param endTime 종료 시간
      * @return 수정된 공부 시간
      */
-    public AssignedStudyTime updateAssignedStudyTime(Long id, Long activityId, 
+    public AssignedStudyTime updateAssignedStudyTime(Long id, String title, Long activityId, 
                                                    LocalDateTime startTime, LocalDateTime endTime) {
         AssignedStudyTime existing = assignedStudyTimeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("배정된 공부 시간을 찾을 수 없습니다."));
+
+        // 제목 업데이트
+        if (title != null && !title.trim().isEmpty()) {
+            existing.setTitle(title.trim());
+        }
 
         // 활동 검증
         if (activityId != null) {
@@ -93,7 +99,7 @@ public class StudyTimeService {
 
         // 시간 검증 및 겹침 체크
         if (startTime != null && endTime != null) {
-            validateTimeRange(startTime, endTime);
+            validateTimeRangeForAssignment(startTime, endTime);
             
             // 본인 제외하고 겹침 체크
             List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -133,7 +139,7 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getAssignedStudyTimesByStudentAndDateRange(
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
-        validateTimeRange(startDate, endDate);
+        validateTimeRangeForQuery(startDate, endDate);
         return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(
                 studentId, startDate, endDate);
     }
@@ -149,7 +155,7 @@ public class StudyTimeService {
     public List<ActualStudyTime> getActualStudyTimesByStudentAndDateRange(
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
-        validateTimeRange(startDate, endDate);
+        validateTimeRangeForQuery(startDate, endDate);
         return actualStudyTimeRepository.findByStudentIdAndDateRange(
                 studentId, startDate, endDate);
     }
@@ -272,18 +278,28 @@ public class StudyTimeService {
     }
 
     // 검증 메서드들
-    private void validateStudyTimeInput(Long studentId, Long activityId, 
+    private void validateStudyTimeInput(Long studentId, String title, Long activityId, 
                                       LocalDateTime startTime, LocalDateTime endTime, 
                                       Long assignedBy) {
         validateUser(studentId);
         validateUser(assignedBy);
+        validateTitle(title);
         validateActivity(activityId);
-        validateTimeRange(startTime, endTime);
+        validateTimeRangeForAssignment(startTime, endTime);
     }
 
     private void validateUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId);
+        }
+    }
+
+    private void validateTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new BusinessException("일정 제목은 필수입니다.");
+        }
+        if (title.length() > 255) {
+            throw new BusinessException("일정 제목은 255자를 초과할 수 없습니다.");
         }
     }
 
@@ -296,13 +312,25 @@ public class StudyTimeService {
         }
     }
 
-    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+    private void validateTimeRangeForAssignment(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime.isAfter(endTime)) {
             throw new BusinessException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
         }
         
         if (startTime.isBefore(LocalDateTime.now().minusDays(1))) {
             throw new BusinessException("과거 시간으로는 공부 시간을 배정할 수 없습니다.");
+        }
+    }
+
+    private void validateTimeRangeForQuery(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
+        }
+        
+        // 조회용이므로 과거 시간 제한 없음
+        // 단, 너무 오래된 데이터 조회 방지 (1년 전까지만)
+        if (startTime.isBefore(LocalDateTime.now().minusYears(1))) {
+            throw new BusinessException("조회 가능한 기간을 초과했습니다. 최대 1년 전까지 조회 가능합니다.");
         }
     }
 }

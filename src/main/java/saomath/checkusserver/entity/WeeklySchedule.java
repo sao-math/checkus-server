@@ -23,6 +23,9 @@ public class WeeklySchedule {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
+    @Column(nullable = false, length = 255)
+    private String title;
+
     @Column(name = "activity_id", nullable = false)
     private Long activityId;
 

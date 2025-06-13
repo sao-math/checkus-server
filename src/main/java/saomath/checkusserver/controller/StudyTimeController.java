@@ -109,6 +109,7 @@ public class StudyTimeController {
             
             AssignedStudyTime result = studyTimeService.assignStudyTime(
                     request.getStudentId(),
+                    request.getTitle(),
                     request.getActivityId(),
                     request.getStartTime(),
                     request.getEndTime(),
@@ -140,6 +141,7 @@ public class StudyTimeController {
         try {
             AssignedStudyTime result = studyTimeService.updateAssignedStudyTime(
                     id,
+                    request.getTitle(),
                     request.getActivityId(),
                     request.getStartTime(),
                     request.getEndTime()
@@ -378,6 +380,7 @@ public class StudyTimeController {
         AssignedStudyTimeResponse response = new AssignedStudyTimeResponse();
         response.setId(assignedStudyTime.getId());
         response.setStudentId(assignedStudyTime.getStudentId());
+        response.setTitle(assignedStudyTime.getTitle());
         response.setActivityId(assignedStudyTime.getActivityId());
         response.setStartTime(assignedStudyTime.getStartTime());
         response.setEndTime(assignedStudyTime.getEndTime());
@@ -389,6 +392,7 @@ public class StudyTimeController {
         }
         if (assignedStudyTime.getActivity() != null) {
             response.setActivityName(assignedStudyTime.getActivity().getName());
+            response.setIsStudyAssignable(assignedStudyTime.getActivity().getIsStudyAssignable());
         }
         if (assignedStudyTime.getAssignedByUser() != null) {
             response.setAssignedByName(assignedStudyTime.getAssignedByUser().getName());
