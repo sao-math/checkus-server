@@ -59,6 +59,9 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    
+    // Infobank OMNI SDK for Kakao Alimtalk
+    implementation 'io.github.icomm-api:infobank-omni-sdk-java:1.1.0'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

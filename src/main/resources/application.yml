@@ -23,3 +23,11 @@ springdoc:
     path: /v3/api-docs                    # OpenAPI 문서 경로
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
+# Bizgo API 설정
+bizgo:
+  api:
+    base-url: ${BIZGO_API_BASE_URL:https://omni.ibapi.kr}
+    client-id: ${BIZGO_CLIENT_ID}
+    client-password: ${BIZGO_CLIENT_PASSWORD}
+  sender-key: ${BIZGO_SENDER_KEY}
