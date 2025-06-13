@@ -8,6 +8,7 @@ import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.entity.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
+import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.service.StudyTimeService;
@@ -91,6 +92,9 @@ public class VoiceChannelEventService {
                             studentId, event.getTimestamp(), "discord");
                     log.info("공부 시작 기록됨: 학생 ID={}, 시작 시간={}", 
                             studentId, event.getTimestamp());
+                    
+                    // 스터디룸 입장 이벤트 발행
+                    publishStudyRoomEnterEvent(user, event);
                     break;
                     
                 case LEAVE:
@@ -205,6 +209,23 @@ public class VoiceChannelEventService {
                         user, currentAssignments.get(0), remainingMinutes));
             }
         }
+    }
+
+    /**
+     * 스터디룸 입장 이벤트 발행
+     */
+    private void publishStudyRoomEnterEvent(User user, VoiceChannelEvent event) {
+        StudyRoomEnterEvent enterEvent = StudyRoomEnterEvent.builder()
+            .studentId(user.getId())
+            .studentName(user.getName())
+            .discordId(user.getDiscordId())
+            .enterTime(event.getTimestamp())
+            .channelName(event.getChannelName())
+            .build();
+        
+        eventPublisher.publishEvent(enterEvent);
+        log.debug("스터디룸 입장 이벤트 발행: 학생={}, 채널={}", 
+            user.getName(), event.getChannelName());
     }
 
     /**
