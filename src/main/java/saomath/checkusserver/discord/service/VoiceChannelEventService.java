@@ -9,6 +9,7 @@ import saomath.checkusserver.entity.User;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class VoiceChannelEventService {
     private final UserRepository userRepository;
     private final AssignedStudyTimeRepository assignedStudyTimeRepository;
     private final StudyTimeService studyTimeService;
+    private final NotificationService notificationService;
     
     // 현재 음성채널에 있는 사용자들을 추적 (channelId -> Set<userId>)
     private final Map<String, List<String>> currentVoiceChannelMembers = new ConcurrentHashMap<>();
@@ -38,10 +40,12 @@ public class VoiceChannelEventService {
     public VoiceChannelEventService(
             UserRepository userRepository,
             AssignedStudyTimeRepository assignedStudyTimeRepository,
-            StudyTimeService studyTimeService) {
+            StudyTimeService studyTimeService,
+            NotificationService notificationService) {
         this.userRepository = userRepository;
         this.assignedStudyTimeRepository = assignedStudyTimeRepository;
         this.studyTimeService = studyTimeService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -165,7 +169,10 @@ public class VoiceChannelEventService {
                         user.getUsername(), 
                         nearbyAssignments.get(0).getStartTime().until(event.getTimestamp(), 
                                 java.time.temporal.ChronoUnit.MINUTES));
-                // TODO: 늦은 입장 알림 발송
+                // 늦은 입장 알림 발송
+                long lateMinutes = nearbyAssignments.get(0).getStartTime()
+                        .until(event.getTimestamp(), java.time.temporal.ChronoUnit.MINUTES);
+                notificationService.sendLateArrivalNotification(user, nearbyAssignments.get(0), lateMinutes);
             }
         }
     }
@@ -186,7 +193,10 @@ public class VoiceChannelEventService {
                         user.getUsername(),
                         java.time.Duration.between(event.getTimestamp(), 
                                 currentAssignments.get(0).getEndTime()).toMinutes());
-                // TODO: 조기 퇴장 알림 발송
+                // 조기 퇴장 알림 발송
+                long remainingMinutes = java.time.Duration.between(event.getTimestamp(), 
+                        currentAssignments.get(0).getEndTime()).toMinutes();
+                notificationService.sendEarlyLeaveNotification(user, currentAssignments.get(0), remainingMinutes);
             }
         }
     }
