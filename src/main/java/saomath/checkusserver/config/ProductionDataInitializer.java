@@ -16,6 +16,7 @@ import saomath.checkusserver.repository.RoleRepository;
 import saomath.checkusserver.repository.SchoolRepository;
 import saomath.checkusserver.repository.TaskTypeRepository;
 import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.service.UserRoleService;
 
 import java.util.Arrays;
@@ -38,6 +39,7 @@ public class ProductionDataInitializer {
     private final PermissionRepository permissionRepository;
     private final SchoolRepository schoolRepository;
     private final TaskTypeRepository taskTypeRepository;
+    private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
     private final UserRoleService userRoleService;
 
@@ -50,6 +52,7 @@ public class ProductionDataInitializer {
         initializePermissions();
         initializeSchools();
         initializeTaskTypes();
+        initializeActivities();
         initializeAdminUser();
         
         log.info("Production data initialization completed.");
@@ -121,6 +124,22 @@ public class ProductionDataInitializer {
             log.info("Created {} task types", taskTypes.size());
         } else {
             log.info("Task types already exist, skipping initialization");
+        }
+    }
+
+    private void initializeActivities() {
+        if (activityRepository.count() == 0) {
+            log.info("Initializing activities...");
+            
+            List<Activity> activities = Arrays.asList(
+                new Activity(null, "학원", false),
+                new Activity(null, "자습", true)
+            );
+            
+            activityRepository.saveAll(activities);
+            log.info("Created {} activities", activities.size());
+        } else {
+            log.info("Activities already exist, skipping initialization");
         }
     }
 

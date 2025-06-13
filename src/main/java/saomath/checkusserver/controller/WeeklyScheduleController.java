@@ -15,15 +15,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
+import saomath.checkusserver.dto.ActivityResponse;
 import saomath.checkusserver.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.dto.WeeklyScheduleResponse;
+import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.service.WeeklyScheduleService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -339,6 +342,68 @@ public class WeeklyScheduleController {
             log.error("기간별 시간표 조회 실패 - studentId: {}", studentId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseBase.error("기간별 시간표 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "주간 시간표 활동 조회",
+            description = "주간 시간표에 사용할 수 있는 모든 활동을 조회합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "활동 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "활동 목록 응답",
+                                            value = """
+                                            {
+                                              "success": true,
+                                              "message": "활동 목록 조회 성공",
+                                              "data": [
+                                                {
+                                                  "id": 1,
+                                                  "name": "학원",
+                                                  "isStudyAssignable": false
+                                                },
+                                                {
+                                                  "id": 2,
+                                                  "name": "자습",
+                                                  "isStudyAssignable": true
+                                                }
+                                              ]
+                                            }
+                                            """
+                                    )
+                            )
+                    )
+            }
+    )
+    @GetMapping("/activities")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ResponseBase<List<ActivityResponse>>> getAllActivities() {
+
+        try {
+            log.info("주간시간표용 활동 목록 조회 요청");
+
+            List<Activity> activities = weeklyScheduleService.getAllActivities();
+
+            List<ActivityResponse> activityResponses = activities.stream()
+                    .map(activity -> new ActivityResponse(
+                            activity.getId(), 
+                            activity.getName(), 
+                            activity.getIsStudyAssignable()
+                    ))
+                    .collect(Collectors.toList());
+
+            log.info("활동 목록 조회 성공 - 활동 개수: {}", activityResponses.size());
+
+            return ResponseEntity.ok(ResponseBase.success("활동 목록 조회 성공", activityResponses));
+
+        } catch (Exception e) {
+            log.error("활동 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("활동 목록 조회에 실패했습니다: " + e.getMessage()));
         }
     }
 }
