@@ -24,4 +24,6 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
     );
     
     List<ActualStudyTime> findByStudentIdAndAssignedStudyTimeIdIsNull(Long studentId);
+    
+    boolean existsByAssignedStudyTimeId(Long assignedStudyTimeId);
 }

@@ -34,4 +34,6 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("now") LocalDateTime now,
             @Param("tenMinutesAfter") LocalDateTime tenMinutesAfter
     );
+    
+    List<AssignedStudyTime> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 }

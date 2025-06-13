@@ -27,7 +27,7 @@ public class BizgoConfig {
     }
     
     @Bean
-    public AuthService authService() {
+    public AuthService bizgoAuthService() {
         HttpConfig httpConfig = HttpConfig.builder()
                 .baseUrl(bizgoProperties.getApi().getBaseUrl())
                 .build();
