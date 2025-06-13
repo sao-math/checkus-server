@@ -45,7 +45,7 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("currentTime") LocalDateTime currentTime
     );
     
-    // 특정 시간 범위 내에 시작하는 공부 시간 조회 (알림용)
+    // 특정 시간대에 시작하는 공부 시간 조회 (알림용)
     @Query("SELECT ast FROM AssignedStudyTime ast WHERE " +
            "ast.startTime BETWEEN :fromTime AND :toTime " +
            "ORDER BY ast.startTime")
@@ -54,10 +54,11 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("toTime") LocalDateTime toTime
     );
     
-    // 시작했지만 접속 기록이 없는 공부 시간 조회 (미접속 알림용)
+    // 시작했으나 출석하지 않은 공부 시간 조회 (미접속 알림용)
     @Query("SELECT ast FROM AssignedStudyTime ast WHERE " +
            "ast.startTime BETWEEN :fromTime AND :toTime " +
-           "AND NOT EXISTS (SELECT 1 FROM ActualStudyTime act WHERE act.assignedStudyTimeId = ast.id)")
+           "AND NOT EXISTS (SELECT 1 FROM ActualStudyTime actual " +
+           "WHERE actual.assignedStudyTimeId = ast.id)")
     List<AssignedStudyTime> findStartedWithoutAttendance(
             @Param("fromTime") LocalDateTime fromTime,
             @Param("toTime") LocalDateTime toTime

@@ -1,15 +1,16 @@
 package saomath.checkusserver.discord.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.entity.VoiceChannelEvent;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.entity.User;
+import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.service.StudyTimeService;
-import saomath.checkusserver.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 음성채널 이벤트를 관리하는 서비스
+ * 이벤트 발행을 통해 알림 시스템과 분리
  */
 @Slf4j
 @Service
@@ -28,7 +30,7 @@ public class VoiceChannelEventService {
     private final UserRepository userRepository;
     private final AssignedStudyTimeRepository assignedStudyTimeRepository;
     private final StudyTimeService studyTimeService;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
     
     // 현재 음성채널에 있는 사용자들을 추적 (channelId -> Set<userId>)
     private final Map<String, List<String>> currentVoiceChannelMembers = new ConcurrentHashMap<>();
@@ -41,11 +43,11 @@ public class VoiceChannelEventService {
             UserRepository userRepository,
             AssignedStudyTimeRepository assignedStudyTimeRepository,
             StudyTimeService studyTimeService,
-            NotificationService notificationService) {
+            ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.assignedStudyTimeRepository = assignedStudyTimeRepository;
         this.studyTimeService = studyTimeService;
-        this.notificationService = notificationService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -165,14 +167,16 @@ public class VoiceChannelEventService {
                     .anyMatch(ast -> event.getTimestamp().isAfter(ast.getStartTime().plusMinutes(5)));
             
             if (isLate) {
-                log.warn("늦은 입장 감지: 사용자={}, 늦은 시간={} 분", 
-                        user.getUsername(), 
-                        nearbyAssignments.get(0).getStartTime().until(event.getTimestamp(), 
-                                java.time.temporal.ChronoUnit.MINUTES));
-                // 늦은 입장 알림 발송
                 long lateMinutes = nearbyAssignments.get(0).getStartTime()
                         .until(event.getTimestamp(), java.time.temporal.ChronoUnit.MINUTES);
-                notificationService.sendLateArrivalNotification(user, nearbyAssignments.get(0), lateMinutes);
+                        
+                log.warn("늦은 입장 감지: 사용자={}, 늦은 시간={} 분", 
+                        user.getUsername(), lateMinutes);
+                
+                // 늦은 입장 이벤트 발행
+                eventPublisher.publishEvent(new StudyAttendanceEvent(
+                        this, StudyAttendanceEvent.EventType.LATE_ARRIVAL, 
+                        user, nearbyAssignments.get(0), lateMinutes));
             }
         }
     }
@@ -189,14 +193,16 @@ public class VoiceChannelEventService {
                     .anyMatch(ast -> event.getTimestamp().isBefore(ast.getEndTime().minusMinutes(5)));
             
             if (isEarlyLeave) {
-                log.warn("조기 퇴장 감지: 사용자={}, 남은 시간={} 분", 
-                        user.getUsername(),
-                        java.time.Duration.between(event.getTimestamp(), 
-                                currentAssignments.get(0).getEndTime()).toMinutes());
-                // 조기 퇴장 알림 발송
                 long remainingMinutes = java.time.Duration.between(event.getTimestamp(), 
                         currentAssignments.get(0).getEndTime()).toMinutes();
-                notificationService.sendEarlyLeaveNotification(user, currentAssignments.get(0), remainingMinutes);
+                        
+                log.warn("조기 퇴장 감지: 사용자={}, 남은 시간={} 분", 
+                        user.getUsername(), remainingMinutes);
+                
+                // 조기 퇴장 이벤트 발행
+                eventPublisher.publishEvent(new StudyAttendanceEvent(
+                        this, StudyAttendanceEvent.EventType.EARLY_LEAVE, 
+                        user, currentAssignments.get(0), remainingMinutes));
             }
         }
     }
