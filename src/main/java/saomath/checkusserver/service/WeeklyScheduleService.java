@@ -167,6 +167,16 @@ public class WeeklyScheduleService {
     }
 
     /**
+     * 모든 활동 목록 조회 (주간시간표용)
+     * @return 모든 활동 목록
+     */
+    @Transactional(readOnly = true)
+    public List<Activity> getAllActivities() {
+        log.debug("모든 활동 목록 조회");
+        return activityRepository.findAll();
+    }
+
+    /**
      * 요청 유효성 검증
      */
     private void validateScheduleRequest(WeeklyScheduleRequest request) {
