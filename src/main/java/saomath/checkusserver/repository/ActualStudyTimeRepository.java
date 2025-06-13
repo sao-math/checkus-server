@@ -26,4 +26,7 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
     List<ActualStudyTime> findByStudentIdAndAssignedStudyTimeIdIsNull(Long studentId);
     
     boolean existsByAssignedStudyTimeId(Long assignedStudyTimeId);
+    
+    // 진행 중인 공부 시간 조회 (종료 시간이 null인 것)
+    List<ActualStudyTime> findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(Long studentId);
 }

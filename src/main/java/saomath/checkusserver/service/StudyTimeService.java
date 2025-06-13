@@ -15,6 +15,9 @@ import saomath.checkusserver.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @Transactional
@@ -24,6 +27,7 @@ public class StudyTimeService {
     private final ActualStudyTimeRepository actualStudyTimeRepository;
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(StudyTimeService.class);
 
     @Autowired
     public StudyTimeService(
@@ -224,6 +228,37 @@ public class StudyTimeService {
         
         actualStudyTime.setEndTime(endTime);
         return actualStudyTimeRepository.save(actualStudyTime);
+    }
+
+    /**
+     * 디스코드 봇용: 학생 ID로 진행 중인 공부 세션을 종료합니다.
+     * @param studentId 학생 ID
+     * @param endTime 접속 종료 시간
+     * @return 종료된 실제 공부 시간 기록들
+     */
+    public List<ActualStudyTime> recordStudyEndByStudentId(Long studentId, LocalDateTime endTime) {
+        validateUser(studentId);
+        
+        // 진행 중인 공부 세션들 조회 (endTime이 null인 것들)
+        List<ActualStudyTime> ongoingSessions = actualStudyTimeRepository
+                .findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId);
+        
+        if (ongoingSessions.isEmpty()) {
+            log.warn("종료할 진행 중인 공부 세션이 없습니다. 학생 ID: {}", studentId);
+            return new ArrayList<>();
+        }
+        
+        // 모든 진행 중인 세션을 종료
+        List<ActualStudyTime> endedSessions = new ArrayList<>();
+        for (ActualStudyTime session : ongoingSessions) {
+            session.setEndTime(endTime);
+            ActualStudyTime saved = actualStudyTimeRepository.save(session);
+            endedSessions.add(saved);
+            log.info("공부 세션 종료: 학생 ID={}, 시작={}, 종료={}", 
+                    studentId, session.getStartTime(), endTime);
+        }
+        
+        return endedSessions;
     }
 
     /**

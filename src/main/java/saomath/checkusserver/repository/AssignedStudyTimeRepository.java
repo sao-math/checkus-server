@@ -36,4 +36,30 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
     );
     
     List<AssignedStudyTime> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+    
+    // 현재 시간에 진행 중인 공부 시간 조회 (출석 확인용)
+    @Query("SELECT ast FROM AssignedStudyTime ast WHERE ast.studentId = :studentId " +
+           "AND :currentTime BETWEEN ast.startTime AND ast.endTime")
+    List<AssignedStudyTime> findCurrentStudyTimes(
+            @Param("studentId") Long studentId,
+            @Param("currentTime") LocalDateTime currentTime
+    );
+    
+    // 특정 시간 범위 내에 시작하는 공부 시간 조회 (알림용)
+    @Query("SELECT ast FROM AssignedStudyTime ast WHERE " +
+           "ast.startTime BETWEEN :fromTime AND :toTime " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findStartingBetween(
+            @Param("fromTime") LocalDateTime fromTime,
+            @Param("toTime") LocalDateTime toTime
+    );
+    
+    // 시작했지만 접속 기록이 없는 공부 시간 조회 (미접속 알림용)
+    @Query("SELECT ast FROM AssignedStudyTime ast WHERE " +
+           "ast.startTime BETWEEN :fromTime AND :toTime " +
+           "AND NOT EXISTS (SELECT 1 FROM ActualStudyTime act WHERE act.assignedStudyTimeId = ast.id)")
+    List<AssignedStudyTime> findStartedWithoutAttendance(
+            @Param("fromTime") LocalDateTime fromTime,
+            @Param("toTime") LocalDateTime toTime
+    );
 }
