@@ -75,6 +75,9 @@ jobs:
             export ADMIN_USERNAME="${{ secrets.ADMIN_USERNAME }}"
             export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export BIZGO_CLIENT_ID="${{ secrets.BIZGO_CLIENT_ID }}"
+            export BIZGO_CLIENT_PASSWORD="${{ secrets.BIZGO_CLIENT_PASSWORD }}"
+            export BIZGO_SENDER_KEY="${{ secrets.BIZGO_SENDER_KEY }}"
             
             # 기존 컨테이너 중지 및 제거
             cd ~/checkus-infra

@@ -11,6 +11,7 @@ import saomath.checkusserver.repository.*;
 import saomath.checkusserver.service.UserRoleService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class LocalDataInitializer implements CommandLineRunner {
     private final StudentClassRepository studentClassRepository;
     private final StudentGuardianRepository studentGuardianRepository;
     private final WeeklyScheduleRepository weeklyScheduleRepository;
+    private final AssignedStudyTimeRepository assignedStudyTimeRepository;
+    private final ActualStudyTimeRepository actualStudyTimeRepository;
 
     @Override
     @Transactional
@@ -135,6 +138,7 @@ public class LocalDataInitializer implements CommandLineRunner {
         User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
+        User guardian4 = createUserWithRole("parent4", "박어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
 
         // 활동 종류(학원, 자습)
         Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(false).build());
@@ -148,12 +152,19 @@ public class LocalDataInitializer implements CommandLineRunner {
 //            .classEntity(monWedClass)
 //            .build());
 
-        // 학부모 정보(guardian1을 father로 연결)
+        // 학부모 정보 - 박학생에는 아버지와 어머니 모두 연결
         studentGuardianRepository.save(StudentGuardian.builder()
             .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
             .student(student1)
             .guardian(guardian1)
             .relationship("father")
+            .build());
+            
+        studentGuardianRepository.save(StudentGuardian.builder()
+            .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian4.getId()))
+            .student(student1)
+            .guardian(guardian4)
+            .relationship("mother")
             .build());
 
         // 주간 고정 일정(수학 학원, 수학 숙제, 영어 학원, 영어 숙제)
@@ -190,6 +201,39 @@ public class LocalDataInitializer implements CommandLineRunner {
             .startTime(java.time.LocalTime.of(18, 0))
             .endTime(java.time.LocalTime.of(19, 0))
             .build());
+
+        // 6월 13일 박학생 공부시간 데이터 추가
+        LocalDateTime june13_2024 = LocalDateTime.of(2024, 6, 13, 0, 0);
+        
+        // 할당된 공부시간: 6/13 오후 2시~4시 수학 자습
+        AssignedStudyTime assignedStudyTime1 = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+            .studentId(student1.getId())
+            .title("수학 자습")
+            .activityId(selfStudy.getId())
+            .startTime(june13_2024.withHour(14).withMinute(0))
+            .endTime(june13_2024.withHour(16).withMinute(0))
+            .assignedBy(teacher1.getId())
+            .build());
+
+        // 실제 접속시간 1: 6/13 오후 2:05~3:30 (85분)
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+            .studentId(student1.getId())
+            .assignedStudyTimeId(assignedStudyTime1.getId())
+            .startTime(june13_2024.withHour(14).withMinute(5))
+            .endTime(june13_2024.withHour(15).withMinute(30))
+            .source("discord")
+            .build());
+
+        // 실제 접속시간 2: 6/13 오후 3:45~4:00 (15분) - 짧은 추가 접속
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+            .studentId(student1.getId())
+            .assignedStudyTimeId(assignedStudyTime1.getId())
+            .startTime(june13_2024.withHour(15).withMinute(45))
+            .endTime(june13_2024.withHour(16).withMinute(0))
+            .source("discord")
+            .build());
+
+        log.info("박학생 6/13 공부시간 데이터 추가 완료");
     }
 
     // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성
