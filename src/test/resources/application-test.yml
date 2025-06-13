@@ -51,6 +51,14 @@ discord:
     guild-id: dummy-guild-id
     client-id: dummy-client-id
 
+# Bizgo 설정 (테스트용)
+bizgo:
+  api:
+    base-url: https://omni.ibapi.kr
+    client-id: ${BIZGO_CLIENT_ID:test-client-id}
+    client-password: ${BIZGO_CLIENT_PASSWORD:test-password}
+  sender-key: ${BIZGO_SENDER_KEY:test-sender-key}
+
 # Swagger는 테스트에서 비활성화
 springdoc:
   swagger-ui:
