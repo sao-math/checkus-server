@@ -135,6 +135,7 @@ public class LocalDataInitializer implements CommandLineRunner {
         User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
+        User guardian4 = createUserWithRole("parent4", "박어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
 
         // 활동 종류(학원, 자습)
         Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(false).build());
@@ -148,12 +149,19 @@ public class LocalDataInitializer implements CommandLineRunner {
 //            .classEntity(monWedClass)
 //            .build());
 
-        // 학부모 정보(guardian1을 father로 연결)
+        // 학부모 정보 - 박학생에는 아버지와 어머니 모두 연결
         studentGuardianRepository.save(StudentGuardian.builder()
             .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
             .student(student1)
             .guardian(guardian1)
             .relationship("father")
+            .build());
+            
+        studentGuardianRepository.save(StudentGuardian.builder()
+            .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian4.getId()))
+            .student(student1)
+            .guardian(guardian4)
+            .relationship("mother")
             .build());
 
         // 주간 고정 일정(수학 학원, 수학 숙제, 영어 학원, 영어 숙제)
