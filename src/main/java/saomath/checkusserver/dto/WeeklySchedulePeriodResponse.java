@@ -19,9 +19,6 @@ public class WeeklySchedulePeriodResponse {
     @Schema(description = "학생 ID", example = "1")
     private Long studentId;
 
-    @Schema(description = "학생 이름", example = "김학생")
-    private String studentName;
-
     @Schema(description = "일정 제목", example = "수학 공부")
     private String title;
 

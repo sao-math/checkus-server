@@ -94,6 +94,7 @@ public class VoiceChannelEventService {
                             studentId, event.getTimestamp());
                     
                     // 스터디룸 입장 이벤트 발행
+                    User user = userRepository.findById(studentId).orElseThrow();
                     publishStudyRoomEnterEvent(user, event);
                     break;
                     
