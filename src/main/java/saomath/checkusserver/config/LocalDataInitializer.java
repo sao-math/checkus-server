@@ -203,15 +203,15 @@ public class LocalDataInitializer implements CommandLineRunner {
             .build());
 
         // 6월 13일 박학생 공부시간 데이터 추가
-        LocalDateTime june13_2024 = LocalDateTime.of(2024, 6, 13, 0, 0);
+        LocalDateTime june13_2025 = LocalDateTime.of(2025, 6, 13, 0, 0);
         
         // 할당된 공부시간: 6/13 오후 2시~4시 수학 자습
         AssignedStudyTime assignedStudyTime1 = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
             .studentId(student1.getId())
             .title("수학 자습")
             .activityId(selfStudy.getId())
-            .startTime(june13_2024.withHour(14).withMinute(0))
-            .endTime(june13_2024.withHour(16).withMinute(0))
+            .startTime(june13_2025.withHour(14).withMinute(0))
+            .endTime(june13_2025.withHour(16).withMinute(0))
             .assignedBy(teacher1.getId())
             .build());
 
@@ -219,8 +219,8 @@ public class LocalDataInitializer implements CommandLineRunner {
         actualStudyTimeRepository.save(ActualStudyTime.builder()
             .studentId(student1.getId())
             .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2024.withHour(14).withMinute(5))
-            .endTime(june13_2024.withHour(15).withMinute(30))
+            .startTime(june13_2025.withHour(14).withMinute(5))
+            .endTime(june13_2025.withHour(15).withMinute(30))
             .source("discord")
             .build());
 
@@ -228,8 +228,8 @@ public class LocalDataInitializer implements CommandLineRunner {
         actualStudyTimeRepository.save(ActualStudyTime.builder()
             .studentId(student1.getId())
             .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2024.withHour(15).withMinute(45))
-            .endTime(june13_2024.withHour(16).withMinute(0))
+            .startTime(june13_2025.withHour(15).withMinute(45))
+            .endTime(june13_2025.withHour(16).withMinute(0))
             .source("discord")
             .build());
 
