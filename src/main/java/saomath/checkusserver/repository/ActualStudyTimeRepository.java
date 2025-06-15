@@ -29,4 +29,10 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
     
     // 진행 중인 공부 시간 조회 (종료 시간이 null인 것)
     List<ActualStudyTime> findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(Long studentId);
+    
+    // 할당된 시간 이전에 시작되어 아직 진행중이며 아직 할당되지 않은 세션들 조회
+    List<ActualStudyTime> findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
+            Long studentId, 
+            LocalDateTime beforeTime
+    );
 }

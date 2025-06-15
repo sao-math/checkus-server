@@ -63,4 +63,13 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("fromTime") LocalDateTime fromTime,
             @Param("toTime") LocalDateTime toTime
     );
+    
+    // 정확히 할당된 시간 범위 내에 접속한 경우 조회 (startTime <= 접속시간 <= endTime)
+    @Query("SELECT ast FROM AssignedStudyTime ast WHERE ast.studentId = :studentId " +
+           "AND :accessTime BETWEEN ast.startTime AND ast.endTime " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findByStudentIdAndTimeRange(
+            @Param("studentId") Long studentId,
+            @Param("accessTime") LocalDateTime accessTime
+    );
 }

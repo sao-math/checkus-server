@@ -375,6 +375,34 @@ public class StudyTimeController {
         }
     }
 
+    @Operation(
+        summary = "스케줄러용 - 이전 진행중인 세션 연결",
+        description = "할당된 공부시간 시작 10분 후에도 접속하지 않은 경우, 이전에 접속한 진행중인 세션을 연결합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping("/connect-previous/{assignedId}")
+    public ResponseEntity<ResponseBase<ActualStudyTimeResponse>> connectPreviousOngoingSession(
+            @Parameter(description = "할당된 공부시간 ID") @PathVariable("assignedId") Long assignedId) {
+        
+        try {
+            ActualStudyTime result = studyTimeService.connectPreviousOngoingSession(assignedId);
+            
+            if (result != null) {
+                ActualStudyTimeResponse response = convertToActualResponse(result);
+                return ResponseEntity.ok(
+                        ResponseBase.success("이전 진행중인 세션을 성공적으로 연결했습니다.", response));
+            } else {
+                return ResponseEntity.ok(
+                        ResponseBase.success("연결할 이전 진행중인 세션이 없습니다.", null));
+            }
+                    
+        } catch (Exception e) {
+            log.error("이전 진행중인 세션 연결 실패: assignedId={}", assignedId, e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
+        }
+    }
+
     // Helper methods for converting entities to responses
     private AssignedStudyTimeResponse convertToAssignedResponse(AssignedStudyTime assignedStudyTime) {
         AssignedStudyTimeResponse response = new AssignedStudyTimeResponse();
