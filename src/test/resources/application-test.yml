@@ -66,6 +66,16 @@ springdoc:
   api-docs:
     enabled: false
 
+# 알림 시스템 설정 (테스트용)
+notification:
+  # 통합 스케줄러 비활성화 (테스트에서는 수동 실행)
+  scheduler:
+    enabled: false
+  
+  # 기존 알림톡 전용 스케줄러 비활성화
+  alimtalk-scheduler:
+    enabled: false
+
 # 로깅 레벨 조정
 logging:
   level:
