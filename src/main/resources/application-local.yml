@@ -41,3 +41,12 @@ spring:
   logging:
     level:
       root: DEBUG
+
+# 테스트 데이터 설정 (LocalDataInitializer용)
+# 실제 값으로 변경해서 사용, 빈 값이면 더미 데이터 사용
+test-data:
+  student:
+    phone: ${STUDENT_PHONE}
+    discord-id: ${STUDENT_DISCORD}
+  guardian:
+    phone: ${GUARDIAN_PHONE}

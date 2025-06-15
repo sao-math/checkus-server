@@ -22,21 +22,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LocalDataInitializer implements CommandLineRunner {
 
-    // 환경변수에서 테스트 데이터 읽기 (없으면 null)
-    @Value("${TEST_STUDENT_PHONE:}")
+    @Value("${test-data.student.phone:}")
     private String testStudentPhone;
     
-    @Value("${TEST_STUDENT_DISCORD_ID:}")
+    @Value("${test-data.student.discord-id:}")
     private String testStudentDiscordId;
-    
-    @Value("${TEST_GUARDIAN_PHONE:}")
+
+    @Value("${test-data.guardian.phone:}")
     private String testGuardianPhone;
-    
-    @Value("${TEST_GUARDIAN_NAME:}")
-    private String testGuardianName;
-    
-    @Value("${TEST_GUARDIAN_RELATIONSHIP:father}")
-    private String testGuardianRelationship;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -130,11 +123,10 @@ public class LocalDataInitializer implements CommandLineRunner {
     private void initializeUsers() {
         log.info("사용자 데이터 초기화...");
         
-        // 환경변수 설정 여부 로그 출력
         if (isTestDataConfigured()) {
-            log.info("실제 테스트 데이터 사용 (환경변수에서 읽음)");
+            log.info("실제 테스트 데이터 사용 (설정 파일에서 읽음)");
         } else {
-            log.info("더미 테스트 데이터 사용 (환경변수 미설정)");
+            log.info("더미 테스트 데이터 사용 (설정 파일 미설정)");
         }
         
         // 학교 조회
@@ -163,9 +155,8 @@ public class LocalDataInitializer implements CommandLineRunner {
         
         // 학부모 계정들 (환경변수가 있으면 실제 데이터 사용)
         String guardianPhone = hasValue(testGuardianPhone) ? testGuardianPhone : "010-3333-1111";
-        String guardianName = hasValue(testGuardianName) ? testGuardianName : "박학부모";
-        
-        User guardian1 = createUserWithRole("parent1", guardianName, guardianPhone, "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
+
+        User guardian1 = createUserWithRole("parent1", "박학부모", guardianPhone, "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
         User guardian4 = createUserWithRole("parent4", "박어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
@@ -181,15 +172,12 @@ public class LocalDataInitializer implements CommandLineRunner {
 //            .student(student1)
 //            .classEntity(monWedClass)
 //            .build());
-
-        // 학부모 정보 - 박학생에는 아버지와 어머니 모두 연결 (환경변수 관계 사용)
-        String relationship = hasValue(testGuardianRelationship) ? testGuardianRelationship : "father";
         
         studentGuardianRepository.save(StudentGuardian.builder()
             .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
             .student(student1)
             .guardian(guardian1)
-            .relationship(relationship)
+            .relationship("father")
             .build());
             
         studentGuardianRepository.save(StudentGuardian.builder()
