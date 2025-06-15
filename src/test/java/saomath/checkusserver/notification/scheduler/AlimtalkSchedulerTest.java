@@ -12,7 +12,7 @@ import org.mockito.quality.Strictness;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
-import saomath.checkusserver.notification.service.AlimtalkService;
+import saomath.checkusserver.notification.service.DirectAlimtalkService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
 import saomath.checkusserver.service.StudyTimeService;
 
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 class AlimtalkSchedulerTest {
     
     @Mock
-    private AlimtalkService alimtalkService;
+    private DirectAlimtalkService directAlimtalkService;
     
     @Mock
     private NotificationTargetService targetService;
@@ -42,7 +42,7 @@ class AlimtalkSchedulerTest {
     
     @BeforeEach
     void setUp() {
-        when(alimtalkService.sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class)))
+        when(directAlimtalkService.sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class)))
             .thenReturn(true);
     }
     
@@ -73,7 +73,7 @@ class AlimtalkSchedulerTest {
         
         // Then
         verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
-        verify(alimtalkService, times(2)).sendAlimtalk(
+        verify(directAlimtalkService, times(2)).sendAlimtalk(
             anyString(), 
             eq(AlimtalkTemplate.STUDY_REMINDER_10MIN), 
             any(Map.class)
@@ -131,7 +131,7 @@ class AlimtalkSchedulerTest {
         // Then
         // 1. 알림 발송 확인
         verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
-        verify(alimtalkService, times(2)).sendAlimtalk(
+        verify(directAlimtalkService, times(2)).sendAlimtalk(
             anyString(), 
             eq(AlimtalkTemplate.STUDY_START), 
             any(Map.class)
@@ -226,7 +226,7 @@ class AlimtalkSchedulerTest {
         
         // Then
         verify(targetService).getTodayTaskTargets();
-        verify(alimtalkService, times(2)).sendAlimtalk(
+        verify(directAlimtalkService, times(2)).sendAlimtalk(
             anyString(), 
             eq(AlimtalkTemplate.TODAY_TASKS), 
             any(Map.class)
@@ -260,7 +260,7 @@ class AlimtalkSchedulerTest {
         // Then
         verify(targetService).getNoShowTargets(any(LocalDateTime.class));
         // 학부모에게만 발송 (학생 알림 비활성화)
-        verify(alimtalkService, times(1)).sendAlimtalk(
+        verify(directAlimtalkService, times(1)).sendAlimtalk(
             eq("01011110000"), 
             eq(AlimtalkTemplate.NO_SHOW), 
             any(Map.class)
@@ -271,7 +271,7 @@ class AlimtalkSchedulerTest {
     @DisplayName("알림 발송 실패 시 예외 처리 테스트")
     void sendNotificationWithException() {
         // Given
-        when(alimtalkService.sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class)))
+        when(directAlimtalkService.sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class)))
             .thenThrow(new RuntimeException("네트워크 오류"));
         
         NotificationTargetService.StudyTarget target = NotificationTargetService.StudyTarget.builder()
@@ -296,7 +296,7 @@ class AlimtalkSchedulerTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
         
         // Then
-        verify(alimtalkService).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));
+        verify(directAlimtalkService).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));
     }
     
     @Test
@@ -325,6 +325,6 @@ class AlimtalkSchedulerTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
         
         // Then - 전화번호가 없으므로 알림 발송 안됨
-        verify(alimtalkService, never()).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));
+        verify(directAlimtalkService, never()).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));
     }
 }

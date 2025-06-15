@@ -51,10 +51,7 @@ class AlimtalkServiceImplTest {
         when(infobankClient.send(any(AlimtalkRequest.class))).thenReturn(successResponse);
 
         Map<String, String> variables = new HashMap<>();
-        variables.put("studentName", "홍길동");
-        variables.put("activityName", "수학");
-        variables.put("startTime", "15:00");
-        variables.put("endTime", "17:00");
+        variables.put("이름", "홍길동");
         
         // When
         boolean result = alimtalkService.sendAlimtalk(
@@ -72,7 +69,8 @@ class AlimtalkServiceImplTest {
         AlimtalkRequest capturedRequest = captor.getValue();
         assertThat(capturedRequest.getTo()).isEqualTo(TEST_PHONE_NUMBER);
         assertThat(capturedRequest.getSenderKey()).isEqualTo(TEST_SENDER_KEY);
-        assertThat(capturedRequest.getText()).contains("홍길동", "수학", "15:00", "17:00");
+        assertThat(capturedRequest.getText()).contains("홍길동");
+        assertThat(capturedRequest.getText()).doesNotContain("#{이름}");
     }
     
     @Test
@@ -136,9 +134,8 @@ class AlimtalkServiceImplTest {
             .thenReturn(successResponse);
         
         Map<String, String> variables = new HashMap<>();
-        variables.put("studentName", "테스트");
-        variables.put("taskCount", "5");
-        variables.put("taskList", "과제 목록");
+        variables.put("이름", "테스트");
+        variables.put("1", "과제 목록");
         
         // When
         int successCount = alimtalkService.sendBulkAlimtalk(
@@ -157,8 +154,8 @@ class AlimtalkServiceImplTest {
     void replaceVariables() throws Exception {
         // Given
         Map<String, String> variables = new HashMap<>();
-        variables.put("studentName", "김철수");
-        variables.put("enterTime", "14:30");
+        variables.put("이름", "김철수");
+        variables.put("입장시간", "14:30");
         
         AlimtalkResponse successResponse = mock(AlimtalkResponse.class);
         when(successResponse.getCode()).thenReturn("0000");
@@ -176,8 +173,7 @@ class AlimtalkServiceImplTest {
         verify(infobankClient).send(captor.capture());
         
         String sentText = captor.getValue().getText();
-        assertThat(sentText).contains("김철수");
-        assertThat(sentText).contains("14:30");
-        assertThat(sentText).doesNotContain("#{");
+        assertThat(sentText).contains("김철수", "14:30");
+        assertThat(sentText).doesNotContain("#{이름}", "#{입장시간}");
     }
 }
