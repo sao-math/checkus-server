@@ -8,26 +8,35 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
+import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
-import saomath.checkusserver.notification.service.DirectAlimtalkService;
+import saomath.checkusserver.notification.service.MultiChannelNotificationService;
+import saomath.checkusserver.notification.service.NotificationService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * 통합 알림 스케줄러
+ * 알림톡, 디스코드 등 모든 채널을 통합하여 관리
+ */
 @Slf4j
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "notification.alimtalk-scheduler.enabled", havingValue = "true", matchIfMissing = false)
-public class AlimtalkScheduler {
+@ConditionalOnProperty(name = "notification.scheduler.enabled", havingValue = "true", matchIfMissing = true)
+public class UnifiedNotificationScheduler {
     
-    private final DirectAlimtalkService directAlimtalkService;
+    private final MultiChannelNotificationService notificationService;
     private final NotificationTargetService targetService;
     private final StudyTimeService studyTimeService;
+    
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     
     /**
      * 매 분마다 실행: 공부 시작 10분 전 알림
@@ -45,12 +54,22 @@ public class AlimtalkScheduler {
                 "이름", target.getStudentName()
             );
             
-            // 학생에게 알림
-            sendNotification(target.getStudentPhone(), AlimtalkTemplate.STUDY_REMINDER_10MIN, variables);
+            // 멀티채널로 학생에게 알림 전송
+            notificationService.sendNotification(
+                target.getStudentId(), 
+                AlimtalkTemplate.STUDY_REMINDER_10MIN.name(), 
+                variables
+            ).thenAccept(success -> {
+                if (success) {
+                    log.debug("10분 전 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+                } else {
+                    log.warn("10분 전 알림 전송 실패 - 학생 ID: {}", target.getStudentId());
+                }
+            });
             
             // 학부모에게도 알림 (설정된 경우)
-            if (target.isParentNotificationEnabled()) {
-                sendNotification(target.getParentPhone(), AlimtalkTemplate.STUDY_REMINDER_10MIN, variables);
+            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.STUDY_REMINDER_10MIN, variables);
             }
         }
         
@@ -74,10 +93,20 @@ public class AlimtalkScheduler {
                 "이름", target.getStudentName()
             );
             
-            sendNotification(target.getStudentPhone(), AlimtalkTemplate.STUDY_START, variables);
+            // 멀티채널로 학생에게 알림 전송
+            notificationService.sendNotification(
+                target.getStudentId(),
+                AlimtalkTemplate.STUDY_START.name(),
+                variables
+            ).thenAccept(success -> {
+                if (success) {
+                    log.debug("공부 시작 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+                }
+            });
             
-            if (target.isParentNotificationEnabled()) {
-                sendNotification(target.getParentPhone(), AlimtalkTemplate.STUDY_START, variables);
+            // 학부모에게도 알림 (설정된 경우)
+            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.STUDY_START, variables);
             }
         }
         
@@ -99,6 +128,9 @@ public class AlimtalkScheduler {
                     log.info("이전 진행중인 세션 연결 성공: 할당 ID={}, 학생 ID={}, 실제 세션 ID={}", 
                             assignedStudyTime.getId(), assignedStudyTime.getStudentId(), connected.getId());
                 }
+            } catch (ResourceNotFoundException e) {
+                log.warn("할당된 공부시간을 찾을 수 없어 세션 연결 스킵: 할당 ID={}, 오류: {}", 
+                        assignedStudyTime.getId(), e.getMessage());
             } catch (Exception e) {
                 log.error("세션 연결 실패: 할당 ID={}, 학생 ID={}", 
                         assignedStudyTime.getId(), assignedStudyTime.getStudentId(), e);
@@ -125,10 +157,20 @@ public class AlimtalkScheduler {
                 "2", "" // 미완료 과제는 빈 값으로 설정 (오늘 시작이므로)
             );
             
-            sendNotification(target.getStudentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
+            // 멀티채널로 학생에게 알림 전송
+            notificationService.sendNotification(
+                target.getStudentId(),
+                AlimtalkTemplate.TODAY_TASKS.name(),
+                variables
+            ).thenAccept(success -> {
+                if (success) {
+                    log.debug("오늘의 할일 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+                }
+            });
             
-            if (target.isParentNotificationEnabled()) {
-                sendNotification(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
+            // 학부모에게도 알림 (설정된 경우)
+            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
             }
         }
         
@@ -153,12 +195,20 @@ public class AlimtalkScheduler {
                     "2", target.getTaskListString() // 미완료 과제
                 );
                 
-                sendNotification(target.getStudentPhone(), 
-                    AlimtalkTemplate.TODAY_TASKS, variables); // TODAY_TASKS 템플릿 사용
+                // 멀티채널로 학생에게 알림 전송
+                notificationService.sendNotification(
+                    target.getStudentId(),
+                    AlimtalkTemplate.TODAY_TASKS.name(), 
+                    variables
+                ).thenAccept(success -> {
+                    if (success) {
+                        log.debug("전날 미완료 할일 알림(아침) 전송 성공 - 학생 ID: {}", target.getStudentId());
+                    }
+                });
                 
-                if (target.isParentNotificationEnabled()) {
-                    sendNotification(target.getParentPhone(), 
-                        AlimtalkTemplate.TODAY_TASKS, variables);
+                // 학부모에게도 알림 (설정된 경우)
+                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
                 }
             }
         }
@@ -183,12 +233,20 @@ public class AlimtalkScheduler {
                     "1", target.getTaskListString() // 미완료 과제
                 );
                 
-                sendNotification(target.getStudentPhone(), 
-                    AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, variables);
+                // 멀티채널로 학생에게 알림 전송
+                notificationService.sendNotification(
+                    target.getStudentId(),
+                    AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING.name(),
+                    variables
+                ).thenAccept(success -> {
+                    if (success) {
+                        log.debug("전날 미완료 할일 알림(저녁) 전송 성공 - 학생 ID: {}", target.getStudentId());
+                    }
+                });
                 
-                if (target.isParentNotificationEnabled()) {
-                    sendNotification(target.getParentPhone(), 
-                        AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, variables);
+                // 학부모에게도 알림 (설정된 경우)
+                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, variables);
                 }
             }
         }
@@ -212,14 +270,22 @@ public class AlimtalkScheduler {
                 "이름", target.getStudentName()
             );
             
-            // 미접속 알림은 주로 학부모에게 발송
-            if (target.isParentNotificationEnabled()) {
-                sendNotification(target.getParentPhone(), AlimtalkTemplate.NO_SHOW, variables);
-            }
-            
             // 학생에게도 발송 설정된 경우
             if (target.isStudentNotificationEnabled()) {
-                sendNotification(target.getStudentPhone(), AlimtalkTemplate.NO_SHOW, variables);
+                notificationService.sendNotification(
+                    target.getStudentId(),
+                    AlimtalkTemplate.NO_SHOW.name(),
+                    variables
+                ).thenAccept(success -> {
+                    if (success) {
+                        log.debug("미접속 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+                    }
+                });
+            }
+            
+            // 미접속 알림은 주로 학부모에게 발송
+            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.NO_SHOW, variables);
             }
         }
         
@@ -227,20 +293,39 @@ public class AlimtalkScheduler {
     }
     
     /**
-     * 알림 발송 헬퍼 메서드
+     * 학부모에게 직접 알림톡 전송 헬퍼 메서드
      */
-    private void sendNotification(String phoneNumber, AlimtalkTemplate template, Map<String, String> variables) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
+    private void sendDirectAlimtalkToParent(String parentPhone, AlimtalkTemplate template, Map<String, String> variables) {
+        if (parentPhone == null || parentPhone.isEmpty()) {
             return;
         }
         
-        try {
-            boolean success = directAlimtalkService.sendAlimtalk(phoneNumber, template, variables);
-            if (!success) {
-                log.warn("알림톡 발송 실패 - 수신자: {}, 템플릿: {}", phoneNumber, template.name());
-            }
-        } catch (Exception e) {
-            log.error("알림톡 발송 중 오류 - 수신자: {}, 템플릿: {}", phoneNumber, template.name(), e);
+        // 전화번호 마스킹 (로그용)
+        String maskedPhone = parentPhone.length() > 7 
+            ? parentPhone.substring(0, 3) + "****" + parentPhone.substring(7)
+            : "****";
+        
+        // 알림톡 채널로만 전송 (학부모는 주로 카카오톡 사용)
+        CompletableFuture<Boolean> future = notificationService.sendNotificationToChannel(
+            parentPhone,
+            template.name(),
+            variables,
+            NotificationService.NotificationChannel.ALIMTALK
+        );
+        
+        if (future != null) {
+            future.thenAccept(success -> {
+                if (success) {
+                    log.debug("학부모 알림톡 전송 성공 - 전화번호: {}, 템플릿: {}", 
+                        maskedPhone, template.name());
+                } else {
+                    log.warn("학부모 알림톡 전송 실패 - 전화번호: {}, 템플릿: {}", 
+                        maskedPhone, template.name());
+                }
+            });
+        } else {
+            log.error("학부모 알림톡 전송 실패 - sendNotificationToChannel이 null 반환 - 전화번호: {}, 템플릿: {}", 
+                maskedPhone, template.name());
         }
     }
 }

@@ -6,6 +6,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import saomath.checkusserver.entity.StudentGuardian;
+import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.entity.User;
+import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
 import saomath.checkusserver.notification.service.NotificationService;
@@ -17,7 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 알림 이벤트 리스너
+ * 통합 알림 이벤트 리스너
+ * 스터디룸 입장, 조기퇴장, 늦은 입장 등 실시간 이벤트 처리
  */
 @Slf4j
 @Component
@@ -29,6 +33,9 @@ public class NotificationEventListener {
     
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     
+    /**
+     * 스터디룸 입장 이벤트 처리
+     */
     @Async
     @EventListener
     public void handleStudyRoomEnterEvent(StudyRoomEnterEvent event) {
@@ -38,10 +45,10 @@ public class NotificationEventListener {
         try {
             // 알림 변수 설정
             Map<String, String> variables = new HashMap<>();
-            variables.put("studentName", event.getStudentName());
-            variables.put("enterTime", event.getEnterTime().format(TIME_FORMATTER));
+            variables.put("이름", event.getStudentName());
+            variables.put("입장시간", event.getEnterTime().format(TIME_FORMATTER));
             
-            // 학생에게 알림 전송
+            // 멀티채널로 학생에게 알림 전송
             notificationService.sendNotification(
                 event.getStudentId(),
                 AlimtalkTemplate.STUDY_ROOM_ENTER.name(),
@@ -49,6 +56,8 @@ public class NotificationEventListener {
             ).thenAccept(success -> {
                 if (success) {
                     log.debug("학생 입장 알림 전송 성공 - ID: {}", event.getStudentId());
+                } else {
+                    log.warn("학생 입장 알림 전송 실패 - ID: {}", event.getStudentId());
                 }
             });
             
@@ -61,19 +70,106 @@ public class NotificationEventListener {
     }
     
     /**
-     * 학부모에게 알림 전송
+     * 출석 관련 이벤트 처리 (조기퇴장, 늦은입장)
+     */
+    @Async
+    @EventListener
+    public void handleStudyAttendanceEvent(StudyAttendanceEvent event) {
+        log.info("출석 이벤트 수신 - 타입: {}, 학생: {}, 시간: {}분", 
+            event.getEventType(), event.getStudent().getName(), event.getMinutes());
+        
+        try {
+            switch (event.getEventType()) {
+                case EARLY_LEAVE:
+                    handleEarlyLeaveEvent(event.getStudent(), event.getStudyTime(), event.getMinutes());
+                    break;
+                case LATE_ARRIVAL:
+                    handleLateArrivalEvent(event.getStudent(), event.getStudyTime(), event.getMinutes());
+                    break;
+                default:
+                    log.warn("알 수 없는 출석 이벤트 타입: {}", event.getEventType());
+            }
+        } catch (Exception e) {
+            log.error("출석 이벤트 처리 중 오류 - 타입: {}, 학생: {}", 
+                event.getEventType(), event.getStudent().getName(), e);
+        }
+    }
+    
+    /**
+     * 조기퇴장 이벤트 처리
+     */
+    private void handleEarlyLeaveEvent(User student, AssignedStudyTime studyTime, long remainingMinutes) {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("이름", student.getName());
+        variables.put("과목", studyTime.getTitle() != null ? studyTime.getTitle() : "공부");
+        variables.put("남은시간", remainingMinutes + "분");
+        variables.put("종료시간", studyTime.getEndTime().format(TIME_FORMATTER));
+        
+        // 조기퇴장 알림 전송
+        notificationService.sendNotification(
+            student.getId(),
+            AlimtalkTemplate.EARLY_LEAVE.name(),
+            variables
+        ).thenAccept(success -> {
+            if (success) {
+                log.debug("조기퇴장 알림 전송 성공 - 학생 ID: {}", student.getId());
+            }
+        });
+        
+        // 학부모에게도 알림
+        sendToGuardiansByStudentId(student.getId(), AlimtalkTemplate.EARLY_LEAVE.name(), variables);
+    }
+    
+    /**
+     * 늦은입장 이벤트 처리  
+     */
+    private void handleLateArrivalEvent(User student, AssignedStudyTime studyTime, long lateMinutes) {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("이름", student.getName());
+        variables.put("과목", studyTime.getTitle() != null ? studyTime.getTitle() : "공부");
+        variables.put("늦은시간", lateMinutes + "분");
+        variables.put("종료시간", studyTime.getEndTime().format(TIME_FORMATTER));
+        
+        // 늦은입장 알림 전송
+        notificationService.sendNotification(
+            student.getId(),
+            AlimtalkTemplate.LATE_ARRIVAL.name(),
+            variables
+        ).thenAccept(success -> {
+            if (success) {
+                log.debug("늦은입장 알림 전송 성공 - 학생 ID: {}", student.getId());
+            }
+        });
+        
+        // 학부모에게도 알림
+        sendToGuardiansByStudentId(student.getId(), AlimtalkTemplate.LATE_ARRIVAL.name(), variables);
+    }
+    
+    /**
+     * 스터디룸 입장 시 학부모에게 알림 전송
      */
     private void sendToGuardians(StudyRoomEnterEvent event, Map<String, String> variables) {
-        List<StudentGuardian> guardians = studentGuardianRepository.findByStudentId(event.getStudentId());
+        sendToGuardiansByStudentId(event.getStudentId(), AlimtalkTemplate.STUDY_ROOM_ENTER.name(), variables);
+    }
+    
+    /**
+     * 학생 ID로 학부모에게 알림 전송
+     */
+    private void sendToGuardiansByStudentId(Long studentId, String templateId, Map<String, String> variables) {
+        List<StudentGuardian> guardians = studentGuardianRepository.findByStudentId(studentId);
         
         for (StudentGuardian guardian : guardians) {
             notificationService.sendNotification(
                 guardian.getGuardian().getId(),
-                AlimtalkTemplate.STUDY_ROOM_ENTER.name(),
+                templateId,
                 variables
             ).thenAccept(success -> {
                 if (success) {
-                    log.debug("학부모 입장 알림 전송 성공 - 학부모 ID: {}", guardian.getGuardian().getId());
+                    log.debug("학부모 알림 전송 성공 - 학부모 ID: {}, 템플릿: {}", 
+                        guardian.getGuardian().getId(), templateId);
+                } else {
+                    log.warn("학부모 알림 전송 실패 - 학부모 ID: {}, 템플릿: {}", 
+                        guardian.getGuardian().getId(), templateId);
                 }
             });
         }
