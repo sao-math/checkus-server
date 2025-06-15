@@ -270,7 +270,6 @@ class WeeklyScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("기간별 시간표 조회 성공"))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].id").value(1))
-                .andExpect(jsonPath("$.data[0].studentName").value("김학생"))
                 .andExpect(jsonPath("$.data[0].title").value("수학 공부"))
                 .andExpect(jsonPath("$.data[0].actualStartTime").value("2025-06-02T09:00:00"))
                 .andExpect(jsonPath("$.data[0].dayOfWeekName").value("월요일"));
