@@ -33,10 +33,17 @@ public class DirectAlimtalkService implements AlimtalkService {
     
     public boolean sendAlimtalk(String phoneNumber, AlimtalkTemplate template, Map<String, String> variables) {
         try {
+            // 전화번호 유효성 검사 및 하이픈 제거
+            if (phoneNumber == null || phoneNumber.isEmpty()) {
+                log.warn("알림톡 발송 실패 - 전화번호가 비어있음");
+                return false;
+            }
+            String cleanPhoneNumber = phoneNumber.replaceAll("[-\\s]", "");  // 하이픈과 공백 제거
+            
             // 템플릿 메시지에 변수 치환
             String message = replaceVariables(template.getTemplateMessage(), variables);
             
-            log.info("직접 HTTP 알림톡 발송 시작 - 수신자: {}, 템플릿: {}", phoneNumber, template.name());
+            log.info("직접 HTTP 알림톡 발송 시작 - 수신자: {} -> {}, 템플릿: {}", phoneNumber, cleanPhoneNumber, template.name());
             log.info("SenderKey: {}", bizgoProperties.getSenderKey());
             log.info("TemplateCode: {}", template.getTemplateCode());
             log.info("Message: {}", message);
@@ -45,7 +52,7 @@ public class DirectAlimtalkService implements AlimtalkService {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("senderKey", bizgoProperties.getSenderKey());
             requestBody.put("msgType", "AT");
-            requestBody.put("to", phoneNumber);
+            requestBody.put("to", cleanPhoneNumber);  // 정제된 전화번호 사용
             requestBody.put("templateCode", template.getTemplateCode());
             requestBody.put("text", message);
             
@@ -95,7 +102,7 @@ public class DirectAlimtalkService implements AlimtalkService {
                 
                 // 성공 코드 체크 (A000 또는 0000)
                 if ("A000".equals(code) || "0000".equals(code)) {
-                    log.info("직접 HTTP 알림톡 발송 성공 - 수신자: {}, 템플릿: {}", phoneNumber, template.name());
+                    log.info("직접 HTTP 알림톡 발송 성공 - 수신자: {} -> {}, 템플릿: {}", phoneNumber, cleanPhoneNumber, template.name());
                     return true;
                 } else {
                     log.error("알림톡 발송 실패 - 코드: {}, 메시지: {}", code, responseJson.path("result").asText());
