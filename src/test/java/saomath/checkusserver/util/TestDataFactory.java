@@ -126,7 +126,6 @@ public class TestDataFactory {
     public static WeeklySchedule createWeeklySchedule(Long studentId, String title, Long activityId, 
                                                      Integer dayOfWeek, LocalTime startTime, LocalTime endTime) {
         return WeeklySchedule.builder()
-                .id((long) userCounter++)
                 .studentId(studentId)
                 .title(title)
                 .activityId(activityId)
@@ -148,7 +147,6 @@ public class TestDataFactory {
      */
     public static Activity createActivity(String name, Boolean isStudyAssignable) {
         return Activity.builder()
-                .id((long) userCounter++)
                 .name(name)
                 .isStudyAssignable(isStudyAssignable)
                 .build();
@@ -166,10 +164,33 @@ public class TestDataFactory {
      */
     public static User createUser(String name) {
         return User.builder()
-                .id((long) userCounter++)
-                .username("testuser" + userCounter)
+                .username("testuser" + userCounter++)
                 .name(name)
                 .phoneNumber("010-1234-" + String.format("%04d", userCounter))
+                .build();
+    }
+    
+    /**
+     * 학생 사용자 엔티티 생성
+     */
+    public static User createStudent(String username, String name, String phoneNumber) {
+        return User.builder()
+                .username(username)
+                .name(name)
+                .phoneNumber(phoneNumber)
+                .discordId("discord" + userCounter++)
+                .build();
+    }
+    
+    /**
+     * 선생님 사용자 엔티티 생성
+     */
+    public static User createTeacher(String username, String name, String phoneNumber) {
+        return User.builder()
+                .username(username)
+                .name(name)
+                .phoneNumber(phoneNumber)
+                .discordId("discord" + userCounter++)
                 .build();
     }
 }

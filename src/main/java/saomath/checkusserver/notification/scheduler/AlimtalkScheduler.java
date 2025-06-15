@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
-import saomath.checkusserver.notification.service.AlimtalkService;
+import saomath.checkusserver.notification.service.DirectAlimtalkService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
+import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,8 +23,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AlimtalkScheduler {
     
-    private final AlimtalkService alimtalkService;
+    private final DirectAlimtalkService directAlimtalkService;
     private final NotificationTargetService targetService;
+    private final StudyTimeService studyTimeService;
     
     /**
      * 매 분마다 실행: 공부 시작 10분 전 알림
@@ -36,10 +40,7 @@ public class AlimtalkScheduler {
         
         for (NotificationTargetService.StudyTarget target : targets) {
             Map<String, String> variables = Map.of(
-                "studentName", target.getStudentName(),
-                "activityName", target.getActivityName(),
-                "startTime", target.getFormattedStartTime(),
-                "endTime", target.getFormattedEndTime()
+                "이름", target.getStudentName()
             );
             
             // 학생에게 알림
@@ -55,22 +56,20 @@ public class AlimtalkScheduler {
     }
     
     /**
-     * 매 분마다 실행: 공부 시작 시간 알림
+     * 매 분마다 실행: 공부 시작 시간 알림 + 세션 연결 체크
      */
     @Scheduled(cron = "0 * * * * *")
-    public void sendStudyStartNotification() {
-        log.debug("공부 시작 시간 알림 체크 시작");
-        
+    public void sendStudyStartNotificationAndConnectSessions() {
         LocalDateTime now = LocalDateTime.now();
+        log.debug("공부 시작 시간 알림 및 세션 연결 체크 시작: {}", now);
+        
+        // 1. 공부 시작 시간 알림 발송
         List<NotificationTargetService.StudyTarget> targets = 
             targetService.getStudyTargetsForTime(now);
         
         for (NotificationTargetService.StudyTarget target : targets) {
             Map<String, String> variables = Map.of(
-                "studentName", target.getStudentName(),
-                "activityName", target.getActivityName(),
-                "startTime", target.getFormattedStartTime(),
-                "endTime", target.getFormattedEndTime()
+                "이름", target.getStudentName()
             );
             
             sendNotification(target.getStudentPhone(), AlimtalkTemplate.STUDY_START, variables);
@@ -81,6 +80,30 @@ public class AlimtalkScheduler {
         }
         
         log.debug("공부 시작 시간 알림 발송 완료 - {}건", targets.size());
+        
+        // 2. 10분 전에 시작된 공부시간의 세션 연결 체크
+        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
+        List<AssignedStudyTime> assignedStudyTimes = studyTimeService.getAssignedStudyTimesByDateRange(
+                tenMinutesAgo.minusMinutes(1), 
+                tenMinutesAgo.plusMinutes(1)
+        );
+        
+        int connectedSessions = 0;
+        for (AssignedStudyTime assignedStudyTime : assignedStudyTimes) {
+            try {
+                ActualStudyTime connected = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
+                if (connected != null) {
+                    connectedSessions++;
+                    log.info("이전 진행중인 세션 연결 성공: 할당 ID={}, 학생 ID={}, 실제 세션 ID={}", 
+                            assignedStudyTime.getId(), assignedStudyTime.getStudentId(), connected.getId());
+                }
+            } catch (Exception e) {
+                log.error("세션 연결 실패: 할당 ID={}, 학생 ID={}", 
+                        assignedStudyTime.getId(), assignedStudyTime.getStudentId(), e);
+            }
+        }
+        
+        log.debug("세션 연결 체크 완료 - 대상: {}건, 연결: {}건", assignedStudyTimes.size(), connectedSessions);
     }
     
     /**
@@ -95,9 +118,9 @@ public class AlimtalkScheduler {
         
         for (NotificationTargetService.TaskTarget target : targets) {
             Map<String, String> variables = Map.of(
-                "studentName", target.getStudentName(),
-                "taskCount", String.valueOf(target.getTaskCount()),
-                "taskList", target.getTaskListString()
+                "이름", target.getStudentName(),
+                "1", target.getTaskListString(),
+                "2", "" // 미완료 과제는 빈 값으로 설정 (오늘 시작이므로)
             );
             
             sendNotification(target.getStudentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
@@ -123,17 +146,17 @@ public class AlimtalkScheduler {
         for (NotificationTargetService.TaskTarget target : targets) {
             if (target.getTaskCount() > 0) {
                 Map<String, String> variables = Map.of(
-                    "studentName", target.getStudentName(),
-                    "incompleteCount", String.valueOf(target.getTaskCount()),
-                    "taskList", target.getTaskListString()
+                    "이름", target.getStudentName(),
+                    "1", "", // 오늘의 과제는 빈 값
+                    "2", target.getTaskListString() // 미완료 과제
                 );
                 
                 sendNotification(target.getStudentPhone(), 
-                    AlimtalkTemplate.YESTERDAY_INCOMPLETE_MORNING, variables);
+                    AlimtalkTemplate.TODAY_TASKS, variables); // TODAY_TASKS 템플릿 사용
                 
                 if (target.isParentNotificationEnabled()) {
                     sendNotification(target.getParentPhone(), 
-                        AlimtalkTemplate.YESTERDAY_INCOMPLETE_MORNING, variables);
+                        AlimtalkTemplate.TODAY_TASKS, variables);
                 }
             }
         }
@@ -154,9 +177,8 @@ public class AlimtalkScheduler {
         for (NotificationTargetService.TaskTarget target : targets) {
             if (target.getTaskCount() > 0) {
                 Map<String, String> variables = Map.of(
-                    "studentName", target.getStudentName(),
-                    "incompleteCount", String.valueOf(target.getTaskCount()),
-                    "taskList", target.getTaskListString()
+                    "이름", target.getStudentName(),
+                    "1", target.getTaskListString() // 미완료 과제
                 );
                 
                 sendNotification(target.getStudentPhone(), 
@@ -185,9 +207,7 @@ public class AlimtalkScheduler {
         
         for (NotificationTargetService.NoShowTarget target : targets) {
             Map<String, String> variables = Map.of(
-                "studentName", target.getStudentName(),
-                "startTime", target.getFormattedStartTime(),
-                "endTime", target.getFormattedEndTime()
+                "이름", target.getStudentName()
             );
             
             // 미접속 알림은 주로 학부모에게 발송
@@ -213,7 +233,7 @@ public class AlimtalkScheduler {
         }
         
         try {
-            boolean success = alimtalkService.sendAlimtalk(phoneNumber, template, variables);
+            boolean success = directAlimtalkService.sendAlimtalk(phoneNumber, template, variables);
             if (!success) {
                 log.warn("알림톡 발송 실패 - 수신자: {}, 템플릿: {}", phoneNumber, template.name());
             }

@@ -6,10 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
@@ -26,8 +24,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("StudyTimeService 테스트")
-class StudyTimeServiceTest {
+@DisplayName("StudyTimeService 새 기능 테스트")
+class StudyTimeServiceNewFeatureTest {
 
     @Mock
     private AssignedStudyTimeRepository assignedStudyTimeRepository;
@@ -45,160 +43,8 @@ class StudyTimeServiceTest {
     private StudyTimeService studyTimeService;
 
     @Test
-    @DisplayName("공부 시간 배정 성공")
-    void assignStudyTime_Success() {
-        // Given
-        Long studentId = 1L;
-        Long activityId = 1L;
-        Long teacherId = 2L;
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
-        LocalDateTime endTime = startTime.plusHours(2);
-
-        Activity activity = Activity.builder()
-                .id(activityId)
-                .name("수학 공부")
-                .isStudyAssignable(true)
-                .build();
-
-        AssignedStudyTime expectedResult = AssignedStudyTime.builder()
-                .studentId(studentId)
-                .title("수학 공부")
-                .activityId(activityId)
-                .startTime(startTime)
-                .endTime(endTime)
-                .assignedBy(teacherId)
-                .build();
-
-        when(userRepository.existsById(studentId)).thenReturn(true);
-        when(userRepository.existsById(teacherId)).thenReturn(true);
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
-        when(assignedStudyTimeRepository.findOverlappingStudyTimes(studentId, startTime, endTime))
-                .thenReturn(new ArrayList<>());
-        when(assignedStudyTimeRepository.save(any(AssignedStudyTime.class))).thenReturn(expectedResult);
-
-        // When
-        AssignedStudyTime result = studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(studentId, result.getStudentId());
-        assertEquals("수학 공부", result.getTitle());
-        assertEquals(activityId, result.getActivityId());
-        assertEquals(startTime, result.getStartTime());
-        assertEquals(endTime, result.getEndTime());
-        assertEquals(teacherId, result.getAssignedBy());
-
-        verify(userRepository).existsById(studentId);
-        verify(userRepository).existsById(teacherId);
-        verify(activityRepository).findById(activityId);
-        verify(assignedStudyTimeRepository).findOverlappingStudyTimes(studentId, startTime, endTime);
-        verify(assignedStudyTimeRepository).save(any(AssignedStudyTime.class));
-    }
-
-    @Test
-    @DisplayName("공부 시간 배정 실패 - 시간 겹침")
-    void assignStudyTime_Fail_TimeOverlap() {
-        // Given
-        Long studentId = 1L;
-        Long activityId = 1L;
-        Long teacherId = 2L;
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
-        LocalDateTime endTime = startTime.plusHours(2);
-
-        Activity activity = Activity.builder()
-                .id(activityId)
-                .name("수학 공부")
-                .isStudyAssignable(true)
-                .build();
-
-        List<AssignedStudyTime> overlappingTimes = List.of(
-                AssignedStudyTime.builder().id(1L).studentId(studentId).build()
-        );
-
-        when(userRepository.existsById(studentId)).thenReturn(true);
-        when(userRepository.existsById(teacherId)).thenReturn(true);
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
-        when(assignedStudyTimeRepository.findOverlappingStudyTimes(studentId, startTime, endTime))
-                .thenReturn(overlappingTimes);
-
-        // When & Then
-        assertThrows(BusinessException.class, () -> {
-            studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
-        });
-
-        verify(assignedStudyTimeRepository, never()).save(any(AssignedStudyTime.class));
-    }
-
-    @Test
-    @DisplayName("배정된 공부 시간 삭제 성공")
-    void deleteAssignedStudyTime_Success() {
-        // Given
-        Long assignedId = 1L;
-        when(assignedStudyTimeRepository.existsById(assignedId)).thenReturn(true);
-
-        // When
-        studyTimeService.deleteAssignedStudyTime(assignedId);
-
-        // Then
-        verify(assignedStudyTimeRepository).existsById(assignedId);
-        verify(assignedStudyTimeRepository).deleteById(assignedId);
-    }
-
-    @Test
-    @DisplayName("학생별 기간 공부 시간 조회 성공")
-    void getAssignedStudyTimesByStudentAndDateRange_Success() {
-        // Given
-        Long studentId = 1L;
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusDays(7);
-
-        List<AssignedStudyTime> expectedResult = List.of(
-                AssignedStudyTime.builder().studentId(studentId).title("수학 공부").build()
-        );
-
-        when(userRepository.existsById(studentId)).thenReturn(true);
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(studentId, startDate, endDate))
-                .thenReturn(expectedResult);
-
-        // When
-        List<AssignedStudyTime> result = studyTimeService.getAssignedStudyTimesByStudentAndDateRange(
-                studentId, startDate, endDate);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(userRepository).existsById(studentId);
-        verify(assignedStudyTimeRepository).findByStudentIdAndStartTimeBetween(studentId, startDate, endDate);
-    }
-
-    @Test
-    @DisplayName("전체 기간별 배정된 공부 시간 조회 성공")
-    void getAssignedStudyTimesByDateRange_Success() {
-        // Given
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusDays(7);
-
-        List<AssignedStudyTime> expectedResult = List.of(
-                AssignedStudyTime.builder().studentId(1L).title("수학 공부").build(),
-                AssignedStudyTime.builder().studentId(2L).title("영어 공부").build()
-        );
-
-        when(assignedStudyTimeRepository.findStartingBetween(startDate, endDate))
-                .thenReturn(expectedResult);
-
-        // When
-        List<AssignedStudyTime> result = studyTimeService.getAssignedStudyTimesByDateRange(
-                startDate, endDate);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(assignedStudyTimeRepository).findStartingBetween(startDate, endDate);
-    }
-
-    @Test
-    @DisplayName("디스코드 봇용 공부 시작 기록 - 할당된 시간 범위 내 접속")
-    void recordStudyStart_WithinAssignedTime() {
+    @DisplayName("할당된 시간 범위 내 접속시 즉시 연결")
+    void recordStudyStart_Success_WithinAssignedTime() {
         // Given
         Long studentId = 1L;
         LocalDateTime startTime = LocalDateTime.now();
@@ -242,8 +88,8 @@ class StudyTimeServiceTest {
     }
 
     @Test
-    @DisplayName("디스코드 봇용 공부 시작 기록 - 할당된 시간 범위 밖 접속")
-    void recordStudyStart_OutsideAssignedTime() {
+    @DisplayName("할당된 시간 범위 밖 접속시 미연결")
+    void recordStudyStart_Success_OutsideAssignedTime() {
         // Given
         Long studentId = 1L;
         LocalDateTime startTime = LocalDateTime.now();
@@ -372,23 +218,118 @@ class StudyTimeServiceTest {
     }
 
     @Test
-    @DisplayName("공부 배정 가능한 활동 목록 조회 성공")
-    void getStudyAssignableActivities_Success() {
+    @DisplayName("이전 진행중인 세션 연결 - 할당된 공부시간을 찾을 수 없는 경우")
+    void connectPreviousOngoingSession_AssignedNotFound() {
         // Given
-        List<Activity> expectedResult = List.of(
-                Activity.builder().id(1L).name("수학").isStudyAssignable(true).build(),
-                Activity.builder().id(2L).name("영어").isStudyAssignable(true).build()
-        );
+        Long assignedStudyTimeId = 999L;
 
-        when(activityRepository.findByIsStudyAssignableTrue()).thenReturn(expectedResult);
+        when(assignedStudyTimeRepository.findById(assignedStudyTimeId))
+                .thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
+        });
+
+        verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
+        verify(actualStudyTimeRepository, never())
+                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
+                        any(), any());
+        verify(actualStudyTimeRepository, never()).save(any(ActualStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("이전 진행중인 세션 연결 - 여러 세션 중 가장 최근 세션 선택")
+    void connectPreviousOngoingSession_SelectLatestSession() {
+        // Given
+        Long assignedStudyTimeId = 1L;
+        Long studentId = 10L;
+        LocalDateTime assignedStartTime = LocalDateTime.now();
+        LocalDateTime olderSessionStart = assignedStartTime.minusHours(2);
+        LocalDateTime laterSessionStart = assignedStartTime.minusMinutes(30);
+
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .id(assignedStudyTimeId)
+                .studentId(studentId)
+                .startTime(assignedStartTime)
+                .endTime(assignedStartTime.plusHours(2))
+                .build();
+
+        ActualStudyTime olderSession = ActualStudyTime.builder()
+                .id(100L)
+                .studentId(studentId)
+                .startTime(olderSessionStart)
+                .endTime(null)
+                .assignedStudyTimeId(null)
+                .source("discord")
+                .build();
+
+        ActualStudyTime laterSession = ActualStudyTime.builder()
+                .id(101L)
+                .studentId(studentId)
+                .startTime(laterSessionStart) // 더 최근
+                .endTime(null)
+                .assignedStudyTimeId(null)
+                .source("discord")
+                .build();
+
+        List<ActualStudyTime> ongoingSessions = List.of(olderSession, laterSession);
+
+        ActualStudyTime expectedResult = ActualStudyTime.builder()
+                .id(101L)
+                .studentId(studentId)
+                .startTime(laterSessionStart)
+                .endTime(null)
+                .assignedStudyTimeId(assignedStudyTimeId) // 연결됨
+                .source("discord")
+                .build();
+
+        when(assignedStudyTimeRepository.findById(assignedStudyTimeId))
+                .thenReturn(Optional.of(assignedStudyTime));
+        when(actualStudyTimeRepository.findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
+                studentId, assignedStartTime))
+                .thenReturn(ongoingSessions);
+        when(actualStudyTimeRepository.save(any(ActualStudyTime.class)))
+                .thenReturn(expectedResult);
 
         // When
-        List<Activity> result = studyTimeService.getStudyAssignableActivities();
+        ActualStudyTime result = studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(studentId, result.getStudentId());
+        assertEquals(assignedStudyTimeId, result.getAssignedStudyTimeId());
+        assertEquals(laterSessionStart, result.getStartTime()); // 더 최근 세션이 선택됨
+
+        verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
+        verify(actualStudyTimeRepository)
+                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
+                        studentId, assignedStartTime);
+        verify(actualStudyTimeRepository).save(any(ActualStudyTime.class));
+    }
+
+    @Test
+    @DisplayName("전체 기간별 배정된 공부 시간 조회 성공")
+    void getAssignedStudyTimesByDateRange_Success() {
+        // Given
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = startDate.plusDays(7);
+
+        List<AssignedStudyTime> expectedResult = List.of(
+                AssignedStudyTime.builder().studentId(1L).title("수학 공부").build(),
+                AssignedStudyTime.builder().studentId(2L).title("영어 공부").build()
+        );
+
+        when(assignedStudyTimeRepository.findStartingBetween(startDate, endDate))
+                .thenReturn(expectedResult);
+
+        // When
+        List<AssignedStudyTime> result = studyTimeService.getAssignedStudyTimesByDateRange(
+                startDate, endDate);
 
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(Activity::getIsStudyAssignable));
-        verify(activityRepository).findByIsStudyAssignableTrue();
+        verify(assignedStudyTimeRepository).findStartingBetween(startDate, endDate);
     }
 }

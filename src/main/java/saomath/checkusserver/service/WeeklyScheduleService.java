@@ -228,10 +228,9 @@ public class WeeklyScheduleService {
         response.setDayOfWeekName(WeeklySchedule.DayOfWeek.fromValue(schedule.getDayOfWeek()).getKorean());
 
         // 연관 엔티티 정보 설정
-        if (schedule.getActivity() != null) {
-            response.setActivityName(schedule.getActivity().getName());
-            response.setIsStudyAssignable(schedule.getActivity().getIsStudyAssignable());
-        }
+        Activity activity = activityRepository.findById(schedule.getActivityId()).orElseThrow();
+        response.setActivityName(activity.getName());
+        response.setIsStudyAssignable(activity.getIsStudyAssignable());
 
         return response;
     }
@@ -254,14 +253,9 @@ public class WeeklyScheduleService {
         // 요일 이름 설정
         response.setDayOfWeekName(WeeklySchedule.DayOfWeek.fromValue(schedule.getDayOfWeek()).getKorean());
 
-        // 연관 엔티티 정보 설정
-        if (schedule.getStudent() != null) {
-            response.setStudentName(schedule.getStudent().getName());
-        }
-        if (schedule.getActivity() != null) {
-            response.setActivityName(schedule.getActivity().getName());
-            response.setIsStudyAssignable(schedule.getActivity().getIsStudyAssignable());
-        }
+        Activity activity = activityRepository.findById(schedule.getActivityId()).orElseThrow();
+        response.setActivityName(activity.getName());
+        response.setIsStudyAssignable(activity.getIsStudyAssignable());
 
         return response;
     }

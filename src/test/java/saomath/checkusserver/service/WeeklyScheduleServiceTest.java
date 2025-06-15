@@ -92,6 +92,7 @@ class WeeklyScheduleServiceTest {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(weeklyScheduleRepository.findByStudentIdWithDetails(1L))
                 .thenReturn(Arrays.asList(mockSchedule));
+        when(activityRepository.findById(1L)).thenReturn(Optional.of(mockActivity)); // Mock 추가
 
         // When
         List<WeeklyScheduleResponse> result = weeklyScheduleService.getWeeklyScheduleByStudent(1L);
@@ -132,6 +133,7 @@ class WeeklyScheduleServiceTest {
                 .thenReturn(mockSchedule);
         when(weeklyScheduleRepository.findById(1L))
                 .thenReturn(Optional.of(mockSchedule));
+        when(activityRepository.findById(1L)).thenReturn(Optional.of(mockActivity)); // Mock 추가
 
         // When
         WeeklyScheduleResponse result = weeklyScheduleService.createWeeklySchedule(mockRequest);
@@ -213,6 +215,7 @@ class WeeklyScheduleServiceTest {
                 .thenReturn(0L);
         when(weeklyScheduleRepository.save(any(WeeklySchedule.class)))
                 .thenReturn(mockSchedule);
+        when(activityRepository.findById(1L)).thenReturn(Optional.of(mockActivity)); // Mock 추가
 
         // When
         WeeklyScheduleResponse result = weeklyScheduleService.updateWeeklySchedule(1L, mockRequest);
@@ -267,6 +270,7 @@ class WeeklyScheduleServiceTest {
         LocalDate startDate = LocalDate.of(2025, 6, 2); // 월요일
         when(weeklyScheduleRepository.findByStudentIdWithDetails(1L))
                 .thenReturn(Arrays.asList(mockSchedule));
+        when(activityRepository.findById(1L)).thenReturn(Optional.of(mockActivity)); // Mock 추가
 
         // When
         List<WeeklySchedulePeriodResponse> result = weeklyScheduleService.getWeeklyScheduleForPeriod(

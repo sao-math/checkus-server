@@ -2,6 +2,7 @@ package saomath.checkusserver.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,15 @@ import java.util.List;
 @Profile({"local"})
 @RequiredArgsConstructor
 public class LocalDataInitializer implements CommandLineRunner {
+
+    @Value("${test-data.student.phone:}")
+    private String testStudentPhone;
+    
+    @Value("${test-data.student.discord-id:}")
+    private String testStudentDiscordId;
+
+    @Value("${test-data.guardian.phone:}")
+    private String testGuardianPhone;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -113,6 +123,12 @@ public class LocalDataInitializer implements CommandLineRunner {
     private void initializeUsers() {
         log.info("사용자 데이터 초기화...");
         
+        if (isTestDataConfigured()) {
+            log.info("실제 테스트 데이터 사용 (설정 파일에서 읽음)");
+        } else {
+            log.info("더미 테스트 데이터 사용 (설정 파일 미설정)");
+        }
+        
         // 학교 조회
         School ihyeon = schoolRepository.findByName("이현중").orElseThrow();
         School songok = schoolRepository.findByName("손곡중").orElseThrow();
@@ -124,8 +140,11 @@ public class LocalDataInitializer implements CommandLineRunner {
         User teacher1 = createUserWithRole("teacher1", "김선생", "010-1111-1111", "Password123!", "teacher1#1234", RoleConstants.TEACHER);
         User teacher2 = createUserWithRole("teacher2", "이선생", "010-1111-2222", "Password123!", "teacher2#5678", RoleConstants.TEACHER);
         
-        // 학생 계정들 + 프로필
-        User student1 = createUserWithRole("student1", "박학생", "010-2222-1111", "Password123!", "student1#1234", RoleConstants.STUDENT);
+        // 학생 계정들 + 프로필 (환경변수가 있으면 실제 데이터 사용)
+        String studentPhone = hasValue(testStudentPhone) ? testStudentPhone : "010-2222-1111";
+        String studentDiscordId = hasValue(testStudentDiscordId) ? testStudentDiscordId : "student1#1234";
+        
+        User student1 = createUserWithRole("student1", "박학생", studentPhone, "Password123!", studentDiscordId, RoleConstants.STUDENT);
         createStudentProfile(student1, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.MALE);
         
         User student2 = createUserWithRole("student2", "최학생", "010-2222-2222", "Password123!", "student2#5678", RoleConstants.STUDENT);
@@ -134,8 +153,10 @@ public class LocalDataInitializer implements CommandLineRunner {
         User student3 = createUserWithRole("student3", "정학생", "010-2222-3333", "Password123!", "student3#9012", RoleConstants.STUDENT);
         createStudentProfile(student3, StudentProfile.StudentStatus.ENROLLED, songok, 1, StudentProfile.Gender.MALE);
         
-        // 학부모 계정들
-        User guardian1 = createUserWithRole("parent1", "박학부모", "010-3333-1111", "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
+        // 학부모 계정들 (환경변수가 있으면 실제 데이터 사용)
+        String guardianPhone = hasValue(testGuardianPhone) ? testGuardianPhone : "010-3333-1111";
+
+        User guardian1 = createUserWithRole("parent1", "박학부모", guardianPhone, "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
         User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
         User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
         User guardian4 = createUserWithRole("parent4", "박어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
@@ -151,8 +172,7 @@ public class LocalDataInitializer implements CommandLineRunner {
 //            .student(student1)
 //            .classEntity(monWedClass)
 //            .build());
-
-        // 학부모 정보 - 박학생에는 아버지와 어머니 모두 연결
+        
         studentGuardianRepository.save(StudentGuardian.builder()
             .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
             .student(student1)
@@ -203,15 +223,15 @@ public class LocalDataInitializer implements CommandLineRunner {
             .build());
 
         // 6월 13일 박학생 공부시간 데이터 추가
-        LocalDateTime june13_2024 = LocalDateTime.of(2024, 6, 13, 0, 0);
+        LocalDateTime june13_2025 = LocalDateTime.of(2025, 6, 13, 0, 0);
         
         // 할당된 공부시간: 6/13 오후 2시~4시 수학 자습
         AssignedStudyTime assignedStudyTime1 = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
             .studentId(student1.getId())
             .title("수학 자습")
             .activityId(selfStudy.getId())
-            .startTime(june13_2024.withHour(14).withMinute(0))
-            .endTime(june13_2024.withHour(16).withMinute(0))
+            .startTime(june13_2025.withHour(14).withMinute(0))
+            .endTime(june13_2025.withHour(16).withMinute(0))
             .assignedBy(teacher1.getId())
             .build());
 
@@ -219,8 +239,8 @@ public class LocalDataInitializer implements CommandLineRunner {
         actualStudyTimeRepository.save(ActualStudyTime.builder()
             .studentId(student1.getId())
             .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2024.withHour(14).withMinute(5))
-            .endTime(june13_2024.withHour(15).withMinute(30))
+            .startTime(june13_2025.withHour(14).withMinute(5))
+            .endTime(june13_2025.withHour(15).withMinute(30))
             .source("discord")
             .build());
 
@@ -228,8 +248,8 @@ public class LocalDataInitializer implements CommandLineRunner {
         actualStudyTimeRepository.save(ActualStudyTime.builder()
             .studentId(student1.getId())
             .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2024.withHour(15).withMinute(45))
-            .endTime(june13_2024.withHour(16).withMinute(0))
+            .startTime(june13_2025.withHour(15).withMinute(45))
+            .endTime(june13_2025.withHour(16).withMinute(0))
             .source("discord")
             .build());
 
@@ -302,5 +322,19 @@ public class LocalDataInitializer implements CommandLineRunner {
         TaskType taskType = new TaskType();
         taskType.setName(name);
         return taskTypeRepository.save(taskType);
+    }
+    
+    /**
+     * 환경변수가 설정되어 있는지 확인
+     */
+    private boolean isTestDataConfigured() {
+        return hasValue(testStudentPhone) && hasValue(testStudentDiscordId) && hasValue(testGuardianPhone);
+    }
+    
+    /**
+     * 문자열이 비어있지 않은지 확인
+     */
+    private boolean hasValue(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 }

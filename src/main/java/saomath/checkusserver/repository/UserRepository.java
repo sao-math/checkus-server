@@ -17,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByPhoneNumber(String phoneNumber);
     Optional<User> findByPhoneNumber(String phoneNumber);
     
+    // 디스코드 ID로 사용자 조회
+    Optional<User> findByDiscordId(String discordId);
+    
     // 학생 필터링을 위한 복합 쿼리
     @Query("SELECT DISTINCT u FROM User u " +
            "JOIN UserRole ur ON u.id = ur.user.id " +
