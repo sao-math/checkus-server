@@ -21,9 +21,13 @@ import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.notification.dto.NotificationTestRequest;
 import saomath.checkusserver.notification.dto.StudyRoomEnterNotificationRequest;
 import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
+import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.notification.service.DirectAlimtalkService;
 import saomath.checkusserver.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.HashMap;
 
 @Slf4j
 @RestController
@@ -34,6 +38,7 @@ public class NotificationController {
     
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
+    private final DirectAlimtalkService directAlimtalkService;
     
     @Operation(
         summary = "스터디룸 입장 알림 수동 발송",
@@ -138,22 +143,47 @@ public class NotificationController {
         }
     )
     @PostMapping("/test")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseBase<Void>> sendTestNotification(
             @Valid @RequestBody NotificationTestRequest request) {
         
         try {
-            // TODO: 알림 서비스와 연동하여 테스트 알림 발송
-            log.info("테스트 알림 발송 - 템플릿: {}, 수신자: {}", 
-                request.getTemplateId(), request.getPhoneNumber());
+            // 템플릿 ID를 AlimtalkTemplate enum으로 변환
+            AlimtalkTemplate template;
+            try {
+                template = AlimtalkTemplate.valueOf(request.getTemplateId());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(ResponseBase.error("지원하지 않는 템플릿 ID입니다: " + request.getTemplateId()));
+            }
             
-            return ResponseEntity.ok(
-                ResponseBase.success("테스트 알림이 발송되었습니다.", null));
+            // 테스트용 변수 설정
+            Map<String, String> variables = new HashMap<>();
+            variables.put("이름", "테스트학생");
+            variables.put("1", "수학 문제집 10페이지\n영어 단어 암기");
+            variables.put("2", "과학 실험 보고서");
+            variables.put("입장시간", "15:30");
+            
+            // 알림톡 발송
+            boolean success = directAlimtalkService.sendAlimtalk(
+                request.getPhoneNumber(), 
+                template, 
+                variables
+            );
+            
+            if (success) {
+                log.info("테스트 알림 발송 성공 - 템플릿: {}, 수신자: {}", 
+                    request.getTemplateId(), request.getPhoneNumber());
+                return ResponseEntity.ok(
+                    ResponseBase.success("테스트 알림이 발송되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ResponseBase.error("알림 발송에 실패했습니다."));
+            }
                 
         } catch (Exception e) {
             log.error("테스트 알림 발송 실패", e);
             return ResponseEntity.badRequest()
-                    .body(ResponseBase.error("테스트 알림 발송 중 오류가 발생했습니다."));
+                    .body(ResponseBase.error("테스트 알림 발송 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 }

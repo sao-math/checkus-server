@@ -72,6 +72,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
 
+                        //알림톡 테스트
+                        .requestMatchers("/notifications/test").permitAll() //todo 나중에 막기
+
                         // 헬스체크 및 모니터링
                         .requestMatchers("/actuator/health").permitAll()
 

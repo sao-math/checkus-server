@@ -7,60 +7,63 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AlimtalkTemplate {
     
-    // 공부 시작 10분 전 알림
-    STUDY_REMINDER_10MIN("study_reminder_10min", 
-        "공부 시작 10분 전입니다!\n\n" +
-        "학생: #{studentName}\n" +
-        "과목: #{activityName}\n" +
-        "시간: #{startTime} ~ #{endTime}\n\n" +
-        "곧 공부를 시작해주세요!"),
+    // 공부 시작 10분 전 알림 - D0001
+    STUDY_REMINDER_10MIN("D0001", 
+        "[사오수학]\n" +
+        "#{이름} 학생, \n" +
+        "곧 공부 시작할 시간이에요!  \n" +
+        "지금부터 10분 뒤 학습 시작입니다. \n" +
+        "오늘도 빠짐없이 계획을 끝내볼까요?"),
     
-    // 공부 시작 알림
-    STUDY_START("study_start",
-        "공부 시작 시간입니다!\n\n" +
-        "학생: #{studentName}\n" +
-        "과목: #{activityName}\n" +
-        "시간: #{startTime} ~ #{endTime}\n\n" +
-        "지금 스터디룸에 입장해주세요!"),
+    // 공부 시작 알림 - D0002
+    STUDY_START("D0002",
+        "[사오수학]\n" +
+        "#{이름} 학생, \n" +
+        "공부 시작할 시간입니다!\n" +
+        "스터디룸에 입장해 주세요."),
     
-    // 스터디룸 입장 알림
+    // 미입장 알림 - D0003
+    NO_SHOW("D0003",
+        "[사오수학]\n" +
+        "#{이름} 학생\n" +
+        "아직 스터디룸 입장이 확인되지 \n" +
+        "않았습니다.\n" +
+        "빠르게 입장해주세요!\n" +
+        "*오늘 학습 스케줄 이행이 힘든 경우\n" +
+        "담당선생님께 꼭 연락해주세요!"),
+    
+    // 오늘의 할일 알림 (아침) - S0001
+    TODAY_TASKS("S0001",
+        "[사오수학]\n" +
+        "#{이름} 학생\n" +
+        "오늘의 학습 계획 도착!\n" +
+        "📝 오늘의 과제\n" +
+        "#{1}\n" +
+        "⏰ 미완료 과제\n" +
+        "#{2}\n" +
+        "*과제 이행이 어려운 경우 \n" +
+        "담임 선생님께 꼭 계획 조정을 \n" +
+        "요청해 주세요!"),
+    
+    // 전날 미완료 할일 알림 (저녁) - S0002
+    YESTERDAY_INCOMPLETE_EVENING("S0002",
+        "[사오수학]\n" +
+        "#{이름} 학생\n" +
+        "아직 미이행 된 과제가 있어요!\n" +
+        "⏰ 미완료 과제\n" +
+        "#{1}\n" +
+        "*과제 이행이 어려운 경우 \n" +
+        "담임 선생님께 꼭 계획 조정을 \n" +
+        "요청해 주세요!"),
+    
+    // 스터디룸 입장 완료 (등록 예정)
     STUDY_ROOM_ENTER("study_room_enter",
-        "스터디룸 입장 완료\n\n" +
-        "학생: #{studentName}\n" +
-        "입장 시간: #{enterTime}\n\n" +
-        "오늘도 열심히 공부해봐요!"),
-    
-    // 미접속 알림
-    NO_SHOW("no_show",
-        "공부 시간 미접속 알림\n\n" +
-        "학생: #{studentName}\n" +
-        "예정 시간: #{startTime} ~ #{endTime}\n\n" +
-        "아직 스터디룸에 접속하지 않았습니다.\n" +
-        "확인 부탁드립니다."),
-    
-    // 오늘의 할일 알림 (아침)
-    TODAY_TASKS("today_tasks",
-        "오늘의 할일\n\n" +
-        "학생: #{studentName}\n" +
-        "오늘 할일: #{taskCount}개\n\n" +
-        "#{taskList}\n\n" +
-        "오늘도 화이팅!"),
-    
-    // 전날 미완료 할일 알림 (아침)
-    YESTERDAY_INCOMPLETE_MORNING("yesterday_incomplete_morning",
-        "어제 미완료 할일 알림\n\n" +
-        "학생: #{studentName}\n" +
-        "미완료 할일: #{incompleteCount}개\n\n" +
-        "#{taskList}\n\n" +
-        "오늘 꼭 완료해주세요!"),
-    
-    // 전날 미완료 할일 알림 (저녁)
-    YESTERDAY_INCOMPLETE_EVENING("yesterday_incomplete_evening",
-        "미완료 할일 확인\n\n" +
-        "학생: #{studentName}\n" +
-        "미완료 할일: #{incompleteCount}개\n\n" +
-        "#{taskList}\n\n" +
-        "내일까지 꼭 완료해주세요!");
+        "[사오수학]\n" +
+        "#{이름} 학생\n" +
+        "스터디룸 입장이 확인되었습니다.\n" +
+        "⏰ 입장 시간: #{입장시간}\n\n" +
+        "오늘도 열심히 공부해봐요!\n" +
+        "계획된 학습을 차근차근 완료해보세요.");
     
     private final String templateCode;
     private final String templateMessage;
