@@ -87,7 +87,16 @@ public class StudyTimeService {
                 .assignedBy(assignedBy)
                 .build();
 
-        return assignedStudyTimeRepository.save(assignedStudyTime);
+        AssignedStudyTime saved = assignedStudyTimeRepository.save(assignedStudyTime);
+        
+        // 할당 후 즉시 기존 접속중인 세션들과 연결 시도
+        List<ActualStudyTime> connectedSessions = connectCurrentOngoingSessions(saved.getId());
+        if (!connectedSessions.isEmpty()) {
+            log.info("공부시간 할당 시 {} 개의 기존 세션을 연결했습니다: 할당 ID={}, 학생 ID={}", 
+                    connectedSessions.size(), saved.getId(), studentId);
+        }
+        
+        return saved;
     }
 
     /**
@@ -289,6 +298,48 @@ public class StudyTimeService {
         
         return assignedStudyTimeRepository.findUpcomingStudyTimesV2(
                 tenMinutesBefore, now, tenMinutesAfter);
+    }
+
+    /**
+     * 할당 시점에 해당 시간대에 이미 접속중인 세션들을 새로 할당된 공부시간에 연결합니다.
+     * @param assignedStudyTimeId 할당된 공부시간 ID
+     * @return 연결된 실제 공부시간 기록 리스트
+     */
+    public List<ActualStudyTime> connectCurrentOngoingSessions(Long assignedStudyTimeId) {
+        AssignedStudyTime assignedStudyTime = assignedStudyTimeRepository.findById(assignedStudyTimeId)
+                .orElseThrow(() -> new ResourceNotFoundException("할당된 공부시간을 찾을 수 없습니다."));
+        
+        Long studentId = assignedStudyTime.getStudentId();
+        LocalDateTime startTime = assignedStudyTime.getStartTime();
+        LocalDateTime endTime = assignedStudyTime.getEndTime();
+        
+        // 할당된 시간 범위 내에 시작되어 아직 할당되지 않은 모든 세션들 조회
+        List<ActualStudyTime> unassignedSessions = actualStudyTimeRepository
+                .findByStudentIdAndStartTimeBetweenAndAssignedStudyTimeIdIsNull(
+                        studentId, startTime, endTime);
+        
+        if (unassignedSessions.isEmpty()) {
+            log.info("연결할 미할당 세션이 없음: 할당 ID={}, 학생 ID={}, 시간범위={} ~ {}", 
+                    assignedStudyTimeId, studentId, startTime, endTime);
+            return new ArrayList<>();
+        }
+        
+        // 모든 미할당 세션들을 할당된 공부시간에 연결
+        List<ActualStudyTime> connectedSessions = new ArrayList<>();
+        for (ActualStudyTime session : unassignedSessions) {
+            session.setAssignedStudyTimeId(assignedStudyTimeId);
+            ActualStudyTime saved = actualStudyTimeRepository.save(session);
+            connectedSessions.add(saved);
+            
+            log.info("세션을 할당된 공부시간에 연결: 할당 ID={}, 세션 ID={}, 학생 ID={}, 세션 시작시간={}, 세션 종료시간={}",
+                    assignedStudyTimeId, saved.getId(), studentId, session.getStartTime(), 
+                    session.getEndTime() != null ? session.getEndTime() : "진행중");
+        }
+        
+        log.info("전체 {} 개 세션을 할당된 공부시간에 연결 완료: 할당 ID={}, 학생 ID={}", 
+                connectedSessions.size(), assignedStudyTimeId, studentId);
+        
+        return connectedSessions;
     }
 
     /**
