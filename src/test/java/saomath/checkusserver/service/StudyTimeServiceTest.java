@@ -61,6 +61,7 @@ class StudyTimeServiceTest {
                 .build();
 
         AssignedStudyTime expectedResult = AssignedStudyTime.builder()
+                .id(100L)  // ID 추가
                 .studentId(studentId)
                 .title("수학 공부")
                 .activityId(activityId)
@@ -75,6 +76,12 @@ class StudyTimeServiceTest {
         when(assignedStudyTimeRepository.findOverlappingStudyTimes(studentId, startTime, endTime))
                 .thenReturn(new ArrayList<>());
         when(assignedStudyTimeRepository.save(any(AssignedStudyTime.class))).thenReturn(expectedResult);
+        
+        // connectCurrentOngoingSessions 메서드를 위한 Mock 설정
+        when(assignedStudyTimeRepository.findById(100L)).thenReturn(Optional.of(expectedResult));
+        when(actualStudyTimeRepository.findByStudentIdAndStartTimeBetweenAndAssignedStudyTimeIdIsNull(
+                eq(studentId), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(new ArrayList<>());
 
         // When
         AssignedStudyTime result = studyTimeService.assignStudyTime(studentId, "수학 공부", activityId, startTime, endTime, teacherId);
