@@ -307,4 +307,29 @@ class StudyTimeServiceNewFeatureTest {
                         studentId, assignedStartTime);
         verify(actualStudyTimeRepository).save(any(ActualStudyTime.class));
     }
+
+    @Test
+    @DisplayName("전체 기간별 배정된 공부 시간 조회 성공")
+    void getAssignedStudyTimesByDateRange_Success() {
+        // Given
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = startDate.plusDays(7);
+
+        List<AssignedStudyTime> expectedResult = List.of(
+                AssignedStudyTime.builder().studentId(1L).title("수학 공부").build(),
+                AssignedStudyTime.builder().studentId(2L).title("영어 공부").build()
+        );
+
+        when(assignedStudyTimeRepository.findStartingBetween(startDate, endDate))
+                .thenReturn(expectedResult);
+
+        // When
+        List<AssignedStudyTime> result = studyTimeService.getAssignedStudyTimesByDateRange(
+                startDate, endDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(assignedStudyTimeRepository).findStartingBetween(startDate, endDate);
+    }
 }

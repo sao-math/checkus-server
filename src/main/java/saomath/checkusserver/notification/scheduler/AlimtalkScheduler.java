@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.AlimtalkService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
+import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,6 +25,7 @@ public class AlimtalkScheduler {
     
     private final AlimtalkService alimtalkService;
     private final NotificationTargetService targetService;
+    private final StudyTimeService studyTimeService;
     
     /**
      * 매 분마다 실행: 공부 시작 10분 전 알림
@@ -55,13 +59,14 @@ public class AlimtalkScheduler {
     }
     
     /**
-     * 매 분마다 실행: 공부 시작 시간 알림
+     * 매 분마다 실행: 공부 시작 시간 알림 + 세션 연결 체크
      */
     @Scheduled(cron = "0 * * * * *")
-    public void sendStudyStartNotification() {
-        log.debug("공부 시작 시간 알림 체크 시작");
-        
+    public void sendStudyStartNotificationAndConnectSessions() {
         LocalDateTime now = LocalDateTime.now();
+        log.debug("공부 시작 시간 알림 및 세션 연결 체크 시작: {}", now);
+        
+        // 1. 공부 시작 시간 알림 발송
         List<NotificationTargetService.StudyTarget> targets = 
             targetService.getStudyTargetsForTime(now);
         
@@ -81,6 +86,30 @@ public class AlimtalkScheduler {
         }
         
         log.debug("공부 시작 시간 알림 발송 완료 - {}건", targets.size());
+        
+        // 2. 10분 전에 시작된 공부시간의 세션 연결 체크
+        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
+        List<AssignedStudyTime> assignedStudyTimes = studyTimeService.getAssignedStudyTimesByDateRange(
+                tenMinutesAgo.minusMinutes(1), 
+                tenMinutesAgo.plusMinutes(1)
+        );
+        
+        int connectedSessions = 0;
+        for (AssignedStudyTime assignedStudyTime : assignedStudyTimes) {
+            try {
+                ActualStudyTime connected = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
+                if (connected != null) {
+                    connectedSessions++;
+                    log.info("이전 진행중인 세션 연결 성공: 할당 ID={}, 학생 ID={}, 실제 세션 ID={}", 
+                            assignedStudyTime.getId(), assignedStudyTime.getStudentId(), connected.getId());
+                }
+            } catch (Exception e) {
+                log.error("세션 연결 실패: 할당 ID={}, 학생 ID={}", 
+                        assignedStudyTime.getId(), assignedStudyTime.getStudentId(), e);
+            }
+        }
+        
+        log.debug("세션 연결 체크 완료 - 대상: {}건, 연결: {}건", assignedStudyTimes.size(), connectedSessions);
     }
     
     /**

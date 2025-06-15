@@ -7,9 +7,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.AlimtalkService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
+import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -27,6 +30,9 @@ class AlimtalkSchedulerTest {
     
     @Mock
     private NotificationTargetService targetService;
+    
+    @Mock
+    private StudyTimeService studyTimeService;
     
     @InjectMocks
     private AlimtalkScheduler scheduler;
@@ -72,11 +78,13 @@ class AlimtalkSchedulerTest {
     }
     
     @Test
-    @DisplayName("공부 시작 시간 알림 발송 테스트")
-    void sendStudyStartNotification() {
+    @DisplayName("공부 시작 시간 알림 및 세션 연결 통합 테스트")
+    void sendStudyStartNotificationAndConnectSessions() {
         // Given
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
         
+        // 알림 대상
         NotificationTargetService.StudyTarget target = NotificationTargetService.StudyTarget.builder()
             .studentId(1L)
             .studentName("김철수")
@@ -89,19 +97,107 @@ class AlimtalkSchedulerTest {
             .studentNotificationEnabled(true)
             .build();
         
+        // 세션 연결 대상
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .id(1L)
+                .studentId(2L)
+                .title("수학 공부")
+                .startTime(tenMinutesAgo)
+                .endTime(tenMinutesAgo.plusHours(2))
+                .build();
+        
+        ActualStudyTime connectedSession = ActualStudyTime.builder()
+                .id(100L)
+                .studentId(2L)
+                .assignedStudyTimeId(1L)
+                .startTime(tenMinutesAgo.minusMinutes(5))
+                .source("discord")
+                .build();
+        
         when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
             .thenReturn(Arrays.asList(target));
+        when(studyTimeService.getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList(assignedStudyTime));
+        when(studyTimeService.connectPreviousOngoingSession(1L))
+            .thenReturn(connectedSession);
         
         // When
-        scheduler.sendStudyStartNotification();
+        scheduler.sendStudyStartNotificationAndConnectSessions();
         
         // Then
+        // 1. 알림 발송 확인
         verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
         verify(alimtalkService, times(2)).sendAlimtalk(
             anyString(), 
             eq(AlimtalkTemplate.STUDY_START), 
             any(Map.class)
         );
+        
+        // 2. 세션 연결 확인
+        verify(studyTimeService).getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(studyTimeService).connectPreviousOngoingSession(1L);
+    }
+    
+    @Test
+    @DisplayName("세션 연결 실패 시 예외 처리 테스트")
+    void connectSessionsWithException() {
+        // Given
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
+        
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .id(1L)
+                .studentId(1L)
+                .title("수학 공부")
+                .startTime(tenMinutesAgo)
+                .endTime(tenMinutesAgo.plusHours(2))
+                .build();
+        
+        when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList());
+        when(studyTimeService.getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList(assignedStudyTime));
+        when(studyTimeService.connectPreviousOngoingSession(1L))
+            .thenThrow(new RuntimeException("데이터베이스 오류"));
+        
+        // When - 예외가 발생해도 스케줄러는 중단되지 않음
+        scheduler.sendStudyStartNotificationAndConnectSessions();
+        
+        // Then
+        verify(studyTimeService).connectPreviousOngoingSession(1L);
+    }
+    
+    @Test
+    @DisplayName("연결할 세션이 없는 경우 테스트")
+    void connectSessionsWithNoOngoingSession() {
+        // Given
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
+        
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .id(1L)
+                .studentId(1L)
+                .title("수학 공부")
+                .startTime(tenMinutesAgo)
+                .endTime(tenMinutesAgo.plusHours(2))
+                .build();
+        
+        when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList());
+        when(studyTimeService.getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList(assignedStudyTime));
+        when(studyTimeService.connectPreviousOngoingSession(1L))
+            .thenReturn(null); // 연결할 세션 없음
+        
+        // When
+        scheduler.sendStudyStartNotificationAndConnectSessions();
+        
+        // Then
+        verify(studyTimeService).connectPreviousOngoingSession(1L);
     }
     
     @Test
@@ -189,9 +285,12 @@ class AlimtalkSchedulerTest {
         
         when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
             .thenReturn(Arrays.asList(target));
+        when(studyTimeService.getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList());
         
         // When - 예외가 발생해도 스케줄러는 중단되지 않음
-        scheduler.sendStudyStartNotification();
+        scheduler.sendStudyStartNotificationAndConnectSessions();
         
         // Then
         verify(alimtalkService).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));
@@ -215,9 +314,12 @@ class AlimtalkSchedulerTest {
         
         when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
             .thenReturn(Arrays.asList(target));
+        when(studyTimeService.getAssignedStudyTimesByDateRange(
+                any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList());
         
         // When
-        scheduler.sendStudyStartNotification();
+        scheduler.sendStudyStartNotificationAndConnectSessions();
         
         // Then - 전화번호가 없으므로 알림 발송 안됨
         verify(alimtalkService, never()).sendAlimtalk(anyString(), any(AlimtalkTemplate.class), any(Map.class));

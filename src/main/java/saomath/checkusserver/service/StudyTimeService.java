@@ -43,6 +43,19 @@ public class StudyTimeService {
     }
 
     /**
+     * 특정 기간의 모든 배정된 공부 시간을 조회합니다.
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @return 배정된 공부 시간 목록
+     */
+    @Transactional(readOnly = true)
+    public List<AssignedStudyTime> getAssignedStudyTimesByDateRange(
+            LocalDateTime startDate, LocalDateTime endDate) {
+        validateTimeRangeForQuery(startDate, endDate);
+        return assignedStudyTimeRepository.findStartingBetween(startDate, endDate);
+    }
+
+    /**
      * 학생에게 공부 시간을 배정합니다.
      * @param studentId 학생 ID
      * @param activityId 활동 ID
