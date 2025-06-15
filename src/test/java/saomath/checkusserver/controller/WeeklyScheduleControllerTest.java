@@ -80,7 +80,6 @@ class WeeklyScheduleControllerTest {
         mockPeriodResponse = new WeeklySchedulePeriodResponse();
         mockPeriodResponse.setId(1L);
         mockPeriodResponse.setStudentId(1L);
-        mockPeriodResponse.setStudentName("김학생");
         mockPeriodResponse.setTitle("수학 공부");
         mockPeriodResponse.setActivityId(1L);
         mockPeriodResponse.setActivityName("자습");
