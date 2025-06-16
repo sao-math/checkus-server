@@ -372,7 +372,6 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
         
         Map<String, NotificationSettingDto> deliveryMethods = new HashMap<>();
         int advanceMinutes = 0;
-        boolean hasAnyEnabled = false;
         
         // 가능한 모든 채널 확인
         Set<String> allChannels = Set.of("alimtalk", "discord");
@@ -396,33 +395,29 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
             
             // 사용자가 해당 채널을 사용할 수 있는 경우만 추가
             if (canUseChannel(user, channel)) {
+                // 간소화된 DTO 생성 - 중복 정보 제거
                 NotificationSettingDto settingDto = NotificationSettingDto.builder()
                     .id(exceptionSetting != null ? exceptionSetting.getId().toString() : null)
-                    .userId(userId.toString())
-                    .notificationTypeId(template.name())
-                    .isEnabled(isEnabled)
-                    .deliveryMethod(channel)
-                    .advanceMinutes(channelAdvanceMinutes)
+                    .enabled(isEnabled)
                     .build();
                 
                 deliveryMethods.put(channel, settingDto);
                 
-                if (isEnabled) {
-                    hasAnyEnabled = true;
+                // 공통 advanceMinutes 설정 (활성화된 채널 중 하나의 값 사용)
+                if (isEnabled && advanceMinutes == 0) {
                     advanceMinutes = channelAdvanceMinutes;
                 }
             }
         }
         
+        // 간소화된 그룹 DTO 생성
         return NotificationSettingGroupDto.builder()
             .notificationType(NotificationTypeDto.builder()
                 .id(template.name())
-                .name(template.name())
                 .description(template.getDescription())
                 .build())
-            .isEnabled(hasAnyEnabled)
-            .advanceMinutes(advanceMinutes)
             .deliveryMethods(deliveryMethods)
+            .advanceMinutes(advanceMinutes)
             .build();
     }
 }
