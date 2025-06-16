@@ -6,15 +6,22 @@ import org.springframework.stereotype.Service;
 import saomath.checkusserver.entity.NotificationSetting;
 import saomath.checkusserver.entity.User;
 import saomath.checkusserver.entity.UserRole;
+import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.domain.DefaultNotificationSetting;
+import saomath.checkusserver.notification.dto.NotificationSettingDto;
+import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
+import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;
+import saomath.checkusserver.notification.dto.NotificationTypeDto;
 import saomath.checkusserver.repository.NotificationSettingRepository;
 import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.repository.UserRoleRepository;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -63,6 +70,97 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     @Override
     public List<NotificationPreference> getAllUserPreferences(Long userId) {
         return getUserPreferences(userId, null);
+    }
+    
+    @Override
+    public List<NotificationSettingGroupDto> getGroupedNotificationSettings(Long userId) {
+        List<NotificationSettingGroupDto> groupedSettings = new ArrayList<>();
+        
+        // 사용자 조회
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.warn("사용자를 찾을 수 없습니다. userId: {}", userId);
+            return groupedSettings;
+        }
+        
+        // 사용자 역할 확인
+        String userRole = getUserPrimaryRole(userId);
+        DefaultNotificationSetting defaultSetting = DefaultNotificationSetting.getByRole(userRole);
+        
+        // 예외 설정 조회 (DB에서)
+        Map<String, NotificationSetting> exceptionSettings = getExceptionSettings(userId, null);
+        
+        // 모든 알림 템플릿에 대해 그룹화된 설정 생성
+        for (AlimtalkTemplate template : AlimtalkTemplate.values()) {
+            NotificationSettingGroupDto group = createGroupForTemplate(userId, user, template, defaultSetting, exceptionSettings);
+            groupedSettings.add(group);
+        }
+        
+        return groupedSettings;
+    }
+    
+    @Override
+    public void updateNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto updateDto) {
+        // 채널명 표준화
+        String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
+        
+        // 기존 설정 조회
+        Optional<NotificationSetting> existingSetting = notificationSettingRepository
+            .findByUserIdAndTemplateNameAndDeliveryMethod(userId, templateId, standardizedMethod);
+        
+        if (existingSetting.isPresent()) {
+            // 기존 설정 업데이트
+            NotificationSetting setting = existingSetting.get();
+            setting.setIsEnabled(updateDto.isEnabled());
+            if (updateDto.getAdvanceMinutes() != null) {
+                setting.setAdvanceMinutes(updateDto.getAdvanceMinutes());
+            }
+            notificationSettingRepository.save(setting);
+            log.info("알림 설정 업데이트 완료 - userId: {}, template: {}, method: {}, enabled: {}", 
+                userId, templateId, standardizedMethod, updateDto.isEnabled());
+        } else {
+            // 새 설정 생성
+            createNotificationSetting(userId, templateId, standardizedMethod, updateDto);
+        }
+    }
+    
+    @Override
+    public void createNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto createDto) {
+        // 채널명 표준화
+        String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
+        
+        // 중복 설정 확인
+        if (hasNotificationSetting(userId, templateId, standardizedMethod)) {
+            throw new BusinessException("이미 존재하는 알림 설정입니다.");
+        }
+        
+        // 템플릿 유효성 검증
+        try {
+            AlimtalkTemplate.valueOf(templateId);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("지원하지 않는 템플릿 ID입니다: " + templateId);
+        }
+        
+        // 새 설정 생성
+        NotificationSetting newSetting = NotificationSetting.builder()
+            .userId(userId)
+            .templateName(templateId)
+            .deliveryMethod(standardizedMethod)
+            .isEnabled(createDto.isEnabled())
+            .advanceMinutes(createDto.getAdvanceMinutes() != null ? createDto.getAdvanceMinutes() : 0)
+            .build();
+        
+        notificationSettingRepository.save(newSetting);
+        log.info("새 알림 설정 생성 완료 - userId: {}, template: {}, method: {}, enabled: {}", 
+            userId, templateId, standardizedMethod, createDto.isEnabled());
+    }
+    
+    @Override
+    public boolean hasNotificationSetting(Long userId, String templateId, String deliveryMethod) {
+        String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
+        return notificationSettingRepository
+            .findByUserIdAndTemplateNameAndDeliveryMethod(userId, templateId, standardizedMethod)
+            .isPresent();
     }
     
     /**
@@ -236,5 +334,95 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                 log.warn("알 수 없는 delivery method: {}, ALIMTALK으로 기본 설정", deliveryMethod);
                 return NotificationService.NotificationChannel.ALIMTALK;
         }
+    }
+    
+    /**
+     * 채널명 표준화 (kakao -> alimtalk)
+     */
+    private String standardizeDeliveryMethod(String deliveryMethod) {
+        if (deliveryMethod == null) {
+            return "alimtalk";
+        }
+        
+        switch (deliveryMethod.toLowerCase()) {
+            case "kakao":
+            case "kakaotalk":
+                return "alimtalk";
+            case "discord":
+                return "discord";
+            case "email":
+                return "email";
+            case "sms":
+                return "sms";
+            default:
+                log.warn("알 수 없는 delivery method: {}, alimtalk으로 기본 설정", deliveryMethod);
+                return "alimtalk";
+        }
+    }
+    
+    /**
+     * 특정 템플릿에 대한 그룹화된 설정 생성
+     */
+    private NotificationSettingGroupDto createGroupForTemplate(
+            Long userId, 
+            User user, 
+            AlimtalkTemplate template, 
+            DefaultNotificationSetting defaultSetting,
+            Map<String, NotificationSetting> exceptionSettings) {
+        
+        Map<String, NotificationSettingDto> deliveryMethods = new HashMap<>();
+        int advanceMinutes = 0;
+        boolean hasAnyEnabled = false;
+        
+        // 가능한 모든 채널 확인
+        Set<String> allChannels = Set.of("alimtalk", "discord");
+        
+        for (String channel : allChannels) {
+            String key = template.name() + ":" + channel;
+            NotificationSetting exceptionSetting = exceptionSettings.get(key);
+            
+            boolean isEnabled;
+            int channelAdvanceMinutes = 0;
+            
+            if (exceptionSetting != null) {
+                // DB에 예외 설정이 있으면 그것을 사용
+                isEnabled = exceptionSetting.getIsEnabled();
+                channelAdvanceMinutes = exceptionSetting.getAdvanceMinutes();
+            } else {
+                // 예외 설정이 없으면 기본값 사용
+                isEnabled = defaultSetting.isDefaultEnabled(template, channel);
+                channelAdvanceMinutes = 0; // 기본값은 0분
+            }
+            
+            // 사용자가 해당 채널을 사용할 수 있는 경우만 추가
+            if (canUseChannel(user, channel)) {
+                NotificationSettingDto settingDto = NotificationSettingDto.builder()
+                    .id(exceptionSetting != null ? exceptionSetting.getId().toString() : null)
+                    .userId(userId.toString())
+                    .notificationTypeId(template.name())
+                    .isEnabled(isEnabled)
+                    .deliveryMethod(channel)
+                    .advanceMinutes(channelAdvanceMinutes)
+                    .build();
+                
+                deliveryMethods.put(channel, settingDto);
+                
+                if (isEnabled) {
+                    hasAnyEnabled = true;
+                    advanceMinutes = channelAdvanceMinutes;
+                }
+            }
+        }
+        
+        return NotificationSettingGroupDto.builder()
+            .notificationType(NotificationTypeDto.builder()
+                .id(template.name())
+                .name(template.name())
+                .description(template.getDescription())
+                .build())
+            .isEnabled(hasAnyEnabled)
+            .advanceMinutes(advanceMinutes)
+            .deliveryMethods(deliveryMethods)
+            .build();
     }
 }

@@ -91,4 +91,30 @@ public enum AlimtalkTemplate {
     
     private final String templateCode;
     private final String templateMessage;
+    
+    /**
+     * 각 템플릿의 사용자 친화적인 설명 반환
+     */
+    public String getDescription() {
+        switch (this) {
+            case STUDY_REMINDER_10MIN:
+                return "공부 시작 10분 전 알림";
+            case STUDY_START:
+                return "공부 시작 시간 알림";
+            case NO_SHOW:
+                return "미접속 알림";
+            case STUDY_ROOM_ENTER:
+                return "스터디룸 입장 알림";
+            case TODAY_TASKS:
+                return "오늘의 할일 알림 (아침)";
+            case YESTERDAY_INCOMPLETE_EVENING:
+                return "전날 미완료 할일 알림 (저녁)";
+            case EARLY_LEAVE:
+                return "조기퇴장 알림";
+            case LATE_ARRIVAL:
+                return "늦은입장 알림";
+            default:
+                return this.name();
+        }
+    }
 }
