@@ -55,16 +55,15 @@ class NotificationPreferenceServiceIntegrationTest {
             .discordId("testuser#1234")
             .build();
             
-        Role role = Role.builder()
-            .id(1L)
-            .name("STUDENT")
-            .build();
+        Role role = new Role();
+        role.setId(1L);
+        role.setName("STUDENT");
             
-        studentRole = UserRole.builder()
-            .userId(1L)
-            .role(role)
-            .status(UserRole.RoleStatus.ACTIVE)
-            .build();
+        UserRole.UserRoleId userRoleId = new UserRole.UserRoleId(1L, 1L);
+        studentRole = new UserRole();
+        studentRole.setId(userRoleId);
+        studentRole.setRole(role);
+        studentRole.setStatus(UserRole.RoleStatus.ACTIVE);
     }
     
     @Test
