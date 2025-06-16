@@ -222,8 +222,8 @@ public class NotificationController {
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
     public ResponseEntity<ResponseBase<String>> updateNotificationSettingGroup(
-            @PathVariable String notificationTypeId,
-            @PathVariable String deliveryMethod,
+            @PathVariable("notificationTypeId") String notificationTypeId,
+            @PathVariable("deliveryMethod") String deliveryMethod,
             @RequestBody NotificationSettingUpdateDto updateDto) {
         try {
             Long userId = getCurrentUserId();
