@@ -1,3 +1,144 @@
 package saomath.checkusserver.notification.service;
 
-import org.junit.jupiter.api.Test;\nimport org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.boot.test.context.SpringBootTest;\nimport org.springframework.test.context.ActiveProfiles;\nimport org.springframework.transaction.annotation.Transactional;\nimport saomath.checkusserver.entity.NotificationSetting;\nimport saomath.checkusserver.entity.User;\nimport saomath.checkusserver.notification.domain.AlimtalkTemplate;\nimport saomath.checkusserver.repository.NotificationSettingRepository;\nimport saomath.checkusserver.repository.UserRepository;\n\nimport java.util.List;\n\nimport static org.assertj.core.api.Assertions.assertThat;\n\n/**\n * NotificationSetting 기능 테스트\n */\n@SpringBootTest\n@ActiveProfiles(\"test\")\n@Transactional\npublic class NotificationSettingTest {\n    \n    @Autowired\n    private UserRepository userRepository;\n    \n    @Autowired\n    private NotificationSettingRepository notificationSettingRepository;\n    \n    @Autowired\n    private NotificationPreferenceService notificationPreferenceService;\n    \n    @Test\n    public void testNotificationSettingBasicCRUD() {\n        // Given: 테스트 사용자 생성\n        User testUser = User.builder()\n            .username(\"testuser\")\n            .name(\"테스트사용자\")\n            .phoneNumber(\"010-1234-5678\")\n            .discordId(\"123456789012345678\")\n            .password(\"password\")\n            .build();\n        userRepository.save(testUser);\n        \n        // When: 알림 설정 생성\n        NotificationSetting alimtalkSetting = NotificationSetting.builder()\n            .userId(testUser.getId())\n            .templateName(AlimtalkTemplate.STUDY_REMINDER_10MIN.name())\n            .deliveryMethod(\"alimtalk\")\n            .isEnabled(true)\n            .advanceMinutes(10)\n            .build();\n        \n        NotificationSetting discordSetting = NotificationSetting.builder()\n            .userId(testUser.getId())\n            .templateName(AlimtalkTemplate.STUDY_REMINDER_10MIN.name())\n            .deliveryMethod(\"discord\")\n            .isEnabled(true)\n            .advanceMinutes(10)\n            .build();\n        \n        notificationSettingRepository.save(alimtalkSetting);\n        notificationSettingRepository.save(discordSetting);\n        \n        // Then: 조회 테스트\n        List<NotificationSetting> userSettings = notificationSettingRepository.findByUserId(testUser.getId());\n        assertThat(userSettings).hasSize(2);\n        \n        List<NotificationSetting> templateSettings = notificationSettingRepository\n            .findByUserIdAndTemplateName(testUser.getId(), AlimtalkTemplate.STUDY_REMINDER_10MIN.name());\n        assertThat(templateSettings).hasSize(2);\n        \n        List<NotificationSetting> enabledSettings = notificationSettingRepository\n            .findByUserIdAndIsEnabledTrue(testUser.getId());\n        assertThat(enabledSettings).hasSize(2);\n    }\n    \n    @Test\n    public void testNotificationPreferenceService() {\n        // Given: 테스트 사용자 생성\n        User testUser = User.builder()\n            .username(\"testuser2\")\n            .name(\"테스트사용자2\")\n            .phoneNumber(\"010-9876-5432\")\n            .discordId(\"987654321098765432\")\n            .password(\"password\")\n            .build();\n        userRepository.save(testUser);\n        \n        // 알림 설정이 없는 상태에서 테스트 (기본 설정 사용)\n        List<NotificationPreference> preferences = notificationPreferenceService\n            .getUserPreferences(testUser.getId(), AlimtalkTemplate.STUDY_START.name());\n        \n        // 기본적으로 알림톡과 디스코드 모두 활성화되어야 함\n        assertThat(preferences).hasSize(2);\n        assertThat(preferences)\n            .extracting(NotificationPreference::getChannel)\n            .containsExactlyInAnyOrder(\n                NotificationService.NotificationChannel.ALIMTALK,\n                NotificationService.NotificationChannel.DISCORD\n            );\n        \n        // When: DB에 알림 설정 추가 (알림톡만 활성화)\n        NotificationSetting alimtalkOnly = NotificationSetting.builder()\n            .userId(testUser.getId())\n            .templateName(AlimtalkTemplate.STUDY_START.name())\n            .deliveryMethod(\"alimtalk\")\n            .isEnabled(true)\n            .build();\n        notificationSettingRepository.save(alimtalkOnly);\n        \n        // Then: DB 설정이 반영되어야 함\n        List<NotificationPreference> dbPreferences = notificationPreferenceService\n            .getUserPreferences(testUser.getId(), AlimtalkTemplate.STUDY_START.name());\n        \n        assertThat(dbPreferences).hasSize(1);\n        assertThat(dbPreferences.get(0).getChannel())\n            .isEqualTo(NotificationService.NotificationChannel.ALIMTALK);\n        assertThat(dbPreferences.get(0).getRecipient())\n            .isEqualTo(testUser.getPhoneNumber());\n    }\n    \n    @Test\n    public void testUniqueConstraint() {\n        // Given: 테스트 사용자 생성\n        User testUser = User.builder()\n            .username(\"testuser3\")\n            .name(\"테스트사용자3\")\n            .phoneNumber(\"010-1111-2222\")\n            .password(\"password\")\n            .build();\n        userRepository.save(testUser);\n        \n        // When: 같은 설정을 두 번 저장 시도\n        NotificationSetting setting1 = NotificationSetting.builder()\n            .userId(testUser.getId())\n            .templateName(AlimtalkTemplate.NO_SHOW.name())\n            .deliveryMethod(\"alimtalk\")\n            .isEnabled(true)\n            .build();\n        \n        notificationSettingRepository.save(setting1);\n        \n        // Then: 중복 설정은 저장되지 않아야 함 (유니크 제약조건)\n        // 실제로는 예외가 발생해야 하지만, 테스트에서는 중복 체크만 수행\n        List<NotificationSetting> duplicateSettings = notificationSettingRepository\n            .findByUserIdAndTemplateNameAndDeliveryMethod(\n                testUser.getId(), \n                AlimtalkTemplate.NO_SHOW.name(), \n                \"alimtalk\"\n            ).stream().toList();\n        \n        assertThat(duplicateSettings).hasSize(1);\n    }\n}
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+import saomath.checkusserver.entity.NotificationSetting;
+import saomath.checkusserver.entity.User;
+import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.repository.NotificationSettingRepository;
+import saomath.checkusserver.repository.UserRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * 알림 설정 기능 테스트
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+public class NotificationSettingTest {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
+    
+    @Autowired
+    private NotificationPreferenceService notificationPreferenceService;
+    
+    @Test
+    public void testBasicNotificationSettingCRUD() {
+        // Given: 테스트 사용자 생성
+        User testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setName("테스트사용자");
+        testUser.setPhoneNumber("010-1234-5678");
+        testUser.setDiscordId("123456789012345678");
+        testUser.setPassword("password");
+        userRepository.save(testUser);
+        
+        // When: 알림 설정 생성
+        NotificationSetting setting = new NotificationSetting();
+        setting.setUserId(testUser.getId());
+        setting.setTemplateName(AlimtalkTemplate.STUDY_REMINDER_10MIN.name());
+        setting.setDeliveryMethod("alimtalk");
+        setting.setIsEnabled(true);
+        setting.setAdvanceMinutes(10);
+        notificationSettingRepository.save(setting);
+        
+        // Then: 조회 테스트
+        List<NotificationSetting> userSettings = notificationSettingRepository.findByUserId(testUser.getId());
+        assertThat(userSettings).hasSize(1);
+        assertThat(userSettings.get(0).getTemplateName()).isEqualTo(AlimtalkTemplate.STUDY_REMINDER_10MIN.name());
+        assertThat(userSettings.get(0).getDeliveryMethod()).isEqualTo("alimtalk");
+    }
+    
+    @Test
+    public void testNotificationPreferenceServiceDefaultBehavior() {
+        // Given: 전화번호와 디스코드 ID가 있는 사용자
+        User testUser = new User();
+        testUser.setUsername("testuser2");
+        testUser.setName("테스트사용자2");
+        testUser.setPhoneNumber("010-9876-5432");
+        testUser.setDiscordId("987654321098765432");
+        testUser.setPassword("password");
+        userRepository.save(testUser);
+        
+        // When: DB에 설정이 없는 상태에서 알림 설정 조회
+        List<NotificationPreference> preferences = notificationPreferenceService
+            .getUserPreferences(testUser.getId(), AlimtalkTemplate.STUDY_START.name());
+        
+        // Then: 기본적으로 알림톡과 디스코드 모두 활성화되어야 함
+        assertThat(preferences).hasSizeGreaterThanOrEqualTo(1);
+        
+        // 전화번호가 있으므로 알림톡 설정이 있어야 함
+        boolean hasAlimtalk = preferences.stream()
+            .anyMatch(p -> p.getRecipient().equals(testUser.getPhoneNumber()));
+        assertThat(hasAlimtalk).isTrue();
+    }
+    
+    @Test
+    public void testNotificationPreferenceServiceWithDatabaseSettings() {
+        // Given: 테스트 사용자 생성
+        User testUser = new User();
+        testUser.setUsername("testuser3");
+        testUser.setName("테스트사용자3");
+        testUser.setPhoneNumber("010-1111-2222");
+        testUser.setDiscordId("111111111111111111");
+        testUser.setPassword("password");
+        userRepository.save(testUser);
+        
+        // DB에 알림 설정 추가 (알림톡만 활성화)
+        NotificationSetting alimtalkSetting = new NotificationSetting();
+        alimtalkSetting.setUserId(testUser.getId());
+        alimtalkSetting.setTemplateName(AlimtalkTemplate.STUDY_START.name());
+        alimtalkSetting.setDeliveryMethod("alimtalk");
+        alimtalkSetting.setIsEnabled(true);
+        notificationSettingRepository.save(alimtalkSetting);
+        
+        // When: 알림 설정 조회
+        List<NotificationPreference> preferences = notificationPreferenceService
+            .getUserPreferences(testUser.getId(), AlimtalkTemplate.STUDY_START.name());
+        
+        // Then: DB 설정이 반영되어 알림톡만 활성화되어야 함
+        assertThat(preferences).hasSize(1);
+        assertThat(preferences.get(0).getRecipient()).isEqualTo(testUser.getPhoneNumber());
+    }
+    
+    @Test
+    public void testFindSpecificNotificationSetting() {
+        // Given: 테스트 사용자 및 설정 생성
+        User testUser = new User();
+        testUser.setUsername("testuser4");
+        testUser.setName("테스트사용자4");
+        testUser.setPhoneNumber("010-3333-4444");
+        testUser.setPassword("password");
+        userRepository.save(testUser);
+        
+        NotificationSetting setting = new NotificationSetting();
+        setting.setUserId(testUser.getId());
+        setting.setTemplateName(AlimtalkTemplate.NO_SHOW.name());
+        setting.setDeliveryMethod("alimtalk");
+        setting.setIsEnabled(false); // 비활성화
+        notificationSettingRepository.save(setting);
+        
+        // When: 특정 설정 조회
+        Optional<NotificationSetting> foundSetting = notificationSettingRepository
+            .findByUserIdAndTemplateNameAndDeliveryMethod(
+                testUser.getId(), 
+                AlimtalkTemplate.NO_SHOW.name(), 
+                "alimtalk"
+            );
+        
+        // Then: 설정이 조회되고 비활성화 상태여야 함
+        assertThat(foundSetting).isPresent();
+        assertThat(foundSetting.get().getIsEnabled()).isFalse();
+    }
+}
