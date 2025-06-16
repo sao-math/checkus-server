@@ -5,15 +5,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.entity.NotificationSetting;
 import saomath.checkusserver.entity.User;
+import saomath.checkusserver.entity.UserRole;
+import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.notification.domain.DefaultNotificationSetting;
 import saomath.checkusserver.repository.NotificationSettingRepository;
 import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.repository.UserRoleRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 사용자 알림 설정 조회 서비스 구현체
- * DB 기반 알림 설정 관리
+ * 기본값 + 예외 저장 방식 사용
  */
 @Slf4j
 @Service
@@ -21,6 +28,7 @@ import java.util.List;
 public class NotificationPreferenceServiceImpl implements NotificationPreferenceService {
     
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
     private final NotificationSettingRepository notificationSettingRepository;
     
     @Override
@@ -34,51 +42,19 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
             return preferences;
         }
         
-        // DB에서 알림 설정 조회
-        List<NotificationSetting> settings;
-        if (templateId != null) {
-            settings = notificationSettingRepository.findByUserIdAndTemplateNameAndIsEnabledTrue(userId, templateId);
-        } else {
-            settings = notificationSettingRepository.findByUserIdAndIsEnabledTrue(userId);
-        }
+        // 사용자 역할 확인
+        String userRole = getUserPrimaryRole(userId);
+        DefaultNotificationSetting defaultSetting = DefaultNotificationSetting.getByRole(userRole);
         
-        // DB에 설정이 있으면 그것을 사용
-        if (!settings.isEmpty()) {
-            for (NotificationSetting setting : settings) {
-                String recipient = getRecipientForChannel(user, setting.getDeliveryMethod());
-                if (recipient != null) {
-                    preferences.add(NotificationPreference.builder()
-                        .userId(userId)
-                        .channel(mapDeliveryMethodToChannel(setting.getDeliveryMethod()))
-                        .recipient(recipient)
-                        .enabled(setting.getIsEnabled())
-                        .build());
-                }
-            }
-            return preferences;
-        }
+        // 처리할 템플릿 목록 결정
+        List<AlimtalkTemplate> templatesToProcess = getTemplatesToProcess(templateId);
         
-        // DB에 설정이 없으면 기본 설정 사용 (기존 로직 유지)
-        log.debug("사용자 {}에 대한 알림 설정이 없어 기본 설정을 사용합니다.", userId);
+        // 예외 설정 조회 (DB에서)
+        Map<String, NotificationSetting> exceptionSettings = getExceptionSettings(userId, templateId);
         
-        // 알림톡 기본 활성화 (전화번호가 있는 경우)
-        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
-            preferences.add(NotificationPreference.builder()
-                .userId(userId)
-                .channel(NotificationService.NotificationChannel.ALIMTALK)
-                .recipient(user.getPhoneNumber())
-                .enabled(true)
-                .build());
-        }
-        
-        // 디스코드 기본 활성화 (디스코드 ID가 있는 경우)
-        if (user.getDiscordId() != null && !user.getDiscordId().isEmpty()) {
-            preferences.add(NotificationPreference.builder()
-                .userId(userId)
-                .channel(NotificationService.NotificationChannel.DISCORD)
-                .recipient(user.getDiscordId())
-                .enabled(true)
-                .build());
+        // 각 템플릿에 대해 최종 설정 생성
+        for (AlimtalkTemplate template : templatesToProcess) {
+            preferences.addAll(buildPreferencesForTemplate(user, template, defaultSetting, exceptionSettings));
         }
         
         return preferences;
@@ -87,6 +63,138 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     @Override
     public List<NotificationPreference> getAllUserPreferences(Long userId) {
         return getUserPreferences(userId, null);
+    }
+    
+    /**
+     * 사용자의 주 역할 조회
+     */
+    private String getUserPrimaryRole(Long userId) {
+        List<UserRole> userRoles = userRoleRepository.findByUserIdAndStatus(userId, UserRole.RoleStatus.ACTIVE);
+        
+        // 우선순위: STUDENT > GUARDIAN > TEACHER
+        for (UserRole userRole : userRoles) {
+            String roleName = userRole.getRole().getName();
+            if ("STUDENT".equals(roleName)) {
+                return "STUDENT";
+            }
+        }
+        
+        for (UserRole userRole : userRoles) {
+            String roleName = userRole.getRole().getName();
+            if ("GUARDIAN".equals(roleName)) {
+                return "GUARDIAN";
+            }
+        }
+        
+        for (UserRole userRole : userRoles) {
+            String roleName = userRole.getRole().getName();
+            if ("TEACHER".equals(roleName)) {
+                return "TEACHER";
+            }
+        }
+        
+        // 기본값은 STUDENT
+        log.warn("사용자 {}의 활성 역할을 찾을 수 없어 STUDENT로 처리합니다.", userId);
+        return "STUDENT";
+    }
+    
+    /**
+     * 처리할 템플릿 목록 결정
+     */
+    private List<AlimtalkTemplate> getTemplatesToProcess(String templateId) {
+        if (templateId != null) {
+            try {
+                return List.of(AlimtalkTemplate.valueOf(templateId));
+            } catch (IllegalArgumentException e) {
+                log.warn("잘못된 템플릿 ID: {}", templateId);
+                return List.of();
+            }
+        }
+        
+        // 모든 템플릿 반환
+        return List.of(AlimtalkTemplate.values());
+    }
+    
+    /**
+     * DB에서 예외 설정 조회
+     */
+    private Map<String, NotificationSetting> getExceptionSettings(Long userId, String templateId) {
+        List<NotificationSetting> settings;
+        if (templateId != null) {
+            settings = notificationSettingRepository.findByUserIdAndTemplateName(userId, templateId);
+        } else {
+            settings = notificationSettingRepository.findByUserId(userId);
+        }
+        
+        // templateName + deliveryMethod 를 key로 하는 Map 생성
+        return settings.stream()
+            .collect(Collectors.toMap(
+                setting -> setting.getTemplateName() + ":" + setting.getDeliveryMethod(),
+                setting -> setting,
+                (existing, replacement) -> existing // 중복 시 기존 값 유지
+            ));
+    }
+    
+    /**
+     * 특정 템플릿에 대한 최종 설정 생성
+     */
+    private List<NotificationPreference> buildPreferencesForTemplate(
+            User user, 
+            AlimtalkTemplate template, 
+            DefaultNotificationSetting defaultSetting,
+            Map<String, NotificationSetting> exceptionSettings) {
+        
+        List<NotificationPreference> preferences = new ArrayList<>();
+        
+        // 가능한 모든 채널 확인
+        Set<String> allChannels = Set.of("alimtalk", "discord", "email", "sms");
+        
+        for (String channel : allChannels) {
+            String key = template.name() + ":" + channel;
+            NotificationSetting exceptionSetting = exceptionSettings.get(key);
+            
+            boolean isEnabled;
+            if (exceptionSetting != null) {
+                // DB에 예외 설정이 있으면 그것을 사용
+                isEnabled = exceptionSetting.getIsEnabled();
+            } else {
+                // 예외 설정이 없으면 기본값 사용
+                isEnabled = defaultSetting.isDefaultEnabled(template, channel);
+            }
+            
+            // 활성화되어 있고, 사용자가 해당 채널을 사용할 수 있는 경우만 추가
+            if (isEnabled && canUseChannel(user, channel)) {
+                String recipient = getRecipientForChannel(user, channel);
+                if (recipient != null) {
+                    preferences.add(NotificationPreference.builder()
+                        .userId(user.getId())
+                        .channel(mapDeliveryMethodToChannel(channel))
+                        .recipient(recipient)
+                        .enabled(true)
+                        .build());
+                }
+            }
+        }
+        
+        return preferences;
+    }
+    
+    /**
+     * 사용자가 해당 채널을 사용할 수 있는지 확인
+     */
+    private boolean canUseChannel(User user, String channel) {
+        switch (channel) {
+            case "alimtalk":
+            case "sms":
+                return user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty();
+            case "discord":
+                return user.getDiscordId() != null && !user.getDiscordId().isEmpty();
+            case "email":
+                // 이메일 필드가 추가되면 여기에 추가
+                return false;
+            default:
+                return false;
+        }
     }
     
     /**
