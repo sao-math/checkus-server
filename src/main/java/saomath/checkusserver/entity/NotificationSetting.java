@@ -15,7 +15,12 @@ import lombok.NoArgsConstructor;
  * - 알림 시점 조정 가능 (몇 분 전 알림)
  */
 @Entity
-@Table(name = "notification_setting")
+@Table(name = "notification_setting", uniqueConstraints = {
+    @UniqueConstraint(
+        name = "uk_notification_setting", 
+        columnNames = {"user_id", "template_name", "delivery_method"}
+    )
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -67,15 +72,4 @@ public class NotificationSetting {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
-    
-    /**
-     * 복합 유니크 인덱스: 같은 사용자가 같은 템플릿에 같은 채널로 중복 설정 불가
-     */
-    @Table(uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_notification_setting", 
-            columnNames = {"user_id", "template_name", "delivery_method"}
-        )
-    })
-    public static class UniqueConstraint {}
 }
