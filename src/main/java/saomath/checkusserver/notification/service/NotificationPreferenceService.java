@@ -34,23 +34,14 @@ public interface NotificationPreferenceService {
     List<NotificationSettingGroupDto> getGroupedNotificationSettings(Long userId);
     
     /**
-     * 특정 알림 설정 업데이트
+     * 특정 알림 설정 생성/업데이트
      * @param userId 사용자 ID
      * @param templateId 알림 템플릿 ID
      * @param deliveryMethod 전송 방법 (alimtalk, discord 등)
      * @param updateDto 업데이트할 설정 정보
      */
     void updateNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto updateDto);
-    
-    /**
-     * 새로운 알림 설정 생성
-     * @param userId 사용자 ID
-     * @param templateId 알림 템플릿 ID
-     * @param deliveryMethod 전송 방법
-     * @param createDto 생성할 설정 정보
-     */
-    void createNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto createDto);
-    
+
     /**
      * 특정 알림 설정 존재 여부 확인
      * @param userId 사용자 ID

@@ -120,39 +120,18 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                 userId, templateId, standardizedMethod, updateDto.isEnabled());
         } else {
             // 새 설정 생성
-            createNotificationSetting(userId, templateId, standardizedMethod, updateDto);
+            NotificationSetting newSetting = NotificationSetting.builder()
+                    .userId(userId)
+                    .templateName(templateId)
+                    .deliveryMethod(standardizedMethod)
+                    .isEnabled(updateDto.isEnabled())
+                    .advanceMinutes(updateDto.getAdvanceMinutes() != null ? updateDto.getAdvanceMinutes() : 0)
+                    .build();
+
+            notificationSettingRepository.save(newSetting);
+            log.info("새 알림 설정 생성 완료 - userId: {}, template: {}, method: {}, enabled: {}",
+                    userId, templateId, standardizedMethod, updateDto.isEnabled());
         }
-    }
-    
-    @Override
-    public void createNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto createDto) {
-        // 채널명 표준화
-        String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
-        
-        // 중복 설정 확인
-        if (hasNotificationSetting(userId, templateId, standardizedMethod)) {
-            throw new BusinessException("이미 존재하는 알림 설정입니다.");
-        }
-        
-        // 템플릿 유효성 검증
-        try {
-            AlimtalkTemplate.valueOf(templateId);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("지원하지 않는 템플릿 ID입니다: " + templateId);
-        }
-        
-        // 새 설정 생성
-        NotificationSetting newSetting = NotificationSetting.builder()
-            .userId(userId)
-            .templateName(templateId)
-            .deliveryMethod(standardizedMethod)
-            .isEnabled(createDto.isEnabled())
-            .advanceMinutes(createDto.getAdvanceMinutes() != null ? createDto.getAdvanceMinutes() : 0)
-            .build();
-        
-        notificationSettingRepository.save(newSetting);
-        log.info("새 알림 설정 생성 완료 - userId: {}, template: {}, method: {}, enabled: {}", 
-            userId, templateId, standardizedMethod, createDto.isEnabled());
     }
     
     @Override
@@ -339,6 +318,7 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     /**
      * 채널명 표준화 (kakao -> alimtalk)
      */
+    //todo 이게 필요한가...?
     private String standardizeDeliveryMethod(String deliveryMethod) {
         if (deliveryMethod == null) {
             return "alimtalk";
