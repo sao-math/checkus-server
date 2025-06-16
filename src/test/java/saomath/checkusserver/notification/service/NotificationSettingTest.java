@@ -13,6 +13,7 @@ import saomath.checkusserver.repository.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,11 +34,18 @@ public class NotificationSettingTest {
     @Autowired
     private NotificationPreferenceService notificationPreferenceService;
     
+    /**
+     * 고유한 username 생성 헬퍼 메서드
+     */
+    private String generateUniqueUsername() {
+        return "testuser_" + UUID.randomUUID().toString().substring(0, 8);
+    }
+    
     @Test
     public void testBasicNotificationSettingCRUD() {
         // Given: 테스트 사용자 생성
         User testUser = new User();
-        testUser.setUsername("testuser");
+        testUser.setUsername(generateUniqueUsername());
         testUser.setName("테스트사용자");
         testUser.setPhoneNumber("010-1234-5678");
         testUser.setDiscordId("123456789012345678");
@@ -64,7 +72,7 @@ public class NotificationSettingTest {
     public void testNotificationPreferenceServiceDefaultBehavior() {
         // Given: 전화번호와 디스코드 ID가 있는 사용자
         User testUser = new User();
-        testUser.setUsername("testuser2");
+        testUser.setUsername(generateUniqueUsername());
         testUser.setName("테스트사용자2");
         testUser.setPhoneNumber("010-9876-5432");
         testUser.setDiscordId("987654321098765432");
@@ -88,7 +96,7 @@ public class NotificationSettingTest {
     public void testNotificationPreferenceServiceWithDatabaseSettings() {
         // Given: 테스트 사용자 생성
         User testUser = new User();
-        testUser.setUsername("testuser3");
+        testUser.setUsername(generateUniqueUsername());
         testUser.setName("테스트사용자3");
         testUser.setPhoneNumber("010-1111-2222");
         testUser.setDiscordId("111111111111111111");
@@ -116,7 +124,7 @@ public class NotificationSettingTest {
     public void testFindSpecificNotificationSetting() {
         // Given: 테스트 사용자 및 설정 생성
         User testUser = new User();
-        testUser.setUsername("testuser4");
+        testUser.setUsername(generateUniqueUsername());
         testUser.setName("테스트사용자4");
         testUser.setPhoneNumber("010-3333-4444");
         testUser.setPassword("password");
