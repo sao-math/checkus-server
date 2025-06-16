@@ -3,8 +3,9 @@ package saomath.checkusserver.repository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.User;
@@ -14,12 +15,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
 @DisplayName("AssignedStudyTimeRepository 테스트")
 class AssignedStudyTimeRepositoryTest {
 
     @Autowired
-    private TestEntityManager entityManager;
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ActivityRepository activityRepository;
 
     @Autowired
     private AssignedStudyTimeRepository assignedStudyTimeRepository;
@@ -34,7 +40,7 @@ class AssignedStudyTimeRepositoryTest {
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
                 .username("teacher1")
@@ -42,13 +48,13 @@ class AssignedStudyTimeRepositoryTest {
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         LocalDateTime now = LocalDateTime.now();
         AssignedStudyTime studyTime1 = AssignedStudyTime.builder()
@@ -69,8 +75,8 @@ class AssignedStudyTimeRepositoryTest {
                 .assignedBy(teacher.getId())
                 .build();
 
-        entityManager.persistAndFlush(studyTime1);
-        entityManager.persistAndFlush(studyTime2);
+        assignedStudyTimeRepository.save(studyTime1);
+        assignedStudyTimeRepository.save(studyTime2);
 
         // When
         List<AssignedStudyTime> result = assignedStudyTimeRepository
@@ -90,26 +96,26 @@ class AssignedStudyTimeRepositoryTest {
     void findOverlappingStudyTimes_Success() {
         // Given
         User student = User.builder()
-                .username("student1")
-                .name("학생1")
+                .username("student2")
+                .name("학생2")
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
-                .username("teacher1")
-                .name("선생님1")
+                .username("teacher2")
+                .name("선생님2")
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         LocalDateTime baseTime = LocalDateTime.now().plusHours(1);
         
@@ -122,7 +128,7 @@ class AssignedStudyTimeRepositoryTest {
                 .endTime(baseTime.plusHours(2))
                 .assignedBy(teacher.getId())
                 .build();
-        entityManager.persistAndFlush(existing);
+        assignedStudyTimeRepository.save(existing);
 
         // When - 11:00 ~ 13:00 새로운 배정 시도 (겹침)
         List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -142,26 +148,26 @@ class AssignedStudyTimeRepositoryTest {
     void findOverlappingStudyTimes_NoOverlap() {
         // Given
         User student = User.builder()
-                .username("student1")
-                .name("학생1")
+                .username("student3")
+                .name("학생3")
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
-                .username("teacher1")
-                .name("선생님1")
+                .username("teacher3")
+                .name("선생님3")
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         LocalDateTime baseTime = LocalDateTime.now().plusHours(1);
         
@@ -174,7 +180,7 @@ class AssignedStudyTimeRepositoryTest {
                 .endTime(baseTime.plusHours(2))
                 .assignedBy(teacher.getId())
                 .build();
-        entityManager.persistAndFlush(existing);
+        assignedStudyTimeRepository.save(existing);
 
         // When - 13:00 ~ 15:00 새로운 배정 시도 (겹치지 않음)
         List<AssignedStudyTime> overlapping = assignedStudyTimeRepository
@@ -193,26 +199,26 @@ class AssignedStudyTimeRepositoryTest {
     void findUpcomingStudyTimes_Success() {
         // Given
         User student = User.builder()
-                .username("student1")
-                .name("학생1")
+                .username("student4")
+                .name("학생4")
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
-                .username("teacher1")
-                .name("선생님1")
+                .username("teacher4")
+                .name("선생님4")
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         LocalDateTime now = LocalDateTime.now();
         
@@ -246,9 +252,9 @@ class AssignedStudyTimeRepositoryTest {
                 .assignedBy(teacher.getId())
                 .build();
 
-        entityManager.persistAndFlush(upcomingIn5Min);
-        entityManager.persistAndFlush(startingNow);
-        entityManager.persistAndFlush(futureStudy);
+        assignedStudyTimeRepository.save(upcomingIn5Min);
+        assignedStudyTimeRepository.save(startingNow);
+        assignedStudyTimeRepository.save(futureStudy);
 
         // When
         List<AssignedStudyTime> upcoming = assignedStudyTimeRepository

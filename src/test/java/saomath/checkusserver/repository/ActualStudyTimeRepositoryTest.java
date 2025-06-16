@@ -3,8 +3,9 @@ package saomath.checkusserver.repository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.entity.AssignedStudyTime;
@@ -15,12 +16,20 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
 @DisplayName("ActualStudyTimeRepository 테스트")
 class ActualStudyTimeRepositoryTest {
 
     @Autowired
-    private TestEntityManager entityManager;
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ActivityRepository activityRepository;
+    
+    @Autowired
+    private AssignedStudyTimeRepository assignedStudyTimeRepository;
 
     @Autowired
     private ActualStudyTimeRepository actualStudyTimeRepository;
@@ -35,7 +44,7 @@ class ActualStudyTimeRepositoryTest {
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
                 .username("teacher1")
@@ -43,13 +52,13 @@ class ActualStudyTimeRepositoryTest {
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(student.getId())
@@ -59,7 +68,7 @@ class ActualStudyTimeRepositoryTest {
                 .endTime(LocalDateTime.now().plusHours(2))
                 .assignedBy(teacher.getId())
                 .build();
-        entityManager.persistAndFlush(assignedStudyTime);
+        assignedStudyTimeRepository.save(assignedStudyTime);
 
         ActualStudyTime actualStudyTime1 = ActualStudyTime.builder()
                 .studentId(student.getId())
@@ -77,8 +86,8 @@ class ActualStudyTimeRepositoryTest {
                 .source("discord")
                 .build();
 
-        entityManager.persistAndFlush(actualStudyTime1);
-        entityManager.persistAndFlush(actualStudyTime2);
+        actualStudyTimeRepository.save(actualStudyTime1);
+        actualStudyTimeRepository.save(actualStudyTime2);
 
         // When
         List<ActualStudyTime> result = actualStudyTimeRepository
@@ -95,12 +104,12 @@ class ActualStudyTimeRepositoryTest {
     void findByStudentIdAndDateRange_Success() {
         // Given
         User student = User.builder()
-                .username("student1")
-                .name("학생1")
+                .username("student2")
+                .name("학생2")
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -125,9 +134,9 @@ class ActualStudyTimeRepositoryTest {
                 .source("discord")
                 .build();
 
-        entityManager.persistAndFlush(studyTime1);
-        entityManager.persistAndFlush(studyTime2);
-        entityManager.persistAndFlush(studyTime3);
+        actualStudyTimeRepository.save(studyTime1);
+        actualStudyTimeRepository.save(studyTime2);
+        actualStudyTimeRepository.save(studyTime3);
 
         // When
         List<ActualStudyTime> result = actualStudyTimeRepository
@@ -149,26 +158,26 @@ class ActualStudyTimeRepositoryTest {
     void findByStudentIdAndAssignedStudyTimeIdIsNull_Success() {
         // Given
         User student = User.builder()
-                .username("student1")
-                .name("학생1")
+                .username("student3")
+                .name("학생3")
                 .phoneNumber("010-1111-1111")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(student);
+        userRepository.save(student);
 
         User teacher = User.builder()
-                .username("teacher1")
-                .name("선생님1")
+                .username("teacher2")
+                .name("선생님2")
                 .phoneNumber("010-2222-2222")
                 .password("password")
                 .build();
-        entityManager.persistAndFlush(teacher);
+        userRepository.save(teacher);
 
         Activity activity = Activity.builder()
                 .name("수학 공부")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(student.getId())
@@ -178,7 +187,7 @@ class ActualStudyTimeRepositoryTest {
                 .endTime(LocalDateTime.now().plusHours(2))
                 .assignedBy(teacher.getId())
                 .build();
-        entityManager.persistAndFlush(assignedStudyTime);
+        assignedStudyTimeRepository.save(assignedStudyTime);
 
         // 할당된 시간의 접속
         ActualStudyTime assignedStudy = ActualStudyTime.builder()
@@ -198,8 +207,8 @@ class ActualStudyTimeRepositoryTest {
                 .source("discord")
                 .build();
 
-        entityManager.persistAndFlush(assignedStudy);
-        entityManager.persistAndFlush(unassignedStudy);
+        actualStudyTimeRepository.save(assignedStudy);
+        actualStudyTimeRepository.save(unassignedStudy);
 
         // When
         List<ActualStudyTime> result = actualStudyTimeRepository

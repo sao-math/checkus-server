@@ -3,20 +3,20 @@ package saomath.checkusserver.repository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.Activity;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
 @DisplayName("ActivityRepository 테스트")
 class ActivityRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
 
     @Autowired
     private ActivityRepository activityRepository;
@@ -40,9 +40,9 @@ class ActivityRepositoryTest {
                 .isStudyAssignable(false)
                 .build();
 
-        entityManager.persistAndFlush(studyActivity1);
-        entityManager.persistAndFlush(studyActivity2);
-        entityManager.persistAndFlush(nonStudyActivity);
+        activityRepository.save(studyActivity1);
+        activityRepository.save(studyActivity2);
+        activityRepository.save(nonStudyActivity);
 
         // When
         List<Activity> result = activityRepository.findByIsStudyAssignableTrue();
@@ -63,7 +63,7 @@ class ActivityRepositoryTest {
                 .name("과학 실험")
                 .isStudyAssignable(true)
                 .build();
-        entityManager.persistAndFlush(activity);
+        activityRepository.save(activity);
 
         // When & Then
         assertTrue(activityRepository.existsByName("과학 실험"));
@@ -84,8 +84,8 @@ class ActivityRepositoryTest {
                 .isStudyAssignable(false)
                 .build();
 
-        entityManager.persistAndFlush(nonStudyActivity1);
-        entityManager.persistAndFlush(nonStudyActivity2);
+        activityRepository.save(nonStudyActivity1);
+        activityRepository.save(nonStudyActivity2);
 
         // When
         List<Activity> result = activityRepository.findByIsStudyAssignableTrue();
