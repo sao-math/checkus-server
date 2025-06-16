@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -223,8 +224,8 @@ class NotificationPreferenceServiceIntegrationTest {
         // when - "kakao"로 요청하지만 내부적으로 "alimtalk"으로 변환되어야 함
         notificationPreferenceService.updateNotificationSetting(1L, "STUDY_START", "kakao", updateDto);
         
-        // then - alimtalk으로 조회했는지 확인
-        verify(notificationSettingRepository).findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk");
+        // then - alimtalk으로 조회했는지 확인 (내부적으로 hasNotificationSetting도 호출되므로 2번 호출됨)
+        verify(notificationSettingRepository, times(2)).findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk");
     }
     
     @Test

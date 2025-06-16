@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.entity.User;
 import saomath.checkusserver.exception.BusinessException;
@@ -197,6 +198,7 @@ public class NotificationController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping("/settings/grouped")
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
     public ResponseEntity<ResponseBase<List<NotificationSettingGroupDto>>> getGroupedNotificationSettings() {
         try {
@@ -217,6 +219,7 @@ public class NotificationController {
         description = "알림 유형별로 카카오톡과 디스코드를 독립적으로 설정할 수 있습니다."
     )
     @PutMapping("/settings/grouped/{notificationTypeId}/{deliveryMethod}")
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
     public ResponseEntity<ResponseBase<String>> updateNotificationSettingGroup(
             @PathVariable String notificationTypeId,
@@ -238,36 +241,18 @@ public class NotificationController {
         }
     }
 
-    @Operation(
-        summary = "새로운 알림 설정 생성",
-        description = "특정 알림 유형의 특정 채널에 대한 새 설정을 생성합니다."
-    )
-    @PostMapping("/settings/grouped/{notificationTypeId}/{deliveryMethod}")
-    @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
-    public ResponseEntity<ResponseBase<NotificationSettingDto>> createNotificationSetting(
-            @PathVariable String notificationTypeId,
-            @PathVariable String deliveryMethod,
-            @RequestBody NotificationSettingUpdateDto createDto) {
-        try {
-            Long userId = getCurrentUserId();
-            
-            notificationPreferenceService.createNotificationSetting(userId, notificationTypeId, deliveryMethod, createDto);
-            
-            // 생성된 설정은 별도로 조회하지 않고 성공 메시지만 반환
-            return ResponseEntity.ok(ResponseBase.success("새 알림 설정이 생성되었습니다.", null));
-        } catch (BusinessException e) {
-            return ResponseEntity.badRequest()
-                .body(ResponseBase.error(e.getMessage()));
-        } catch (Exception e) {
-            log.error("알림 설정 생성 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseBase.error("알림 설정 생성에 실패했습니다."));
-        }
-    }
-
     // Helper methods
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return Long.valueOf(authentication.getName());
+        log.debug("Authentication: {}", authentication != null ? authentication.getClass().getSimpleName() : "null");
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserPrincipal)) {
+            log.warn("Authentication failed - authentication: {}, principal type: {}",
+                    authentication != null ? "present" : "null",
+                    authentication != null ? authentication.getPrincipal().getClass().getSimpleName() : "null");
+            throw new BusinessException("Authentication failed");
+        }
+        CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
+        return userPrincipal.getId();
+        //todo refactor...
     }
 }

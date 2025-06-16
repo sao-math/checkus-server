@@ -94,12 +94,12 @@ public class NotificationSettingTest {
     
     @Test
     public void testNotificationPreferenceServiceWithDatabaseSettings() {
-        // Given: 테스트 사용자 생성
+        // Given: 테스트 사용자 생성 (디스코드 ID 없이)
         User testUser = new User();
         testUser.setUsername(generateUniqueUsername());
         testUser.setName("테스트사용자3");
         testUser.setPhoneNumber("010-1111-2222");
-        testUser.setDiscordId("111111111111111111");
+        testUser.setDiscordId(null); // 디스코드 ID 없음
         testUser.setPassword("password");
         userRepository.save(testUser);
         
