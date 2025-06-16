@@ -101,25 +101,37 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     
     @Override
     public void updateNotificationSetting(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto updateDto) {
+        // 로깅 추가 - 받은 값 확인
+        log.info("알림 설정 업데이트 요청 - userId: {}, template: {}, method: {}, enabled: {}, advanceMinutes: {}", 
+            userId, templateId, deliveryMethod, updateDto.isEnabled(), updateDto.getAdvanceMinutes());
+        
         // 채널명 표준화
         String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
+        log.info("표준화된 방법: {} -> {}", deliveryMethod, standardizedMethod);
         
         // 기존 설정 조회
         Optional<NotificationSetting> existingSetting = notificationSettingRepository
             .findByUserIdAndTemplateNameAndDeliveryMethod(userId, templateId, standardizedMethod);
         
+        log.info("기존 설정 존재 여부: {}", existingSetting.isPresent());
+        
         if (existingSetting.isPresent()) {
             // 기존 설정 업데이트
             NotificationSetting setting = existingSetting.get();
+            log.info("기존 설정 - ID: {}, 현재 enabled: {}", setting.getId(), setting.getIsEnabled());
+            
             setting.setIsEnabled(updateDto.isEnabled());
             if (updateDto.getAdvanceMinutes() != null) {
                 setting.setAdvanceMinutes(updateDto.getAdvanceMinutes());
             }
-            notificationSettingRepository.save(setting);
+            
+            NotificationSetting savedSetting = notificationSettingRepository.save(setting);
+            log.info("업데이트 후 - ID: {}, enabled: {}", savedSetting.getId(), savedSetting.getIsEnabled());
             log.info("알림 설정 업데이트 완료 - userId: {}, template: {}, method: {}, enabled: {}", 
                 userId, templateId, standardizedMethod, updateDto.isEnabled());
         } else {
             // 새 설정 생성
+            log.info("새 설정 생성 중...");
             NotificationSetting newSetting = NotificationSetting.builder()
                     .userId(userId)
                     .templateName(templateId)
@@ -128,7 +140,8 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                     .advanceMinutes(updateDto.getAdvanceMinutes() != null ? updateDto.getAdvanceMinutes() : 0)
                     .build();
 
-            notificationSettingRepository.save(newSetting);
+            NotificationSetting savedSetting = notificationSettingRepository.save(newSetting);
+            log.info("새 설정 생성 완료 - ID: {}, enabled: {}", savedSetting.getId(), savedSetting.getIsEnabled());
             log.info("새 알림 설정 생성 완료 - userId: {}, template: {}, method: {}, enabled: {}",
                     userId, templateId, standardizedMethod, updateDto.isEnabled());
         }
