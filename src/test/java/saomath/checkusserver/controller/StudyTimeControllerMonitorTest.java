@@ -10,6 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.dto.StudyTimeMonitorResponse;
 import saomath.checkusserver.service.StudyTimeService;
@@ -34,8 +35,12 @@ class StudyTimeControllerMonitorTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private StudyTimeService studyTimeService;
+
+    // JWT 관련 Mock Bean 추가 (보안 설정 때문에 필요)
+    @MockitoBean
+    private saomath.checkusserver.auth.jwt.JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     private ObjectMapper objectMapper;
