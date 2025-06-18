@@ -26,7 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationPreferenceService 통합 테스트")
@@ -168,7 +170,8 @@ class NotificationPreferenceServiceIntegrationTest {
         NotificationSettingUpdateDto updateDto = new NotificationSettingUpdateDto();
         updateDto.setEnabled(true);
         
-        when(notificationSettingRepository.findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk"))
+        when(notificationSettingRepository.findByUserIdAndTemplateNameAndDeliveryMethod(
+            eq(1L), eq("STUDY_START"), eq("alimtalk")))
             .thenReturn(Optional.empty());
         when(notificationSettingRepository.save(any(NotificationSetting.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
@@ -176,8 +179,26 @@ class NotificationPreferenceServiceIntegrationTest {
         // when - "kakao"로 요청하지만 내부적으로 "alimtalk"으로 변환되어야 함
         notificationPreferenceService.updateNotificationSetting(1L, "STUDY_START", "kakao", updateDto);
         
-        // then - alimtalk으로 조회했는지 확인 (내부적으로 hasNotificationSetting도 호출되므로 2번 호출됨)
-        verify(notificationSettingRepository, times(2)).findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk");
+        // then - 표준화가 올바르게 동작하는지 검증
+        
+        // 1. alimtalk으로 표준화되어 조회되었는지 확인
+        verify(notificationSettingRepository)
+            .findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk");
+        
+        // 2. kakao로는 절대 조회하지 않았는지 확인 (핵심!)
+        verify(notificationSettingRepository, never())
+            .findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "kakao");
+        
+        // 3. 저장될 때도 alimtalk으로 저장되는지 확인
+        ArgumentCaptor<NotificationSetting> captor = ArgumentCaptor.forClass(NotificationSetting.class);
+        verify(notificationSettingRepository).save(captor.capture());
+        
+        NotificationSetting saved = captor.getValue();
+        assertThat(saved.getDeliveryMethod()).isEqualTo("alimtalk");
+        assertThat(saved.getDeliveryMethod()).isNotEqualTo("kakao");
+        assertThat(saved.getIsEnabled()).isTrue();
+        assertThat(saved.getUserId()).isEqualTo(1L);
+        assertThat(saved.getTemplateName()).isEqualTo("STUDY_START");
     }
     
     @Test
