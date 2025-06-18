@@ -52,7 +52,7 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getAssignedStudyTimesByDateRange(
             LocalDateTime startDate, LocalDateTime endDate) {
         validateTimeRangeForQuery(startDate, endDate);
-        return assignedStudyTimeRepository.findByStartTimeBetweenWithDetails(startDate, endDate);
+        return assignedStudyTimeRepository.findStartingBetweenWithDetails(startDate, endDate);
     }
 
     /**

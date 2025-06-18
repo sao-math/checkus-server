@@ -70,7 +70,7 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
            "LEFT JOIN FETCH ast.assignedByUser " +
            "WHERE ast.startTime BETWEEN :start AND :end " +
            "ORDER BY ast.startTime")
-    List<AssignedStudyTime> findByStartTimeBetweenWithDetails(
+    List<AssignedStudyTime> findStartingBetweenWithDetails(
             @Param("start") LocalDateTime start, 
             @Param("end") LocalDateTime end
     );

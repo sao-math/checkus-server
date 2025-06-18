@@ -14,6 +14,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
@@ -90,11 +91,16 @@ public class StudyTimeController {
     )
     @PostMapping("/assign")
     public ResponseEntity<ResponseBase<AssignedStudyTimeResponse>> assignStudyTime(
-            @Valid @RequestBody AssignStudyTimeRequest request,
-            Authentication authentication) {
+            @Valid @RequestBody AssignStudyTimeRequest request) {
         
         try {
             // Spring Security에서 자동으로 주입된 인증 정보 사용
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserPrincipal)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ResponseBase.error("인증이 필요합니다."));
+            }
+            
             CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
             Long teacherId = principal.getId();
             

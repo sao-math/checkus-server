@@ -20,8 +20,13 @@ import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
 
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
 import java.time.LocalDateTime;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -33,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class StudyTimeControllerOptimizationTest {
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mockMvc;
 
     @Autowired
@@ -53,6 +60,11 @@ public class StudyTimeControllerOptimizationTest {
 
     @BeforeEach
     void setUp() {
+        // MockMvc 수동 설정
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
+                .build();
+        
         // 테스트 데이터 준비
         testStudent = User.builder()
                 .username("test_student")
