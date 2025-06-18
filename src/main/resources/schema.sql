@@ -144,47 +144,50 @@ CREATE TABLE assigned_task (
                                due_date timestamp
 );
 
-CREATE TABLE notification_type (
-                                   id bigint AUTO_INCREMENT PRIMARY KEY,
-                                   name varchar(255) NOT NULL UNIQUE,
-                                   description text
-);
+-- notification_type 테이블은 현재 사용하지 않음 (AlimtalkTemplate enum 사용)
+-- CREATE TABLE notification_type (
+--                                    id bigint AUTO_INCREMENT PRIMARY KEY,
+--                                    name varchar(255) NOT NULL UNIQUE,
+--                                    description text
+-- );
 
 CREATE TABLE notification_setting (
                                       id bigint AUTO_INCREMENT PRIMARY KEY,
                                       user_id bigint,
-                                      notification_type_id bigint,
+                                      template_name varchar(100) NOT NULL, -- 'STUDY_REMINDER_10MIN', 'STUDY_START' 등
                                       is_enabled boolean DEFAULT true,
-                                      delivery_method varchar(50), -- 'push', 'email', 'sms', 'discord', 'kakao'
+                                      delivery_method varchar(50), -- 'alimtalk', 'discord', 'email', 'sms'
                                       advance_minutes integer DEFAULT 0, -- 몇 분 전에 알림
                                       FOREIGN KEY (user_id) REFERENCES users (id),
-                                      FOREIGN KEY (notification_type_id) REFERENCES notification_type (id)
+                                      UNIQUE KEY uk_notification_setting (user_id, template_name, delivery_method)
 );
 
-CREATE TABLE scheduled_notification (
-                                        id bigint AUTO_INCREMENT PRIMARY KEY,
-                                        user_id bigint,
-                                        notification_type_id bigint,
-                                        title varchar(255) NOT NULL,
-                                        message text,
-                                        scheduled_time timestamp,
-                                        is_sent boolean DEFAULT false,
-                                        related_table varchar(50), -- 'assigned_study_time', 'assigned_task' 등
-                                        related_id bigint, -- 관련 레코드의 ID
-                                        created_at timestamp DEFAULT CURRENT_TIMESTAMP,
-                                        FOREIGN KEY (user_id) REFERENCES users (id),
-                                        FOREIGN KEY (notification_type_id) REFERENCES notification_type (id)
-);
+-- scheduled_notification 테이블은 현재 사용하지 않음 (즉시 발송 방식 사용)
+-- CREATE TABLE scheduled_notification (
+--                                         id bigint AUTO_INCREMENT PRIMARY KEY,
+--                                         user_id bigint,
+--                                         notification_type_id bigint,
+--                                         title varchar(255) NOT NULL,
+--                                         message text,
+--                                         scheduled_time timestamp,
+--                                         is_sent boolean DEFAULT false,
+--                                         related_table varchar(50), -- 'assigned_study_time', 'assigned_task' 등
+--                                         related_id bigint, -- 관련 레코드의 ID
+--                                         created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+--                                         FOREIGN KEY (user_id) REFERENCES users (id),
+--                                         FOREIGN KEY (notification_type_id) REFERENCES notification_type (id)
+-- );
 
-CREATE TABLE notification_history (
-                                      id bigint AUTO_INCREMENT PRIMARY KEY,
-                                      scheduled_notification_id bigint,
-                                      sent_at timestamp,
-                                      delivery_method varchar(50),
-                                      status varchar(20), -- 'success', 'failed', 'pending'
-                                      error_message text,
-                                      FOREIGN KEY (scheduled_notification_id) REFERENCES scheduled_notification (id)
-);
+-- notification_history 테이블은 현재 사용하지 않음 (로깅만 수행)
+-- CREATE TABLE notification_history (
+--                                       id bigint AUTO_INCREMENT PRIMARY KEY,
+--                                       scheduled_notification_id bigint,
+--                                       sent_at timestamp,
+--                                       delivery_method varchar(50),
+--                                       status varchar(20), -- 'success', 'failed', 'pending'
+--                                       error_message text,
+--                                       FOREIGN KEY (scheduled_notification_id) REFERENCES scheduled_notification (id)
+-- );
 
 CREATE TABLE refresh_token (
                                id bigint AUTO_INCREMENT PRIMARY KEY,
