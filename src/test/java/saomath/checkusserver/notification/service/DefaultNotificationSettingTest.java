@@ -51,15 +51,28 @@ public class DefaultNotificationSettingTest {
         // When: 학습 알림에 대한 기본 채널 조회
         Set<String> studyReminderChannels = studentSetting.getDefaultChannels(AlimtalkTemplate.STUDY_REMINDER_10MIN);
         
-        // Then: 학생은 알림톡 + 디스코드 모두 활성화
+        // Then: 노션 설정에 따라 알림톡 + 디스코드 모두 활성화
         assertThat(studyReminderChannels).contains("alimtalk", "discord");
         
         // When: 미입장 알림 확인
         Set<String> noShowChannels = studentSetting.getDefaultChannels(AlimtalkTemplate.NO_SHOW);
         
-        // Then: 학생은 디스코드만 활성화 (학부모가 주로 받음)
-        assertThat(noShowChannels).contains("discord");
-        assertThat(noShowChannels).doesNotContain("alimtalk");
+        // Then: 노션 설정에 따라 알림톡 + 디스코드 모두 활성화
+        assertThat(noShowChannels).contains("alimtalk", "discord");
+        
+        // When: 공부 시작 알림 확인
+        Set<String> studyStartChannels = studentSetting.getDefaultChannels(AlimtalkTemplate.STUDY_START);
+        
+        // Then: 디스코드만 활성화 (카톡은 OFF 고정)
+        assertThat(studyStartChannels).contains("discord");
+        assertThat(studyStartChannels).doesNotContain("alimtalk");
+        
+        // When: 학부모 기본 설정 확인
+        DefaultNotificationSetting guardianSetting = DefaultNotificationSetting.GUARDIAN;
+        Set<String> guardianChannels = guardianSetting.getDefaultChannels(AlimtalkTemplate.STUDY_REMINDER_10MIN);
+        
+        // Then: 학부모는 모든 알림이 기본 비활성화
+        assertThat(guardianChannels).isEmpty();
     }
     
     @Test
@@ -96,9 +109,8 @@ public class DefaultNotificationSettingTest {
         List<NotificationPreference> preferences = notificationPreferenceService
             .getUserPreferences(guardian.getId(), AlimtalkTemplate.NO_SHOW.name());
         
-        // Then: 학부모는 알림톡만 활성화
-        assertThat(preferences).hasSize(1);
-        assertThat(preferences.get(0).getChannel()).isEqualTo(NotificationService.NotificationChannel.ALIMTALK);
+        // Then: 학부모는 기본적으로 모든 알림이 비활성화
+        assertThat(preferences).isEmpty();
     }
     
     @Test

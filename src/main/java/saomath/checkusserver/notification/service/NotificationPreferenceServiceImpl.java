@@ -109,6 +109,9 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
         String standardizedMethod = standardizeDeliveryMethod(deliveryMethod);
         log.info("표준화된 방법: {} -> {}", deliveryMethod, standardizedMethod);
         
+        // 변경 불가능 설정 검증
+        validateReadOnlySettings(userId, templateId, standardizedMethod, updateDto);
+        
         // 기존 설정 조회
         Optional<NotificationSetting> existingSetting = notificationSettingRepository
             .findByUserIdAndTemplateNameAndDeliveryMethod(userId, templateId, standardizedMethod);
@@ -186,6 +189,65 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
         // 기본값은 STUDENT
         log.warn("사용자 {}의 활성 역할을 찾을 수 없어 STUDENT로 처리합니다.", userId);
         return "STUDENT";
+    }
+    
+    /**
+     * 변경 불가능한 알림 설정 검증
+     * 학생 역할에 대해서만 변경 금지 옵션이 적용됨
+     */
+    private void validateReadOnlySettings(Long userId, String templateId, String deliveryMethod, NotificationSettingUpdateDto updateDto) {
+        // 사용자 역할 확인
+        String userRole = getUserPrimaryRole(userId);
+        
+        // 학생 역할이 아니면 검증 스킵
+        if (!"STUDENT".equals(userRole)) {
+            return;
+        }
+        
+        try {
+            // 템플릿 열거형 변환
+            AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
+            
+            // 해당 채널이 변경 불가능한지 확인
+            if (template.isReadOnlyForStudent(deliveryMethod)) {
+                // 기본 설정 값 확인
+                DefaultNotificationSetting defaultSetting = DefaultNotificationSetting.getByRole(userRole);
+                boolean defaultEnabled = defaultSetting.isDefaultEnabled(template, deliveryMethod);
+                
+                // 기본값과 다른 값으로 변경하려고 하면 예외 발생
+                if (updateDto.isEnabled() != defaultEnabled) {
+                    String channelName = getChannelDisplayName(deliveryMethod);
+                    String statusName = defaultEnabled ? "활성화" : "비활성화";
+                    
+                    throw new BusinessException(
+                        String.format("'%s' 알림의 %s 설정은 변경할 수 없습니다. (고정: %s)", 
+                            template.getDescription(), channelName, statusName)
+                    );
+                }
+            }
+            
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 템플릿 ID: {}", templateId);
+            throw new BusinessException("지원하지 않는 알림 유형입니다.");
+        }
+    }
+    
+    /**
+     * 채널 표시명 반환
+     */
+    private String getChannelDisplayName(String deliveryMethod) {
+        switch (deliveryMethod.toLowerCase()) {
+            case "alimtalk":
+                return "카카오톡";
+            case "discord":
+                return "디스코드";
+            case "email":
+                return "이메일";
+            case "sms":
+                return "SMS";
+            default:
+                return deliveryMethod;
+        }
     }
     
     /**
@@ -388,10 +450,15 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
             
             // 사용자가 해당 채널을 사용할 수 있는 경우만 추가
             if (canUseChannel(user, channel)) {
+                // 변경 가능 여부 확인 (학생 역할에 대해서만 제한)
+                String userRole = getUserPrimaryRole(userId);
+                boolean isChangeable = !"STUDENT".equals(userRole) || !template.isReadOnlyForStudent(channel);
+                
                 // 간소화된 DTO 생성 - 중복 정보 제거
                 NotificationSettingDto settingDto = NotificationSettingDto.builder()
                     .id(exceptionSetting != null ? exceptionSetting.getId().toString() : null)
                     .enabled(isEnabled)
+                    .changeable(isChangeable)
                     .build();
                 
                 deliveryMethods.put(channel, settingDto);

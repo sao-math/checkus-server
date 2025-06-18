@@ -19,4 +19,11 @@ public class NotificationSettingDto {
      * 해당 채널의 활성화 여부
      */
     private boolean enabled;
+    
+    /**
+     * 사용자가 이 설정을 변경할 수 있는지 여부
+     * false인 경우 UI에서 토글을 비활성화하거나 숨김
+     */
+    @Builder.Default
+    private boolean changeable = true;
 } 
