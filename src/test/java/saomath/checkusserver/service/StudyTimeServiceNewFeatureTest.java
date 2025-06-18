@@ -320,7 +320,7 @@ class StudyTimeServiceNewFeatureTest {
                 AssignedStudyTime.builder().studentId(2L).title("영어 공부").build()
         );
 
-        when(assignedStudyTimeRepository.findStartingBetween(startDate, endDate))
+        when(assignedStudyTimeRepository.findStartingBetweenWithDetails(startDate, endDate))
                 .thenReturn(expectedResult);
 
         // When
@@ -330,6 +330,6 @@ class StudyTimeServiceNewFeatureTest {
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        verify(assignedStudyTimeRepository).findStartingBetween(startDate, endDate);
+        verify(assignedStudyTimeRepository).findStartingBetweenWithDetails(startDate, endDate);
     }
 }

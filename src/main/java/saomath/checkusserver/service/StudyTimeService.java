@@ -96,9 +96,7 @@ public class StudyTimeService {
                     connectedSessions.size(), saved.getId(), studentId);
         }
         
-        // 연관 엔티티와 함께 다시 조회하여 반환
-        AssignedStudyTime result = assignedStudyTimeRepository.findByIdWithDetails(saved.getId());
-        return result != null ? result : saved;
+        return saved;
     }
 
     /**
@@ -384,6 +382,16 @@ public class StudyTimeService {
         }
         
         return null;
+    }
+
+    /**
+     * ID로 배정된 공부 시간을 연관 엔티티와 함께 조회합니다.
+     * @param id 배정 ID
+     * @return 연관 엔티티가 포함된 배정된 공부 시간
+     */
+    @Transactional(readOnly = true)
+    public AssignedStudyTime getAssignedStudyTimeWithDetails(Long id) {
+        return assignedStudyTimeRepository.findByIdWithDetails(id);
     }
 
     /**

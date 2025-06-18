@@ -164,7 +164,7 @@ class StudyTimeServiceTest {
         );
 
         when(userRepository.existsById(studentId)).thenReturn(true);
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(studentId, startDate, endDate))
+        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(studentId, startDate, endDate))
                 .thenReturn(expectedResult);
 
         // When
@@ -175,7 +175,7 @@ class StudyTimeServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(userRepository).existsById(studentId);
-        verify(assignedStudyTimeRepository).findByStudentIdAndStartTimeBetween(studentId, startDate, endDate);
+        verify(assignedStudyTimeRepository).findByStudentIdAndStartTimeBetweenWithDetails(studentId, startDate, endDate);
     }
 
     @Test
@@ -190,7 +190,7 @@ class StudyTimeServiceTest {
                 AssignedStudyTime.builder().studentId(2L).title("영어 공부").build()
         );
 
-        when(assignedStudyTimeRepository.findStartingBetween(startDate, endDate))
+        when(assignedStudyTimeRepository.findStartingBetweenWithDetails(startDate, endDate))
                 .thenReturn(expectedResult);
 
         // When
@@ -200,7 +200,7 @@ class StudyTimeServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        verify(assignedStudyTimeRepository).findStartingBetween(startDate, endDate);
+        verify(assignedStudyTimeRepository).findStartingBetweenWithDetails(startDate, endDate);
     }
 
     @Test

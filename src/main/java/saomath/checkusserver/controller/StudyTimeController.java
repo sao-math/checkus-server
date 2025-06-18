@@ -113,7 +113,9 @@ public class StudyTimeController {
                     teacherId
             );
             
-            AssignedStudyTimeResponse response = convertToAssignedResponse(result);
+            // 연관 엔티티와 함께 다시 조회하여 Response 생성
+            AssignedStudyTime resultWithDetails = studyTimeService.getAssignedStudyTimeWithDetails(result.getId());
+            AssignedStudyTimeResponse response = convertToAssignedResponse(resultWithDetails != null ? resultWithDetails : result);
             
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ResponseBase.success("공부 시간이 성공적으로 배정되었습니다.", response));
@@ -144,7 +146,9 @@ public class StudyTimeController {
                     request.getEndTime()
             );
             
-            AssignedStudyTimeResponse response = convertToAssignedResponse(result);
+            // 연관 엔티티와 함께 다시 조회하여 Response 생성
+            AssignedStudyTime resultWithDetails = studyTimeService.getAssignedStudyTimeWithDetails(result.getId());
+            AssignedStudyTimeResponse response = convertToAssignedResponse(resultWithDetails != null ? resultWithDetails : result);
             
             return ResponseEntity.ok(
                     ResponseBase.success("공부 시간이 성공적으로 수정되었습니다.", response));
@@ -384,15 +388,29 @@ public class StudyTimeController {
         response.setAssignedBy(assignedStudyTime.getAssignedBy());
         
         // 연관 엔티티가 로드되어 있으면 이름도 설정
-        if (assignedStudyTime.getStudent() != null) {
-            response.setStudentName(assignedStudyTime.getStudent().getName());
+        try {
+            if (assignedStudyTime.getStudent() != null) {
+                response.setStudentName(assignedStudyTime.getStudent().getName());
+            }
+        } catch (Exception e) {
+            log.debug("Student 엔티티 로드 실패: {}", e.getMessage());
         }
-        if (assignedStudyTime.getActivity() != null) {
-            response.setActivityName(assignedStudyTime.getActivity().getName());
-            response.setIsStudyAssignable(assignedStudyTime.getActivity().getIsStudyAssignable());
+        
+        try {
+            if (assignedStudyTime.getActivity() != null) {
+                response.setActivityName(assignedStudyTime.getActivity().getName());
+                response.setIsStudyAssignable(assignedStudyTime.getActivity().getIsStudyAssignable());
+            }
+        } catch (Exception e) {
+            log.debug("Activity 엔티티 로드 실패: {}", e.getMessage());
         }
-        if (assignedStudyTime.getAssignedByUser() != null) {
-            response.setAssignedByName(assignedStudyTime.getAssignedByUser().getName());
+        
+        try {
+            if (assignedStudyTime.getAssignedByUser() != null) {
+                response.setAssignedByName(assignedStudyTime.getAssignedByUser().getName());
+            }
+        } catch (Exception e) {
+            log.debug("AssignedByUser 엔티티 로드 실패: {}", e.getMessage());
         }
         
         return response;
