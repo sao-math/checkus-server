@@ -377,6 +377,9 @@ public class StudyTimeController {
     }
 
     // Helper methods for converting entities to responses
+    // TODO: Controller에 Entity → DTO 변환 로직이 있는 것은 안티패턴
+    // TODO: Service에서 DTO를 반환하거나 별도 Mapper 클래스로 분리 필요
+    // TODO: 현재 비즈니스 로직이 Controller 계층에 섞여있어 재사용성과 테스트성이 떨어짐
     private AssignedStudyTimeResponse convertToAssignedResponse(AssignedStudyTime assignedStudyTime) {
         AssignedStudyTimeResponse response = new AssignedStudyTimeResponse();
         response.setId(assignedStudyTime.getId());
@@ -416,6 +419,7 @@ public class StudyTimeController {
         return response;
     }
 
+    // TODO: 이 헬퍼 메서드도 Controller에 있으면 안됨 - 별도 Mapper로 분리 필요
     private ActualStudyTimeResponse convertToActualResponse(ActualStudyTime actualStudyTime) {
         ActualStudyTimeResponse response = new ActualStudyTimeResponse();
         response.setId(actualStudyTime.getId());
@@ -433,6 +437,7 @@ public class StudyTimeController {
         return response;
     }
 
+    // TODO: 이 헬퍼 메서드도 Controller에 있으면 안됨 - 별도 Mapper로 분리 필요
     private ActivityResponse convertToActivityResponse(Activity activity) {
         return new ActivityResponse(
                 activity.getId(),
