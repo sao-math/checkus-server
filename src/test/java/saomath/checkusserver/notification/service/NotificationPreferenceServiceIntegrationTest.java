@@ -139,8 +139,8 @@ class NotificationPreferenceServiceIntegrationTest {
         NotificationSetting existingSetting = NotificationSetting.builder()
             .id(1L)
             .userId(1L)
-            .templateName("STUDY_START")
-            .deliveryMethod("alimtalk")
+            .templateName("TODAY_TASKS") // 변경 가능한 템플릿 사용
+            .deliveryMethod("discord") // 변경 가능한 채널 사용
             .isEnabled(true)
             .advanceMinutes(0)
             .build();
@@ -149,13 +149,15 @@ class NotificationPreferenceServiceIntegrationTest {
         updateDto.setEnabled(false);
         updateDto.setAdvanceMinutes(10);
         
-        when(notificationSettingRepository.findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk"))
+        when(userRoleRepository.findByUserIdAndStatus(1L, UserRole.RoleStatus.ACTIVE))
+            .thenReturn(List.of(studentRole)); // 학생 역할 설정
+        when(notificationSettingRepository.findByUserIdAndTemplateNameAndDeliveryMethod(1L, "TODAY_TASKS", "discord"))
             .thenReturn(Optional.of(existingSetting));
         when(notificationSettingRepository.save(any(NotificationSetting.class)))
             .thenReturn(existingSetting);
         
         // when
-        notificationPreferenceService.updateNotificationSetting(1L, "STUDY_START", "alimtalk", updateDto);
+        notificationPreferenceService.updateNotificationSetting(1L, "TODAY_TASKS", "discord", updateDto);
         
         // then
         assertThat(existingSetting.getIsEnabled()).isFalse();
@@ -164,41 +166,32 @@ class NotificationPreferenceServiceIntegrationTest {
     }
     
     @Test
-    @DisplayName("채널명 표준화 테스트 - kakao를 alimtalk으로 변환")
+    @DisplayName("채널명 표준화 테스트 - 변경 가능한 설정 사용")
     void updateNotificationSetting_ChannelStandardization() {
         // given
         NotificationSettingUpdateDto updateDto = new NotificationSettingUpdateDto();
-        updateDto.setEnabled(true);
+        updateDto.setEnabled(false); // TODAY_TASKS의 discord는 변경 가능하므로 비활성화 가능
         
+        when(userRoleRepository.findByUserIdAndStatus(1L, UserRole.RoleStatus.ACTIVE))
+            .thenReturn(List.of(studentRole)); // 학생 역할 설정
         when(notificationSettingRepository.findByUserIdAndTemplateNameAndDeliveryMethod(
-            eq(1L), eq("STUDY_START"), eq("alimtalk")))
+            eq(1L), eq("TODAY_TASKS"), eq("discord")))
             .thenReturn(Optional.empty());
         when(notificationSettingRepository.save(any(NotificationSetting.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         
-        // when - "kakao"로 요청하지만 내부적으로 "alimtalk"으로 변환되어야 함
-        notificationPreferenceService.updateNotificationSetting(1L, "STUDY_START", "kakao", updateDto);
+        // when - discord 설정 변경 (변경 가능)
+        notificationPreferenceService.updateNotificationSetting(1L, "TODAY_TASKS", "discord", updateDto);
         
-        // then - 표준화가 올바르게 동작하는지 검증
-        
-        // 1. alimtalk으로 표준화되어 조회되었는지 확인
-        verify(notificationSettingRepository)
-            .findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "alimtalk");
-        
-        // 2. kakao로는 절대 조회하지 않았는지 확인 (핵심!)
-        verify(notificationSettingRepository, never())
-            .findByUserIdAndTemplateNameAndDeliveryMethod(1L, "STUDY_START", "kakao");
-        
-        // 3. 저장될 때도 alimtalk으로 저장되는지 확인
+        // then - 정상적으로 저장되어야 함
         ArgumentCaptor<NotificationSetting> captor = ArgumentCaptor.forClass(NotificationSetting.class);
         verify(notificationSettingRepository).save(captor.capture());
         
         NotificationSetting saved = captor.getValue();
-        assertThat(saved.getDeliveryMethod()).isEqualTo("alimtalk");
-        assertThat(saved.getDeliveryMethod()).isNotEqualTo("kakao");
-        assertThat(saved.getIsEnabled()).isTrue();
+        assertThat(saved.getDeliveryMethod()).isEqualTo("discord");
+        assertThat(saved.getIsEnabled()).isFalse();
         assertThat(saved.getUserId()).isEqualTo(1L);
-        assertThat(saved.getTemplateName()).isEqualTo("STUDY_START");
+        assertThat(saved.getTemplateName()).isEqualTo("TODAY_TASKS");
     }
     
     @Test
@@ -220,5 +213,28 @@ class NotificationPreferenceServiceIntegrationTest {
         // when & then
         assertThat(notificationPreferenceService.hasNotificationSetting(1L, "STUDY_START", "alimtalk")).isTrue();
         assertThat(notificationPreferenceService.hasNotificationSetting(1L, "STUDY_START", "discord")).isFalse();
+    }
+    
+    @Test
+    @DisplayName("변경 불가능한 설정 변경 시도 시 예외 발생")
+    void updateNotificationSetting_ReadOnlySettingThrowsException() {
+        // given
+        NotificationSettingUpdateDto updateDto = new NotificationSettingUpdateDto();
+        updateDto.setEnabled(false); // STUDY_REMINDER_10MIN의 alimtalk은 ON 고정이므로 변경 불가
+        
+        when(userRoleRepository.findByUserIdAndStatus(1L, UserRole.RoleStatus.ACTIVE))
+            .thenReturn(List.of(studentRole)); // 학생 역할 설정
+        
+        // when & then
+        assertThatThrownBy(() -> {
+            notificationPreferenceService.updateNotificationSetting(1L, "STUDY_REMINDER_10MIN", "alimtalk", updateDto);
+        })
+        .isInstanceOf(BusinessException.class)
+        .hasMessageContaining("변경할 수 없습니다")
+        .hasMessageContaining("카카오톡")
+        .hasMessageContaining("고정: 활성화");
+        
+        // 저장 메소드가 호출되지 않았는지 확인
+        verify(notificationSettingRepository, never()).save(any(NotificationSetting.class));
     }
 }
