@@ -3,6 +3,9 @@ package saomath.checkusserver.notification.domain;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
+import java.util.Set;
+
 @Getter
 @RequiredArgsConstructor
 public enum AlimtalkTemplate {
@@ -91,6 +94,44 @@ public enum AlimtalkTemplate {
     
     private final String templateCode;
     private final String templateMessage;
+    
+    /**
+     * 학생 역할에서 변경 불가능한 채널 정보
+     * 노션 설정에서 "변경불가"로 표시된 항목들
+     */
+    private static final Map<AlimtalkTemplate, Set<String>> STUDENT_READONLY_CHANNELS = Map.of(
+        // ON(변경불가) - 카톡과 디코 모두 변경 불가
+        STUDY_REMINDER_10MIN, Set.of("alimtalk", "discord"),
+        NO_SHOW, Set.of("alimtalk", "discord"),
+        
+        // OFF(변경불가) - 디코만 ON, 카톡은 OFF 고정
+        STUDY_START, Set.of("alimtalk"),  // 카톡만 변경 불가 (OFF 고정)
+        STUDY_ROOM_ENTER, Set.of("alimtalk"),  // 카톡만 변경 불가 (OFF 고정)
+        LATE_ARRIVAL, Set.of("alimtalk"),  // 카톡만 변경 불가 (OFF 고정)
+        EARLY_LEAVE, Set.of("alimtalk"),  // 카톡만 변경 불가 (OFF 고정)
+        
+        // 학습 알림들은 카톡만 변경 불가 (ON 고정), 디코는 변경 가능
+        TODAY_TASKS, Set.of("alimtalk"),
+        YESTERDAY_INCOMPLETE_EVENING, Set.of("alimtalk")
+    );
+    
+    /**
+     * 학생 역할에서 특정 채널이 변경 불가능한지 확인
+     * @param deliveryMethod 전송 방법 ("alimtalk", "discord")
+     * @return 변경 불가능하면 true
+     */
+    public boolean isReadOnlyForStudent(String deliveryMethod) {
+        Set<String> readOnlyChannels = STUDENT_READONLY_CHANNELS.get(this);
+        return readOnlyChannels != null && readOnlyChannels.contains(deliveryMethod);
+    }
+    
+    /**
+     * 학생 역할에서 변경 불가능한 모든 채널 조회
+     * @return 변경 불가능한 채널 집합
+     */
+    public Set<String> getReadOnlyChannelsForStudent() {
+        return STUDENT_READONLY_CHANNELS.getOrDefault(this, Set.of());
+    }
     
     /**
      * 각 템플릿의 사용자 친화적인 설명 반환

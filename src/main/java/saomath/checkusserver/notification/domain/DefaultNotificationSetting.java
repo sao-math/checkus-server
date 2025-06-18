@@ -20,76 +20,72 @@ public enum DefaultNotificationSetting {
     
     /**
      * 학생 기본 알림 설정
-     * - 학습 관련 알림은 알림톡 + 디스코드 모두 활성화
-     * - 실시간성이 중요한 알림 우선
+     * 노션 알림 설정 데이터베이스 기준으로 설정됨
+     * - ON(변경불가): 기본 활성화, 사용자 변경 불가
+     * - ON(변경가능): 기본 활성화, 사용자 변경 가능
+     * - OFF(변경불가): 기본 비활성화, 사용자 변경 불가
      */
     STUDENT(RoleConstants.STUDENT, 
         Map.of(
-            // 공부 관련 실시간 알림 (알림톡 + 디스코드)
+            // [학생] 공부시작 10분전 알림 - 카톡: ON(변경불가), 디코: ON(변경불가)
             AlimtalkTemplate.STUDY_REMINDER_10MIN, Set.of("alimtalk", "discord"),
-            AlimtalkTemplate.STUDY_START, Set.of("alimtalk", "discord"),
-            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of("discord"), // 입장 완료는 디스코드만
             
-            // 학습 관리 알림 (주로 알림톡)
-            AlimtalkTemplate.TODAY_TASKS, Set.of("alimtalk"),
-            AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, Set.of("alimtalk"),
+            // [학생] 공부시작 알림 - 카톡: OFF(변경불가), 디코: ON(변경불가)
+            AlimtalkTemplate.STUDY_START, Set.of("discord"),
             
-            // 미입장은 학부모에게 주로 발송하므로 학생은 디스코드만
-            AlimtalkTemplate.NO_SHOW, Set.of("discord"),
+            // [학생] 스터디룸 입장 완료 - 카톡: OFF(변경불가), 디코: ON(변경불가)
+            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of("discord"),
             
-            // 확장 기능 (기본 비활성화)
-            AlimtalkTemplate.EARLY_LEAVE, Set.of(),
-            AlimtalkTemplate.LATE_ARRIVAL, Set.of()
+            // [학생] 미입장 알림 - 카톡: ON(변경불가), 디코: ON(변경불가)
+            AlimtalkTemplate.NO_SHOW, Set.of("alimtalk", "discord"),
+            
+            // [학생] 학습 알림(아침) - 카톡: ON(변경불가), 디코: ON(변경가능)
+            AlimtalkTemplate.TODAY_TASKS, Set.of("alimtalk", "discord"),
+            
+            // [학생] 학습 알림(저녁) - 카톡: ON(변경불가), 디코: ON(변경가능)
+            AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, Set.of("alimtalk", "discord"),
+            
+            // [학생] 늦은 입장 안내 - 카톡: OFF(변경불가), 디코: ON(변경불가)
+            AlimtalkTemplate.LATE_ARRIVAL, Set.of("discord"),
+            
+            // [학생] 조기 퇴장 안내 - 카톡: OFF(변경불가), 디코: ON(변경불가)
+            AlimtalkTemplate.EARLY_LEAVE, Set.of("discord")
         )
     ),
     
     /**
      * 학부모 기본 알림 설정  
-     * - 자녀 학습 현황 모니터링 중심
-     * - 알림톡 위주 (카카오톡 사용률 높음)
+     * 노션에 학부모 관련 설정이 별도로 정의되지 않아 모든 알림을 기본 비활성화
+     * 필요시 사용자가 개별적으로 활성화 가능
      */
     GUARDIAN(RoleConstants.GUARDIAN,
         Map.of(
-            // 학습 시작 관련 (학부모는 확인용)
-            AlimtalkTemplate.STUDY_REMINDER_10MIN, Set.of("alimtalk"),
-            AlimtalkTemplate.STUDY_START, Set.of(), // 기본 비활성화
-            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of("alimtalk"),
-            
-            // 학습 관리 현황
-            AlimtalkTemplate.TODAY_TASKS, Set.of("alimtalk"),
-            AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, Set.of("alimtalk"),
-            
-            // 미입장은 학부모에게 중요한 알림
-            AlimtalkTemplate.NO_SHOW, Set.of("alimtalk"),
-            
-            // 확장 기능 (학부모에게도 유용)
-            AlimtalkTemplate.EARLY_LEAVE, Set.of("alimtalk"),
-            AlimtalkTemplate.LATE_ARRIVAL, Set.of("alimtalk")
+            AlimtalkTemplate.STUDY_REMINDER_10MIN, Set.of(),
+            AlimtalkTemplate.STUDY_START, Set.of(),
+            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of(),
+            AlimtalkTemplate.NO_SHOW, Set.of(),
+            AlimtalkTemplate.TODAY_TASKS, Set.of(),
+            AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, Set.of(),
+            AlimtalkTemplate.LATE_ARRIVAL, Set.of(),
+            AlimtalkTemplate.EARLY_LEAVE, Set.of()
         )
     ),
     
     /**
      * 선생님 기본 알림 설정
-     * - 학생 관리 및 모니터링 중심
-     * - 디스코드 + 알림톡 조합
+     * 노션에 선생님 관련 설정이 별도로 정의되지 않아 모든 알림을 기본 비활성화
+     * 필요시 사용자가 개별적으로 활성화 가능
      */
     TEACHER(RoleConstants.TEACHER,
         Map.of(
-            // 선생님은 일반적으로 학습 시작 알림 불필요
             AlimtalkTemplate.STUDY_REMINDER_10MIN, Set.of(),
             AlimtalkTemplate.STUDY_START, Set.of(),
-            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of("discord"), // 입장 확인용
-            
-            // 과제 관리
+            AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of(),
+            AlimtalkTemplate.NO_SHOW, Set.of(),
             AlimtalkTemplate.TODAY_TASKS, Set.of(),
             AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, Set.of(),
-            
-            // 미입장은 선생님도 알아야 함
-            AlimtalkTemplate.NO_SHOW, Set.of("discord", "alimtalk"),
-            
-            // 학습 시간 관리
-            AlimtalkTemplate.EARLY_LEAVE, Set.of("discord"),
-            AlimtalkTemplate.LATE_ARRIVAL, Set.of("discord")
+            AlimtalkTemplate.LATE_ARRIVAL, Set.of(),
+            AlimtalkTemplate.EARLY_LEAVE, Set.of()
         )
     );
     
