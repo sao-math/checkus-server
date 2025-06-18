@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
 import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;
 import saomath.checkusserver.repository.*;
 
@@ -256,5 +257,70 @@ public class NotificationPreferenceReadOnlyTest {
         userRole.setRole(role);
         userRole.setStatus(status);
         userRoleRepository.save(userRole);
+    }
+    
+    @Test
+    public void testChangeableFieldInGroupedSettings() {
+        // Given: 학생 사용자 생성
+        User student = createTestUser();
+        Role studentRole = createOrGetRole("STUDENT");
+        createUserRole(student, studentRole, UserRole.RoleStatus.ACTIVE);
+        
+        // When: 그룹화된 알림 설정 조회
+        List<NotificationSettingGroupDto> groupedSettings = notificationPreferenceService.getGroupedNotificationSettings(student.getId());
+        
+        // Then: changeable 필드가 올바르게 설정되어야 함
+        
+        // STUDY_REMINDER_10MIN: 전체 변경 불가
+        NotificationSettingGroupDto studyReminder = groupedSettings.stream()
+            .filter(group -> "STUDY_REMINDER_10MIN".equals(group.getNotificationType().getId()))
+            .findFirst()
+            .orElseThrow();
+        
+        assertThat(studyReminder.getDeliveryMethods().get("alimtalk").isChangeable()).isFalse();
+        assertThat(studyReminder.getDeliveryMethods().get("discord").isChangeable()).isFalse();
+        
+        // TODAY_TASKS: alimtalk 변경 불가, discord 변경 가능
+        NotificationSettingGroupDto todayTasks = groupedSettings.stream()
+            .filter(group -> "TODAY_TASKS".equals(group.getNotificationType().getId()))
+            .findFirst()
+            .orElseThrow();
+        
+        assertThat(todayTasks.getDeliveryMethods().get("alimtalk").isChangeable()).isFalse();
+        assertThat(todayTasks.getDeliveryMethods().get("discord").isChangeable()).isTrue();
+        
+        // STUDY_START: alimtalk 변경 불가, discord 변경 가능
+        NotificationSettingGroupDto studyStart = groupedSettings.stream()
+            .filter(group -> "STUDY_START".equals(group.getNotificationType().getId()))
+            .findFirst()
+            .orElseThrow();
+        
+        assertThat(studyStart.getDeliveryMethods().get("alimtalk").isChangeable()).isFalse();
+        // STUDY_START의 discord는 변경 가능 (기본값 ON이지만 변경 불가 설정에 없음)
+        if (studyStart.getDeliveryMethods().containsKey("discord")) {
+            assertThat(studyStart.getDeliveryMethods().get("discord").isChangeable()).isTrue();
+        }
+    }
+    
+    @Test
+    public void testGuardianHasAllChangeableSettings() {
+        // Given: 학부모 사용자 생성
+        User guardian = createTestUser();
+        Role guardianRole = createOrGetRole("GUARDIAN");
+        createUserRole(guardian, guardianRole, UserRole.RoleStatus.ACTIVE);
+        
+        // When: 그룹화된 알림 설정 조회
+        List<NotificationSettingGroupDto> groupedSettings = notificationPreferenceService.getGroupedNotificationSettings(guardian.getId());
+        
+        // Then: 학부모는 모든 설정이 변경 가능해야 함
+        NotificationSettingGroupDto studyReminder = groupedSettings.stream()
+            .filter(group -> "STUDY_REMINDER_10MIN".equals(group.getNotificationType().getId()))
+            .findFirst()
+            .orElseThrow();
+        
+        // 학부모는 어떤 알림도 제한 없이 변경 가능
+        studyReminder.getDeliveryMethods().values().forEach(setting -> {
+            assertThat(setting.isChangeable()).isTrue();
+        });
     }
 }

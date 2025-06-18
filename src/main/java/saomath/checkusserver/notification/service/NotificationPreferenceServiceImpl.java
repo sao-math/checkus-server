@@ -450,10 +450,15 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
             
             // 사용자가 해당 채널을 사용할 수 있는 경우만 추가
             if (canUseChannel(user, channel)) {
+                // 변경 가능 여부 확인 (학생 역할에 대해서만 제한)
+                String userRole = getUserPrimaryRole(userId);
+                boolean isChangeable = !"STUDENT".equals(userRole) || !template.isReadOnlyForStudent(channel);
+                
                 // 간소화된 DTO 생성 - 중복 정보 제거
                 NotificationSettingDto settingDto = NotificationSettingDto.builder()
                     .id(exceptionSetting != null ? exceptionSetting.getId().toString() : null)
                     .enabled(isEnabled)
+                    .changeable(isChangeable)
                     .build();
                 
                 deliveryMethods.put(channel, settingDto);

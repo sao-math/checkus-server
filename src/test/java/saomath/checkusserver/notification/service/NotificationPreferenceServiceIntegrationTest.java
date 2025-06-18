@@ -237,4 +237,78 @@ class NotificationPreferenceServiceIntegrationTest {
         // 저장 메소드가 호출되지 않았는지 확인
         verify(notificationSettingRepository, never()).save(any(NotificationSetting.class));
     }
+    
+    @Test
+    @DisplayName("그룹화된 알림 설정에 changeable 필드 포함 확인")
+    void getGroupedNotificationSettings_IncludesChangeableField() {
+        // given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRoleRepository.findByUserIdAndStatus(1L, UserRole.RoleStatus.ACTIVE))
+            .thenReturn(List.of(studentRole));
+        when(notificationSettingRepository.findByUserId(1L))
+            .thenReturn(List.of()); // 예외 설정 없음
+        
+        // when
+        List<NotificationSettingGroupDto> result = notificationPreferenceService.getGroupedNotificationSettings(1L);
+        
+        // then
+        assertThat(result).isNotEmpty();
+        
+        // STUDY_REMINDER_10MIN 템플릿 확인 (변경 불가능)
+        NotificationSettingGroupDto studyReminder = result.stream()
+            .filter(group -> group.getNotificationType().getId().equals("STUDY_REMINDER_10MIN"))
+            .findFirst()
+            .orElseThrow();
+            
+        // alimtalk과 discord 모두 변경 불가능해야 함
+        assertThat(studyReminder.getDeliveryMethods().get("alimtalk").isChangeable()).isFalse();
+        assertThat(studyReminder.getDeliveryMethods().get("discord").isChangeable()).isFalse();
+        
+        // TODAY_TASKS 템플릿 확인 (일부 변경 가능)
+        NotificationSettingGroupDto todayTasks = result.stream()
+            .filter(group -> group.getNotificationType().getId().equals("TODAY_TASKS"))
+            .findFirst()
+            .orElseThrow();
+            
+        // alimtalk은 변경 불가, discord는 변경 가능
+        assertThat(todayTasks.getDeliveryMethods().get("alimtalk").isChangeable()).isFalse();
+        assertThat(todayTasks.getDeliveryMethods().get("discord").isChangeable()).isTrue();
+    }
+    
+    @Test
+    @DisplayName("학부모 역할은 모든 설정이 변경 가능")
+    void getGroupedNotificationSettings_GuardianCanChangeAll() {
+        // given - 학부모 역할 설정
+        Role guardianRole = new Role();
+        guardianRole.setId(2L);
+        guardianRole.setName("GUARDIAN");
+        
+        UserRole.UserRoleId guardianRoleId = new UserRole.UserRoleId(1L, 2L);
+        UserRole userGuardianRole = new UserRole();
+        userGuardianRole.setId(guardianRoleId);
+        userGuardianRole.setRole(guardianRole);
+        userGuardianRole.setStatus(UserRole.RoleStatus.ACTIVE);
+        
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRoleRepository.findByUserIdAndStatus(1L, UserRole.RoleStatus.ACTIVE))
+            .thenReturn(List.of(userGuardianRole)); // 학부모 역할
+        when(notificationSettingRepository.findByUserId(1L))
+            .thenReturn(List.of()); // 예외 설정 없음
+        
+        // when
+        List<NotificationSettingGroupDto> result = notificationPreferenceService.getGroupedNotificationSettings(1L);
+        
+        // then
+        assertThat(result).isNotEmpty();
+        
+        // STUDY_REMINDER_10MIN 템플릿 확인 (학부모는 제한 없음)
+        NotificationSettingGroupDto studyReminder = result.stream()
+            .filter(group -> group.getNotificationType().getId().equals("STUDY_REMINDER_10MIN"))
+            .findFirst()
+            .orElseThrow();
+            
+        // 학부모는 모든 설정을 변경할 수 있어야 함
+        assertThat(studyReminder.getDeliveryMethods().get("alimtalk").isChangeable()).isTrue();
+        assertThat(studyReminder.getDeliveryMethods().get("discord").isChangeable()).isTrue();
+    }
 }
