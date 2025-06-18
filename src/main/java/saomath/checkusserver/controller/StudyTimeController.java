@@ -26,6 +26,8 @@ import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -346,6 +348,112 @@ public class StudyTimeController {
                     
         } catch (Exception e) {
             log.error("활동 목록 조회 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
+        }
+    }
+
+    @Operation(
+        summary = "날짜별 학생 공부시간 모니터링 조회",
+        description = "특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        responses = {
+            @ApiResponse(
+                responseCode = "200",
+                description = "모니터링 정보 조회 성공",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "모니터링 조회 성공",
+                        value = """
+                        {
+                          "success": true,
+                          "message": "학생 모니터링 정보를 성공적으로 조회했습니다.",
+                          "data": {
+                            "date": "2025-06-18",
+                            "students": [
+                              {
+                                "studentId": 1,
+                                "studentName": "김학생",
+                                "studentPhone": "010-1234-5678",
+                                "status": "ATTENDING",
+                                "guardians": [
+                                  {
+                                    "guardianId": 2,
+                                    "guardianPhone": "010-9876-5432",
+                                    "relationship": "부"
+                                  }
+                                ],
+                                "assignedStudyTimes": [
+                                  {
+                                    "assignedStudyTimeId": 1,
+                                    "title": "수학 공부",
+                                    "startTime": "2025-06-18T10:00:00",
+                                    "endTime": "2025-06-18T12:00:00",
+                                    "connectedActualStudyTimes": [
+                                      {
+                                        "actualStudyTimeId": 1,
+                                        "startTime": "2025-06-18T10:05:00",
+                                        "endTime": "2025-06-18T11:30:00"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "unassignedActualStudyTimes": []
+                              }
+                            ]
+                          }
+                        }
+                        """
+                    )
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "잘못된 날짜 형식",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "날짜 형식 오류",
+                        value = """
+                        {
+                          "success": false,
+                          "message": "날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식으로 입력해주세요.",
+                          "data": null
+                        }
+                        """
+                    )
+                )
+            )
+        }
+    )
+    @GetMapping("/monitor/{date}")
+    public ResponseEntity<ResponseBase<StudyTimeMonitorResponse>> getStudyTimeMonitor(
+            @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", example = "2025-06-18") 
+            @PathVariable("date") String dateStr
+            // TODO: 향후 구현 예정 - 쿼리 파라미터로 필터링
+            // @RequestParam(value = "classId", required = false) Long classId,
+            // @RequestParam(value = "studentId", required = false) Long studentId,
+            // @RequestParam(value = "teacherId", required = false) Long teacherId
+    ) {
+        
+        try {
+            // 날짜 파싱
+            LocalDate date;
+            try {
+                date = LocalDate.parse(dateStr);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest()
+                        .body(ResponseBase.error("날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식으로 입력해주세요."));
+            }
+            
+            StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(date);
+            
+            return ResponseEntity.ok(
+                    ResponseBase.success("학생 모니터링 정보를 성공적으로 조회했습니다.", result));
+                    
+        } catch (Exception e) {
+            log.error("학생 모니터링 정보 조회 실패: date={}", dateStr, e);
             return ResponseEntity.badRequest()
                     .body(ResponseBase.error(e.getMessage()));
         }
