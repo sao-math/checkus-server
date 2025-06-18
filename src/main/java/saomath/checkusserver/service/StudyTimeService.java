@@ -52,7 +52,7 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getAssignedStudyTimesByDateRange(
             LocalDateTime startDate, LocalDateTime endDate) {
         validateTimeRangeForQuery(startDate, endDate);
-        return assignedStudyTimeRepository.findStartingBetween(startDate, endDate);
+        return assignedStudyTimeRepository.findByStartTimeBetweenWithDetails(startDate, endDate);
     }
 
     /**
@@ -96,7 +96,9 @@ public class StudyTimeService {
                     connectedSessions.size(), saved.getId(), studentId);
         }
         
-        return saved;
+        // 연관 엔티티와 함께 다시 조회하여 반환
+        AssignedStudyTime result = assignedStudyTimeRepository.findByIdWithDetails(saved.getId());
+        return result != null ? result : saved;
     }
 
     /**
@@ -166,7 +168,7 @@ public class StudyTimeService {
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
         validateTimeRangeForQuery(startDate, endDate);
-        return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(
+        return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
                 studentId, startDate, endDate);
     }
 
@@ -296,8 +298,8 @@ public class StudyTimeService {
         LocalDateTime tenMinutesBefore = now.minusMinutes(10);
         LocalDateTime tenMinutesAfter = now.plusMinutes(10);
         
-        return assignedStudyTimeRepository.findUpcomingStudyTimesV2(
-                tenMinutesBefore, now, tenMinutesAfter);
+        return assignedStudyTimeRepository.findUpcomingStudyTimesWithDetails(
+                tenMinutesBefore, tenMinutesAfter);
     }
 
     /**

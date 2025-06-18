@@ -62,6 +62,8 @@ class StudyTimeControllerTest {
     private AssignedStudyTime mockAssignedStudyTime;
     private ActualStudyTime mockActualStudyTime;
     private Activity mockActivity;
+    private saomath.checkusserver.entity.User mockStudent;
+    private saomath.checkusserver.entity.User mockTeacher;
 
     @BeforeEach
     void setUp() {
@@ -76,6 +78,22 @@ class StudyTimeControllerTest {
         SecurityContextHolder.setContext(securityContext);
         
         // Mock 데이터 설정
+        mockStudent = saomath.checkusserver.entity.User.builder()
+                .id(1L)
+                .name("김학생")
+                .build();
+        
+        mockTeacher = saomath.checkusserver.entity.User.builder()
+                .id(2L)
+                .name("이선생")
+                .build();
+        
+        mockActivity = Activity.builder()
+                .id(1L)
+                .name("수학 공부")
+                .isStudyAssignable(true)
+                .build();
+        
         mockAssignedStudyTime = AssignedStudyTime.builder()
                 .id(1L)
                 .studentId(1L)
@@ -85,6 +103,11 @@ class StudyTimeControllerTest {
                 .endTime(LocalDateTime.now().plusHours(3))
                 .assignedBy(2L)
                 .build();
+        
+        // 연관 엔티티 설정
+        mockAssignedStudyTime.setStudent(mockStudent);
+        mockAssignedStudyTime.setActivity(mockActivity);
+        mockAssignedStudyTime.setAssignedByUser(mockTeacher);
 
         mockActualStudyTime = ActualStudyTime.builder()
                 .id(1L)
@@ -94,12 +117,8 @@ class StudyTimeControllerTest {
                 .endTime(LocalDateTime.now().plusHours(1))
                 .source("discord")
                 .build();
-
-        mockActivity = Activity.builder()
-                .id(1L)
-                .name("수학 공부")
-                .isStudyAssignable(true)
-                .build();
+        
+        mockActualStudyTime.setStudent(mockStudent);
     }
     
     @AfterEach
@@ -129,7 +148,10 @@ class StudyTimeControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.studentId").value(1));
+                .andExpect(jsonPath("$.data.studentId").value(1))
+                .andExpect(jsonPath("$.data.studentName").value("김학생"))
+                .andExpect(jsonPath("$.data.activityName").value("수학 공부"))
+                .andExpect(jsonPath("$.data.assignedByName").value("이선생"));
     }
 
     @Test

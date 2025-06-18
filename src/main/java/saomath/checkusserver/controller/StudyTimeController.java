@@ -14,7 +14,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
@@ -91,20 +90,12 @@ public class StudyTimeController {
     )
     @PostMapping("/assign")
     public ResponseEntity<ResponseBase<AssignedStudyTimeResponse>> assignStudyTime(
-            @Valid @RequestBody AssignStudyTimeRequest request) {
+            @Valid @RequestBody AssignStudyTimeRequest request,
+            Authentication authentication) {
         
         try {
-            // 현재 인증된 사용자 정보 가져오기
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserPrincipal principal;
-            
-            if (authentication.getPrincipal() instanceof CustomUserPrincipal) {
-                principal = (CustomUserPrincipal) authentication.getPrincipal();
-            } else {
-                // 테스트 환경에서 @WithMockUser 사용 시 대응
-                throw new BusinessException("인증 정보가 올바르지 않습니다.");
-            }
-            
+            // Spring Security에서 자동으로 주입된 인증 정보 사용
+            CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
             Long teacherId = principal.getId();
             
             AssignedStudyTime result = studyTimeService.assignStudyTime(

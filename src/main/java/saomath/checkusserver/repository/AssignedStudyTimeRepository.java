@@ -18,6 +18,20 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             LocalDateTime endDate
     );
     
+    // Fetch join을 사용한 연관 엔티티와 함께 조회
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.studentId = :studentId " +
+           "AND ast.startTime BETWEEN :startDate AND :endDate " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findByStudentIdAndStartTimeBetweenWithDetails(
+            @Param("studentId") Long studentId, 
+            @Param("startDate") LocalDateTime startDate, 
+            @Param("endDate") LocalDateTime endDate
+    );
+    
     @Query("SELECT ast FROM AssignedStudyTime ast WHERE ast.studentId = :studentId " +
            "AND ast.startTime <= :endTime AND ast.endTime >= :startTime")
     List<AssignedStudyTime> findOverlappingStudyTimes(
@@ -35,7 +49,31 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("tenMinutesAfter") LocalDateTime tenMinutesAfter
     );
     
+    // 알림용 - 연관 엔티티와 함께 조회
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.startTime BETWEEN :tenMinutesBefore AND :tenMinutesAfter " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findUpcomingStudyTimesWithDetails(
+            @Param("tenMinutesBefore") LocalDateTime tenMinutesBefore,
+            @Param("tenMinutesAfter") LocalDateTime tenMinutesAfter
+    );
+    
     List<AssignedStudyTime> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+    
+    // 전체 조회용 - 연관 엔티티와 함께 조회
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.startTime BETWEEN :start AND :end " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findByStartTimeBetweenWithDetails(
+            @Param("start") LocalDateTime start, 
+            @Param("end") LocalDateTime end
+    );
     
     // 현재 시간에 진행 중인 공부 시간 조회 (출석 확인용)
     @Query("SELECT ast FROM AssignedStudyTime ast WHERE ast.studentId = :studentId " +
@@ -72,4 +110,12 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
             @Param("studentId") Long studentId,
             @Param("accessTime") LocalDateTime accessTime
     );
+    
+    // ID로 조회 시 연관 엔티티와 함께 조회
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.id = :id")
+    AssignedStudyTime findByIdWithDetails(@Param("id") Long id);
 }
