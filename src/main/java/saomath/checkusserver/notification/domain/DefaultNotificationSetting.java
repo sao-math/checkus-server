@@ -31,7 +31,7 @@ public enum DefaultNotificationSetting {
             AlimtalkTemplate.STUDY_REMINDER_10MIN, Set.of("alimtalk", "discord"),
             
             // [학생] 공부시작 알림 - 카톡: OFF(변경불가), 디코: ON(변경불가)
-            AlimtalkTemplate.STUDY_START, Set.of("discord"),
+            AlimtalkTemplate.STUDY_START, Set.of("alimtalk", "discord"),
             
             // [학생] 스터디룸 입장 완료 - 카톡: OFF(변경불가), 디코: ON(변경불가)
             AlimtalkTemplate.STUDY_ROOM_ENTER, Set.of("discord"),
