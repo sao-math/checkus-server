@@ -222,38 +222,142 @@ public class LocalDataInitializer implements CommandLineRunner {
             .endTime(java.time.LocalTime.of(19, 0))
             .build());
 
-        // 6월 13일 박학생 공부시간 데이터 추가
-        LocalDateTime june13_2025 = LocalDateTime.of(2025, 6, 13, 0, 0);
-        
-        // 할당된 공부시간: 6/13 오후 2시~4시 수학 자습
-        AssignedStudyTime assignedStudyTime1 = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
-            .studentId(student1.getId())
-            .title("수학 자습")
-            .activityId(selfStudy.getId())
-            .startTime(june13_2025.withHour(14).withMinute(0))
-            .endTime(june13_2025.withHour(16).withMinute(0))
-            .assignedBy(teacher1.getId())
-            .build());
+// 오늘 날짜로 세 학생의 다양한 샘플 데이터 추가
+        LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        log.info("오늘 날짜 샘플 데이터 추가: {}", today.toLocalDate());
 
-        // 실제 접속시간 1: 6/13 오후 2:05~3:30 (85분)
+// ==== 박학생 - 다양한 출석 패턴 ====
+
+// 1. 오전 10:00~12:00 수학 자습 (정상 출석)
+        AssignedStudyTime parkMorning = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+                .studentId(student1.getId())
+                .title("수학 자습")
+                .activityId(selfStudy.getId())
+                .startTime(today.withHour(10).withMinute(0))
+                .endTime(today.withHour(12).withMinute(0))
+                .assignedBy(teacher1.getId())
+                .build());
+
+// 10:05~11:45 접속 (정상 출석)
         actualStudyTimeRepository.save(ActualStudyTime.builder()
-            .studentId(student1.getId())
-            .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2025.withHour(14).withMinute(5))
-            .endTime(june13_2025.withHour(15).withMinute(30))
-            .source("discord")
-            .build());
+                .studentId(student1.getId())
+                .assignedStudyTimeId(parkMorning.getId())
+                .startTime(today.withHour(10).withMinute(5))
+                .endTime(today.withHour(11).withMinute(45))
+                .source("discord")
+                .build());
 
-        // 실제 접속시간 2: 6/13 오후 3:45~4:00 (15분) - 짧은 추가 접속
+// 2. 오후 2:00~4:00 영어 자습 (중간 이탈 후 재접속)
+        AssignedStudyTime parkAfternoon = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+                .studentId(student1.getId())
+                .title("영어 자습")
+                .activityId(selfStudy.getId())
+                .startTime(today.withHour(14).withMinute(0))
+                .endTime(today.withHour(16).withMinute(0))
+                .assignedBy(teacher1.getId())
+                .build());
+
+// 첫 번째 접속: 14:03~14:45 (42분)
         actualStudyTimeRepository.save(ActualStudyTime.builder()
-            .studentId(student1.getId())
-            .assignedStudyTimeId(assignedStudyTime1.getId())
-            .startTime(june13_2025.withHour(15).withMinute(45))
-            .endTime(june13_2025.withHour(16).withMinute(0))
-            .source("discord")
-            .build());
+                .studentId(student1.getId())
+                .assignedStudyTimeId(parkAfternoon.getId())
+                .startTime(today.withHour(14).withMinute(3))
+                .endTime(today.withHour(14).withMinute(45))
+                .source("discord")
+                .build());
 
-        log.info("박학생 6/13 공부시간 데이터 추가 완료");
+// 두 번째 접속: 15:10~15:50 (40분)
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student1.getId())
+                .assignedStudyTimeId(parkAfternoon.getId())
+                .startTime(today.withHour(15).withMinute(10))
+                .endTime(today.withHour(15).withMinute(50))
+                .source("discord")
+                .build());
+
+// 3. 할당되지 않은 자유 접속 (오전 8:30~9:30)
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student1.getId())
+                .assignedStudyTimeId(null)
+                .startTime(today.withHour(8).withMinute(30))
+                .endTime(today.withHour(9).withMinute(30))
+                .source("discord")
+                .build());
+
+// ==== 최학생 - 부분 출석 패턴 ====
+
+// 1. 오전 11:00~13:00 과학 자습 (일부만 출석)
+        AssignedStudyTime choiMorning = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+                .studentId(student2.getId())
+                .title("과학 자습")
+                .activityId(selfStudy.getId())
+                .startTime(today.withHour(11).withMinute(0))
+                .endTime(today.withHour(13).withMinute(0))
+                .assignedBy(teacher2.getId())
+                .build());
+
+// 11:30~12:00만 접속 (30분/120분)
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student2.getId())
+                .assignedStudyTimeId(choiMorning.getId())
+                .startTime(today.withHour(11).withMinute(30))
+                .endTime(today.withHour(12).withMinute(0))
+                .source("discord")
+                .build());
+
+// 2. 오후 3:00~5:00 수학 자습 (완전 결석)
+        AssignedStudyTime choiAfternoon = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+                .studentId(student2.getId())
+                .title("수학 자습")
+                .activityId(selfStudy.getId())
+                .startTime(today.withHour(15).withMinute(0))
+                .endTime(today.withHour(17).withMinute(0))
+                .assignedBy(teacher2.getId())
+                .build());
+// 이 시간에는 접속하지 않음 (완전 결석)
+
+// 3. 할당되지 않은 자유 접속 (오후 6:00~7:00)
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student2.getId())
+                .assignedStudyTimeId(null)
+                .startTime(today.withHour(18).withMinute(0))
+                .endTime(today.withHour(19).withMinute(0))
+                .source("discord")
+                .build());
+
+// ==== 정학생 - 할당된 시간 없음, 자유 접속만 ====
+
+// 1. 자유 접속: 오전 9:00~10:30
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student3.getId())
+                .assignedStudyTimeId(null)
+                .startTime(today.withHour(9).withMinute(0))
+                .endTime(today.withHour(10).withMinute(30))
+                .source("discord")
+                .build());
+
+// 2. 자유 접속: 오후 1:00~2:30
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student3.getId())
+                .assignedStudyTimeId(null)
+                .startTime(today.withHour(13).withMinute(0))
+                .endTime(today.withHour(14).withMinute(30))
+                .source("discord")
+                .build());
+
+// 3. 자유 접속: 오후 4:00~5:45
+        actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student3.getId())
+                .assignedStudyTimeId(null)
+                .startTime(today.withHour(16).withMinute(0))
+                .endTime(today.withHour(17).withMinute(45))
+                .source("discord")
+                .build());
+
+        log.info("오늘 날짜 샘플 데이터 추가 완료");
+        log.info("박학생: 할당된 공부시간 2개(정상출석 + 중간이탈후재접속), 자유접속 1개");
+        log.info("최학생: 할당된 공부시간 2개(일부출석 + 완전결석), 자유접속 1개");
+        log.info("정학생: 할당된 공부시간 없음, 자유접속 3개");
     }
 
     // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성
