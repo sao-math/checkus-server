@@ -83,26 +83,26 @@ class UnifiedNotificationSchedulerTest {
         verify(studyTimeService).getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
     }
 
-    @Test
-    @DisplayName("오늘의 할일 알림 - 정상 처리")
-    void sendTodayTasksNotification_Success() {
-        // Given
-        NotificationTargetService.TaskTarget target = createMockTaskTarget();
-        when(targetService.getTodayTaskTargets())
-            .thenReturn(List.of(target));
-        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
-            .thenReturn(CompletableFuture.completedFuture(true));
-        when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
-            .thenReturn(CompletableFuture.completedFuture(true));
-
-        // When
-        scheduler.sendTodayTasksNotification();
-
-        // Then
-        verify(targetService).getTodayTaskTargets();
-        verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
-        verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
-    }
+//    @Test
+//    @DisplayName("오늘의 할일 알림 - 정상 처리")
+//    void sendTodayTasksNotification_Success() {
+//        // Given
+//        NotificationTargetService.TaskTarget target = createMockTaskTarget();
+//        when(targetService.getTodayTaskTargets())
+//            .thenReturn(List.of(target));
+//        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
+//            .thenReturn(CompletableFuture.completedFuture(true));
+//        when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
+//            .thenReturn(CompletableFuture.completedFuture(true));
+//
+//        // When
+//        scheduler.sendTodayTasksNotification();
+//
+//        // Then
+//        verify(targetService).getTodayTaskTargets();
+//        verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
+//        verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
+//    }
 
     @Test
     @DisplayName("미접속 체크 - 정상 처리")

@@ -15,8 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.dto.RecordStudyStartRequest;
-import saomath.checkusserver.dto.RecordStudyEndRequest;
 import saomath.checkusserver.dto.UpdateStudyTimeRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.ActualStudyTime;
@@ -293,56 +291,6 @@ class StudyTimeControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("디스코드 봇용 공부 시작 기록 API 테스트")
-    void recordStudyStart_Success() throws Exception {
-        // Given
-        String adminToken = jwtTestUtils.generateAdminToken(1L, "discord-bot");
-        
-        RecordStudyStartRequest request = new RecordStudyStartRequest();
-        request.setStudentId(student.getId());
-        request.setStartTime(LocalDateTime.now());
-        request.setSource("discord");
-
-        // When & Then
-        mockMvc.perform(post("/study-time/record/start")
-                .header("Authorization", jwtTestUtils.toBearerToken(adminToken))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("공부 시작이 성공적으로 기록되었습니다."))
-                .andExpect(jsonPath("$.data.studentId").value(student.getId()))
-                .andExpect(jsonPath("$.data.source").value("discord"));
-    }
-
-    @Test
-    @DisplayName("디스코드 봇용 공부 종료 기록 API 테스트")
-    void recordStudyEnd_Success() throws Exception {
-        // Given - 공부 시작 기록 생성
-        String adminToken = jwtTestUtils.generateAdminToken(1L, "discord-bot");
-        
-        ActualStudyTime actual = ActualStudyTime.builder()
-                .studentId(student.getId())
-                .startTime(LocalDateTime.now().minusHours(1))
-                .source("discord")
-                .build();
-        ActualStudyTime saved = actualStudyTimeRepository.save(actual);
-
-        // Given - 종료 요청
-        RecordStudyEndRequest request = new RecordStudyEndRequest();
-        request.setEndTime(LocalDateTime.now());
-
-        // When & Then
-        mockMvc.perform(put("/study-time/record/" + saved.getId() + "/end")
-                .header("Authorization", jwtTestUtils.toBearerToken(adminToken))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("공부 종료가 성공적으로 기록되었습니다."));
-    }
-
-    @Test
     @DisplayName("공부 배정 가능한 활동 목록 조회 API 테스트")
     void getStudyAssignableActivities_Success() throws Exception {
         // When & Then
@@ -356,32 +304,6 @@ class StudyTimeControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].name").value("수학 공부"))
                 .andExpect(jsonPath("$.data[0].isStudyAssignable").value(true));
-    }
-
-    @Test
-    @DisplayName("곧 시작할 공부 시간 조회 API 테스트")
-    void getUpcomingStudyTimes_Success() throws Exception {
-        // Given - 곧 시작할 배정 시간 생성
-        String adminToken = jwtTestUtils.generateAdminToken(1L, "system");
-        
-        LocalDateTime now = LocalDateTime.now();
-        AssignedStudyTime upcoming = AssignedStudyTime.builder()
-                .studentId(student.getId())
-                .title("수학 공부")
-                .activityId(activity.getId())
-                .startTime(now.plusMinutes(5)) // 5분 후 시작
-                .endTime(now.plusHours(1))
-                .assignedBy(teacher.getId())
-                .build();
-        assignedStudyTimeRepository.save(upcoming);
-
-        // When & Then
-        mockMvc.perform(get("/study-time/upcoming")
-                .header("Authorization", jwtTestUtils.toBearerToken(adminToken)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("곧 시작할 공부 시간을 성공적으로 조회했습니다."))
-                .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test

@@ -46,4 +46,15 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
+    
+    // 특정 날짜 범위에서 할당되지 않은 실제 접속 기록 조회
+    @Query("SELECT ast FROM ActualStudyTime ast WHERE ast.studentId = :studentId " +
+           "AND ast.startTime >= :startDate AND ast.startTime <= :endDate " +
+           "AND ast.assignedStudyTimeId IS NULL " +
+           "ORDER BY ast.startTime")
+    List<ActualStudyTime> findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
+            @Param("studentId") Long studentId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

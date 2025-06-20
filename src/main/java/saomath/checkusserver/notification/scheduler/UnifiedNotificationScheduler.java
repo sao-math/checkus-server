@@ -140,119 +140,119 @@ public class UnifiedNotificationScheduler {
         log.debug("세션 연결 체크 완료 - 대상: {}건, 연결: {}건", assignedStudyTimes.size(), connectedSessions);
     }
     
-    /**
-     * 매일 아침 8시: 오늘의 할일 알림
-     */
-    @Scheduled(cron = "0 0 8 * * *")
-    public void sendTodayTasksNotification() {
-        log.info("오늘의 할일 알림 시작");
-        
-        List<NotificationTargetService.TaskTarget> targets = 
-            targetService.getTodayTaskTargets();
-        
-        for (NotificationTargetService.TaskTarget target : targets) {
-            Map<String, String> variables = Map.of(
-                "이름", target.getStudentName(),
-                "1", target.getTaskListString(),
-                "2", "" // 미완료 과제는 빈 값으로 설정 (오늘 시작이므로)
-            );
-            
-            // 멀티채널로 학생에게 알림 전송
-            notificationService.sendNotification(
-                target.getStudentId(),
-                AlimtalkTemplate.TODAY_TASKS.name(),
-                variables
-            ).thenAccept(success -> {
-                if (success) {
-                    log.debug("오늘의 할일 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
-                }
-            });
-            
-            // 학부모에게도 알림 (설정된 경우)
-            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
-                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
-            }
-        }
-        
-        log.info("오늘의 할일 알림 발송 완료 - {}건", targets.size());
-    }
-    
-    /**
-     * 매일 아침 8시 30분: 전날 미완료 할일 알림 (아침)
-     */
-    @Scheduled(cron = "0 30 8 * * *")
-    public void sendYesterdayIncompleteMorning() {
-        log.info("전날 미완료 할일 알림 (아침) 시작");
-        
-        List<NotificationTargetService.TaskTarget> targets = 
-            targetService.getYesterdayIncompleteTaskTargets();
-        
-        for (NotificationTargetService.TaskTarget target : targets) {
-            if (target.getTaskCount() > 0) {
-                Map<String, String> variables = Map.of(
-                    "이름", target.getStudentName(),
-                    "1", "", // 오늘의 과제는 빈 값
-                    "2", target.getTaskListString() // 미완료 과제
-                );
-                
-                // 멀티채널로 학생에게 알림 전송
-                notificationService.sendNotification(
-                    target.getStudentId(),
-                    AlimtalkTemplate.TODAY_TASKS.name(), 
-                    variables
-                ).thenAccept(success -> {
-                    if (success) {
-                        log.debug("전날 미완료 할일 알림(아침) 전송 성공 - 학생 ID: {}", target.getStudentId());
-                    }
-                });
-                
-                // 학부모에게도 알림 (설정된 경우)
-                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
-                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
-                }
-            }
-        }
-        
-        log.info("전날 미완료 할일 알림 (아침) 발송 완료");
-    }
-    
-    /**
-     * 매일 저녁 8시: 전날 미완료 할일 알림 (저녁)
-     */
-    @Scheduled(cron = "0 0 20 * * *")
-    public void sendYesterdayIncompleteEvening() {
-        log.info("전날 미완료 할일 알림 (저녁) 시작");
-        
-        List<NotificationTargetService.TaskTarget> targets = 
-            targetService.getYesterdayIncompleteTaskTargets();
-        
-        for (NotificationTargetService.TaskTarget target : targets) {
-            if (target.getTaskCount() > 0) {
-                Map<String, String> variables = Map.of(
-                    "이름", target.getStudentName(),
-                    "1", target.getTaskListString() // 미완료 과제
-                );
-                
-                // 멀티채널로 학생에게 알림 전송
-                notificationService.sendNotification(
-                    target.getStudentId(),
-                    AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING.name(),
-                    variables
-                ).thenAccept(success -> {
-                    if (success) {
-                        log.debug("전날 미완료 할일 알림(저녁) 전송 성공 - 학생 ID: {}", target.getStudentId());
-                    }
-                });
-                
-                // 학부모에게도 알림 (설정된 경우)
-                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
-                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, variables);
-                }
-            }
-        }
-        
-        log.info("전날 미완료 할일 알림 (저녁) 발송 완료");
-    }
+//    /**
+//     * 매일 아침 8시: 오늘의 할일 알림
+//     */
+//    @Scheduled(cron = "0 0 8 * * *")
+//    public void sendTodayTasksNotification() {
+//        log.info("오늘의 할일 알림 시작");
+//
+//        List<NotificationTargetService.TaskTarget> targets =
+//            targetService.getTodayTaskTargets();
+//
+//        for (NotificationTargetService.TaskTarget target : targets) {
+//            Map<String, String> variables = Map.of(
+//                "이름", target.getStudentName(),
+//                "1", target.getTaskListString(),
+//                "2", "" // 미완료 과제는 빈 값으로 설정 (오늘 시작이므로)
+//            );
+//
+//            // 멀티채널로 학생에게 알림 전송
+//            notificationService.sendNotification(
+//                target.getStudentId(),
+//                AlimtalkTemplate.TODAY_TASKS.name(),
+//                variables
+//            ).thenAccept(success -> {
+//                if (success) {
+//                    log.debug("오늘의 할일 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+//                }
+//            });
+//
+//            // 학부모에게도 알림 (설정된 경우)
+//            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+//                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
+//            }
+//        }
+//
+//        log.info("오늘의 할일 알림 발송 완료 - {}건", targets.size());
+//    }
+//
+//    /**
+//     * 매일 아침 8시 30분: 전날 미완료 할일 알림 (아침)
+//     */
+//    @Scheduled(cron = "0 30 8 * * *")
+//    public void sendYesterdayIncompleteMorning() {
+//        log.info("전날 미완료 할일 알림 (아침) 시작");
+//
+//        List<NotificationTargetService.TaskTarget> targets =
+//            targetService.getYesterdayIncompleteTaskTargets();
+//
+//        for (NotificationTargetService.TaskTarget target : targets) {
+//            if (target.getTaskCount() > 0) {
+//                Map<String, String> variables = Map.of(
+//                    "이름", target.getStudentName(),
+//                    "1", "", // 오늘의 과제는 빈 값
+//                    "2", target.getTaskListString() // 미완료 과제
+//                );
+//
+//                // 멀티채널로 학생에게 알림 전송
+//                notificationService.sendNotification(
+//                    target.getStudentId(),
+//                    AlimtalkTemplate.TODAY_TASKS.name(),
+//                    variables
+//                ).thenAccept(success -> {
+//                    if (success) {
+//                        log.debug("전날 미완료 할일 알림(아침) 전송 성공 - 학생 ID: {}", target.getStudentId());
+//                    }
+//                });
+//
+//                // 학부모에게도 알림 (설정된 경우)
+//                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+//                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.TODAY_TASKS, variables);
+//                }
+//            }
+//        }
+//
+//        log.info("전날 미완료 할일 알림 (아침) 발송 완료");
+//    }
+//
+//    /**
+//     * 매일 저녁 8시: 전날 미완료 할일 알림 (저녁)
+//     */
+//    @Scheduled(cron = "0 0 20 * * *")
+//    public void sendYesterdayIncompleteEvening() {
+//        log.info("전날 미완료 할일 알림 (저녁) 시작");
+//
+//        List<NotificationTargetService.TaskTarget> targets =
+//            targetService.getYesterdayIncompleteTaskTargets();
+//
+//        for (NotificationTargetService.TaskTarget target : targets) {
+//            if (target.getTaskCount() > 0) {
+//                Map<String, String> variables = Map.of(
+//                    "이름", target.getStudentName(),
+//                    "1", target.getTaskListString() // 미완료 과제
+//                );
+//
+//                // 멀티채널로 학생에게 알림 전송
+//                notificationService.sendNotification(
+//                    target.getStudentId(),
+//                    AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING.name(),
+//                    variables
+//                ).thenAccept(success -> {
+//                    if (success) {
+//                        log.debug("전날 미완료 할일 알림(저녁) 전송 성공 - 학생 ID: {}", target.getStudentId());
+//                    }
+//                });
+//
+//                // 학부모에게도 알림 (설정된 경우)
+//                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+//                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.YESTERDAY_INCOMPLETE_EVENING, variables);
+//                }
+//            }
+//        }
+//
+//        log.info("전날 미완료 할일 알림 (저녁) 발송 완료");
+//    }
     
     /**
      * 매 5분마다 실행: 미접속 체크 (공부 시작 후 15분)

@@ -12,10 +12,19 @@ import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.repository.StudentGuardianRepository;
+import saomath.checkusserver.repository.StudentProfileRepository;
+import saomath.checkusserver.dto.StudyTimeMonitorResponse;
+import saomath.checkusserver.entity.User;
+import saomath.checkusserver.entity.StudentGuardian;
+import saomath.checkusserver.entity.StudentProfile;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +36,8 @@ public class StudyTimeService {
     private final ActualStudyTimeRepository actualStudyTimeRepository;
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
+    private final StudentGuardianRepository studentGuardianRepository;
+    private final StudentProfileRepository studentProfileRepository;
     private static final Logger log = LoggerFactory.getLogger(StudyTimeService.class);
 
     @Autowired
@@ -34,12 +45,16 @@ public class StudyTimeService {
             AssignedStudyTimeRepository assignedStudyTimeRepository,
             ActualStudyTimeRepository actualStudyTimeRepository,
             ActivityRepository activityRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            StudentGuardianRepository studentGuardianRepository,
+            StudentProfileRepository studentProfileRepository
     ) {
         this.assignedStudyTimeRepository = assignedStudyTimeRepository;
         this.actualStudyTimeRepository = actualStudyTimeRepository;
         this.activityRepository = activityRepository;
         this.userRepository = userRepository;
+        this.studentGuardianRepository = studentGuardianRepository;
+        this.studentProfileRepository = studentProfileRepository;
     }
 
     /**
@@ -52,7 +67,7 @@ public class StudyTimeService {
     public List<AssignedStudyTime> getAssignedStudyTimesByDateRange(
             LocalDateTime startDate, LocalDateTime endDate) {
         validateTimeRangeForQuery(startDate, endDate);
-        return assignedStudyTimeRepository.findStartingBetween(startDate, endDate);
+        return assignedStudyTimeRepository.findStartingBetweenWithDetails(startDate, endDate);
     }
 
     /**
@@ -166,7 +181,7 @@ public class StudyTimeService {
             Long studentId, LocalDateTime startDate, LocalDateTime endDate) {
         validateUser(studentId);
         validateTimeRangeForQuery(startDate, endDate);
-        return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetween(
+        return assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
                 studentId, startDate, endDate);
     }
 
@@ -296,8 +311,8 @@ public class StudyTimeService {
         LocalDateTime tenMinutesBefore = now.minusMinutes(10);
         LocalDateTime tenMinutesAfter = now.plusMinutes(10);
         
-        return assignedStudyTimeRepository.findUpcomingStudyTimesV2(
-                tenMinutesBefore, now, tenMinutesAfter);
+        return assignedStudyTimeRepository.findUpcomingStudyTimesWithDetails(
+                tenMinutesBefore, tenMinutesAfter);
     }
 
     /**
@@ -385,6 +400,16 @@ public class StudyTimeService {
     }
 
     /**
+     * ID로 배정된 공부 시간을 연관 엔티티와 함께 조회합니다.
+     * @param id 배정 ID
+     * @return 연관 엔티티가 포함된 배정된 공부 시간
+     */
+    @Transactional(readOnly = true)
+    public AssignedStudyTime getAssignedStudyTimeWithDetails(Long id) {
+        return assignedStudyTimeRepository.findByIdWithDetails(id);
+    }
+
+    /**
      * 공부 배정 가능한 활동 목록을 조회합니다.
      * @return 활동 목록
      */
@@ -419,6 +444,150 @@ public class StudyTimeService {
                 .build();
 
         return activityRepository.save(activity);
+    }
+
+    /**
+     * 특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다.
+     * @param date 조회할 날짜
+     * @return 날짜별 학생 모니터링 응답
+     */
+    @Transactional(readOnly = true)
+    public StudyTimeMonitorResponse getStudyTimeMonitorByDate(LocalDate date) {
+        // TODO: 쿼리 파라미터로 반/학생/담임 필터링 기능 추가 예정
+        
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 모든 학생 조회 (실제로는 특정 반/담임으로 필터링될 예정)
+        List<User> allStudents = userRepository.findAllStudents();
+        
+        List<StudyTimeMonitorResponse.StudentStudyInfo> studentInfos = new ArrayList<>();
+        
+        for (User student : allStudents) {
+            Long studentId = student.getId();
+            
+            // 학생 기본 정보
+            StudyTimeMonitorResponse.StudentStudyInfo studentInfo = new StudyTimeMonitorResponse.StudentStudyInfo();
+            studentInfo.setStudentId(studentId);
+            studentInfo.setStudentName(student.getName());
+            studentInfo.setStudentPhone(student.getPhoneNumber());
+            
+            // 보호자 정보
+            List<StudyTimeMonitorResponse.GuardianInfo> guardians = getGuardianInfos(studentId);
+            studentInfo.setGuardians(guardians);
+            
+            // 해당 날짜의 할당된 공부시간 조회
+            List<AssignedStudyTime> assignedStudyTimes = assignedStudyTimeRepository
+                    .findByStudentIdAndStartTimeBetweenWithDetails(studentId, startOfDay, endOfDay);
+            
+            // 할당된 공부시간 정보 생성
+            List<StudyTimeMonitorResponse.AssignedStudyInfo> assignedInfos = new ArrayList<>();
+            for (AssignedStudyTime assignedTime : assignedStudyTimes) {
+                StudyTimeMonitorResponse.AssignedStudyInfo assignedInfo = new StudyTimeMonitorResponse.AssignedStudyInfo();
+                assignedInfo.setAssignedStudyTimeId(assignedTime.getId());
+                assignedInfo.setTitle(assignedTime.getTitle());
+                assignedInfo.setStartTime(assignedTime.getStartTime());
+                assignedInfo.setEndTime(assignedTime.getEndTime());
+                
+                // 이 할당에 연결된 실제 접속 기록들
+                List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
+                        .findByAssignedStudyTimeId(assignedTime.getId());
+                
+                List<StudyTimeMonitorResponse.ConnectedActualStudyInfo> connectedInfos = connectedActuals.stream()
+                        .map(actual -> new StudyTimeMonitorResponse.ConnectedActualStudyInfo(
+                                actual.getId(),
+                                actual.getStartTime(),
+                                actual.getEndTime()
+                        ))
+                        .collect(Collectors.toList());
+                
+                assignedInfo.setConnectedActualStudyTimes(connectedInfos);
+                assignedInfos.add(assignedInfo);
+            }
+            studentInfo.setAssignedStudyTimes(assignedInfos);
+            
+            // 해당 날짜의 할당되지 않은 실제 접속 기록들
+            List<ActualStudyTime> unassignedActuals = actualStudyTimeRepository
+                    .findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(studentId, startOfDay, endOfDay);
+            
+            List<StudyTimeMonitorResponse.UnassignedActualStudyInfo> unassignedInfos = unassignedActuals.stream()
+                    .map(actual -> new StudyTimeMonitorResponse.UnassignedActualStudyInfo(
+                            actual.getId(),
+                            actual.getStartTime(),
+                            actual.getEndTime()
+                    ))
+                    .collect(Collectors.toList());
+            studentInfo.setUnassignedActualStudyTimes(unassignedInfos);
+            
+            // 학생 현재 상태 결정
+            StudyTimeMonitorResponse.StudentCurrentStatus status = determineStudentStatus(
+                    assignedStudyTimes, unassignedActuals, now);
+            studentInfo.setStatus(status);
+            
+            studentInfos.add(studentInfo);
+        }
+        
+        StudyTimeMonitorResponse response = new StudyTimeMonitorResponse();
+        response.setDate(date);
+        response.setStudents(studentInfos);
+        
+        return response;
+    }
+    
+    /**
+     * 학생의 보호자 정보를 조회합니다.
+     * @param studentId 학생 ID
+     * @return 보호자 정보 목록
+     */
+    private List<StudyTimeMonitorResponse.GuardianInfo> getGuardianInfos(Long studentId) {
+        List<StudentGuardian> studentGuardians = studentGuardianRepository.findByStudentId(studentId);
+        
+        return studentGuardians.stream()
+                .map(sg -> new StudyTimeMonitorResponse.GuardianInfo(
+                        sg.getGuardian().getId(),
+                        sg.getGuardian().getPhoneNumber(),
+                        sg.getRelationship()
+                ))
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 학생의 현재 상태를 결정합니다.
+     * @param assignedStudyTimes 할당된 공부시간 목록
+     * @param unassignedActuals 할당되지 않은 실제 접속 기록 목록
+     * @param now 현재 시간
+     * @return 학생 현재 상태
+     */
+    private StudyTimeMonitorResponse.StudentCurrentStatus determineStudentStatus(
+            List<AssignedStudyTime> assignedStudyTimes, 
+            List<ActualStudyTime> unassignedActuals, 
+            LocalDateTime now) {
+        
+        // 현재 시간에 할당된 공부시간이 있는지 확인
+        AssignedStudyTime currentAssigned = assignedStudyTimes.stream()
+                .filter(assigned -> !now.isBefore(assigned.getStartTime()) && !now.isAfter(assigned.getEndTime()))
+                .findFirst()
+                .orElse(null);
+        
+        if (currentAssigned != null) {
+            // 현재 할당된 시간이 있음
+            // 해당 할당에 연결된 현재 진행중인 접속 기록이 있는지 확인
+            List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
+                    .findByAssignedStudyTimeId(currentAssigned.getId());
+            
+            boolean isCurrentlyAttending = connectedActuals.stream()
+                    .anyMatch(actual -> actual.getEndTime() == null || 
+                                       (!now.isBefore(actual.getStartTime()) && 
+                                        (actual.getEndTime() == null || !now.isAfter(actual.getEndTime()))));
+            
+            return isCurrentlyAttending ? 
+                    StudyTimeMonitorResponse.StudentCurrentStatus.ATTENDING : 
+                    StudyTimeMonitorResponse.StudentCurrentStatus.ABSENT;
+        } else {
+            // 현재 할당된 시간이 없음
+            return StudyTimeMonitorResponse.StudentCurrentStatus.NO_ASSIGNED_TIME;
+        }
     }
 
     // 검증 메서드들
