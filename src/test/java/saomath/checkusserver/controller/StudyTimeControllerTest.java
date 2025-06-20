@@ -18,7 +18,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.dto.RecordStudyStartRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
@@ -240,48 +239,6 @@ class StudyTimeControllerTest {
     }
 
     @Test
-    @DisplayName("디스코드 봇용 공부 시작 기록 성공")
-    void recordStudyStart_Success() throws Exception {
-        // Given
-        RecordStudyStartRequest request = new RecordStudyStartRequest();
-        request.setStudentId(1L);
-        request.setStartTime(LocalDateTime.now());
-        request.setSource("discord");
-
-        when(studyTimeService.recordStudyStart(any(Long.class), any(LocalDateTime.class), any(String.class)))
-                .thenReturn(mockActualStudyTime);
-
-        // When & Then
-        mockMvc.perform(post("/study-time/record/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.studentId").value(1))
-                .andExpect(jsonPath("$.data.source").value("discord"));
-    }
-
-    @Test
-    @DisplayName("디스코드 봇용 공부 시작 기록 실패 - 존재하지 않는 학생")
-    void recordStudyStart_StudentNotFound() throws Exception {
-        // Given
-        RecordStudyStartRequest request = new RecordStudyStartRequest();
-        request.setStudentId(999L);
-        request.setStartTime(LocalDateTime.now());
-        request.setSource("discord");
-
-        when(studyTimeService.recordStudyStart(any(Long.class), any(LocalDateTime.class), any(String.class)))
-                .thenThrow(new ResourceNotFoundException("사용자를 찾을 수 없습니다. ID: 999"));
-
-        // When & Then
-        mockMvc.perform(post("/study-time/record/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
     @DisplayName("공부 배정 가능한 활동 목록 조회 성공")
     void getStudyAssignableActivities_Success() throws Exception {
         // Given
@@ -310,21 +267,6 @@ class StudyTimeControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data").isEmpty());
-    }
-
-    @Test
-    @DisplayName("곧 시작할 공부 시간 조회 성공")
-    void getUpcomingStudyTimes_Success() throws Exception {
-        // Given
-        when(studyTimeService.getUpcomingStudyTimes())
-                .thenReturn(Arrays.asList(mockAssignedStudyTime));
-
-        // When & Then
-        mockMvc.perform(get("/study-time/upcoming"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].id").value(1));
     }
 
     @Test

@@ -18,7 +18,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
-import saomath.checkusserver.dto.*;
+import saomath.checkusserver.dto.ActualStudyTimeResponse;
+import saomath.checkusserver.dto.ActivityResponse;
+import saomath.checkusserver.dto.AssignedStudyTimeResponse;
+import saomath.checkusserver.dto.AssignStudyTimeRequest;
+import saomath.checkusserver.dto.StudyTimeMonitorResponse;
+import saomath.checkusserver.dto.UpdateStudyTimeRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
@@ -272,61 +277,7 @@ public class StudyTimeController {
         }
     }
 
-    @Operation(
-        summary = "디스코드 봇용 - 공부 시작 기록",
-        description = "디스코드 봇이 학생의 공부 시작을 기록합니다.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @PostMapping("/record/start")
-    public ResponseEntity<ResponseBase<ActualStudyTimeResponse>> recordStudyStart(
-            @Valid @RequestBody RecordStudyStartRequest request) {
-        
-        try {
-            ActualStudyTime result = studyTimeService.recordStudyStart(
-                    request.getStudentId(),
-                    request.getStartTime(),
-                    request.getSource()
-            );
-            
-            ActualStudyTimeResponse response = convertToActualResponse(result);
-            
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ResponseBase.success("공부 시작이 성공적으로 기록되었습니다.", response));
-                    
-        } catch (Exception e) {
-            log.error("공부 시작 기록 실패", e);
-            return ResponseEntity.badRequest()
-                    .body(ResponseBase.error(e.getMessage()));
-        }
-    }
 
-    @Operation(
-        summary = "디스코드 봇용 - 공부 종료 기록",
-        description = "디스코드 봇이 학생의 공부 종료를 기록합니다.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @PutMapping("/record/{actualStudyTimeId}/end")
-    public ResponseEntity<ResponseBase<ActualStudyTimeResponse>> recordStudyEnd(
-            @Parameter(description = "실제 공부 시간 기록 ID") @PathVariable("actualStudyTimeId") Long actualStudyTimeId,
-            @Valid @RequestBody RecordStudyEndRequest request) {
-        
-        try {
-            ActualStudyTime result = studyTimeService.recordStudyEnd(
-                    actualStudyTimeId,
-                    request.getEndTime()
-            );
-            
-            ActualStudyTimeResponse response = convertToActualResponse(result);
-            
-            return ResponseEntity.ok(
-                    ResponseBase.success("공부 종료가 성공적으로 기록되었습니다.", response));
-                    
-        } catch (Exception e) {
-            log.error("공부 종료 기록 실패: actualStudyTimeId={}", actualStudyTimeId, e);
-            return ResponseEntity.badRequest()
-                    .body(ResponseBase.error(e.getMessage()));
-        }
-    }
 
     @Operation(
         summary = "공부 배정 가능한 활동 목록 조회",
@@ -454,31 +405,6 @@ public class StudyTimeController {
                     
         } catch (Exception e) {
             log.error("학생 모니터링 정보 조회 실패: date={}", dateStr, e);
-            return ResponseEntity.badRequest()
-                    .body(ResponseBase.error(e.getMessage()));
-        }
-    }
-
-    @Operation(
-        summary = "알림용 - 곧 시작할 공부 시간 조회",
-        description = "알림 시스템에서 사용하는 곧 시작할 공부 시간 목록을 조회합니다.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @GetMapping("/upcoming")
-    public ResponseEntity<ResponseBase<List<AssignedStudyTimeResponse>>> getUpcomingStudyTimes() {
-        
-        try {
-            List<AssignedStudyTime> results = studyTimeService.getUpcomingStudyTimes();
-            
-            List<AssignedStudyTimeResponse> responses = results.stream()
-                    .map(this::convertToAssignedResponse)
-                    .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(
-                    ResponseBase.success("곧 시작할 공부 시간을 성공적으로 조회했습니다.", responses));
-                    
-        } catch (Exception e) {
-            log.error("곧 시작할 공부 시간 조회 실패", e);
             return ResponseEntity.badRequest()
                     .body(ResponseBase.error(e.getMessage()));
         }
