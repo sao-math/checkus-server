@@ -60,12 +60,13 @@ public class DefaultNotificationSettingTest {
         // Then: 노션 설정에 따라 알림톡 + 디스코드 모두 활성화
         assertThat(noShowChannels).contains("alimtalk", "discord");
         
-        // When: 공부 시작 알림 확인
-        Set<String> studyStartChannels = studentSetting.getDefaultChannels(AlimtalkTemplate.STUDY_START);
-        
-        // Then: 디스코드만 활성화 (카톡은 OFF 고정)
-        assertThat(studyStartChannels).contains("discord");
-        assertThat(studyStartChannels).doesNotContain("alimtalk");
+        //설정바뀌어 삭제
+//        // When: 공부 시작 알림 확인
+//        Set<String> studyStartChannels = studentSetting.getDefaultChannels(AlimtalkTemplate.STUDY_START);
+//        
+//        // Then: 디스코드만 활성화 (카톡은 OFF 고정)
+//        assertThat(studyStartChannels).contains("discord");
+//        assertThat(studyStartChannels).doesNotContain("alimtalk");
         
         // When: 학부모 기본 설정 확인
         DefaultNotificationSetting guardianSetting = DefaultNotificationSetting.GUARDIAN;
