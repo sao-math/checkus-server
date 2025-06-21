@@ -6,8 +6,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.service.DiscordBotService;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.util.DateTimeUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -66,8 +69,22 @@ public class DiscordNotificationService implements NotificationService {
             AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
             String message = template.getTemplateMessage();
             
+            // 변수 복사본 생성 (원본 수정 방지)
+            Map<String, String> processedVars = new HashMap<>(variables);
+            
+            // 입장시간이 있으면 한국 시간으로 변환
+            if (processedVars.containsKey("입장시간")) {
+                String entryTimeStr = processedVars.get("입장시간");
+                try {
+                    LocalDateTime entryTime = LocalDateTime.parse(entryTimeStr);
+                    processedVars.put("입장시간", DateTimeUtils.formatToKoreanTime(entryTime));
+                } catch (Exception e) {
+                    // 파싱 실패시 원본 사용
+                }
+            }
+            
             // 변수 치환
-            for (Map.Entry<String, String> entry : variables.entrySet()) {
+            for (Map.Entry<String, String> entry : processedVars.entrySet()) {
                 String placeholder = "#{" + entry.getKey() + "}";
                 message = message.replace(placeholder, entry.getValue());
             }

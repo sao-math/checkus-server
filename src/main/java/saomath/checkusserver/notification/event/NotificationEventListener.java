@@ -46,7 +46,7 @@ public class NotificationEventListener {
             // 알림 변수 설정
             Map<String, String> variables = new HashMap<>();
             variables.put("이름", event.getStudentName());
-            variables.put("입장시간", event.getEnterTime().format(TIME_FORMATTER));
+            variables.put("입장시간", event.getEnterTime().toString()); // ISO 형식으로 전달
             
             // 멀티채널로 학생에게 알림 전송
             notificationService.sendNotification(
