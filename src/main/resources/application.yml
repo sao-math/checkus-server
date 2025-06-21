@@ -31,16 +31,6 @@ bizgo:
     client-id: ${BIZGO_CLIENT_ID}
     client-password: ${BIZGO_CLIENT_PASSWORD}
   sender-key: ${BIZGO_SENDER_KEY}
-
-# 알림 시스템 설정
-notification:
-  # 통합 스케줄러 활성화 (기본값: true)
-  scheduler:
-    enabled: ${NOTIFICATION_SCHEDULER_ENABLED:true}
-  
-  # 기존 알림톡 전용 스케줄러 비활성화 (기본값: false)
-  alimtalk-scheduler:
-    enabled: ${ALIMTALK_SCHEDULER_ENABLED:false}
     
 # 디스코드 봇 설정
 discord:
