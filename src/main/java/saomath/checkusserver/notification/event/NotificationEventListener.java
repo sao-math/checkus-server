@@ -100,10 +100,6 @@ public class NotificationEventListener {
      */
     private void handleEarlyLeaveEvent(User student, AssignedStudyTime studyTime, long remainingMinutes) {
         Map<String, String> variables = new HashMap<>();
-        variables.put("이름", student.getName());
-        variables.put("과목", studyTime.getTitle() != null ? studyTime.getTitle() : "공부");
-        variables.put("남은시간", remainingMinutes + "분");
-        variables.put("종료시간", studyTime.getEndTime().format(TIME_FORMATTER));
         
         // 조기퇴장 알림 전송
         notificationService.sendNotification(
@@ -125,10 +121,8 @@ public class NotificationEventListener {
      */
     private void handleLateArrivalEvent(User student, AssignedStudyTime studyTime, long lateMinutes) {
         Map<String, String> variables = new HashMap<>();
-        variables.put("이름", student.getName());
-        variables.put("과목", studyTime.getTitle() != null ? studyTime.getTitle() : "공부");
-        variables.put("늦은시간", lateMinutes + "분");
-        variables.put("종료시간", studyTime.getEndTime().format(TIME_FORMATTER));
+        // CSV D0005 버전은 늦은시간 변수만 사용
+        variables.put("늦은시간", String.valueOf(lateMinutes));
         
         // 늦은입장 알림 전송
         notificationService.sendNotification(
