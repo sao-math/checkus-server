@@ -29,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "notification.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class UnifiedNotificationScheduler {
     
     private final MultiChannelNotificationService notificationService;
