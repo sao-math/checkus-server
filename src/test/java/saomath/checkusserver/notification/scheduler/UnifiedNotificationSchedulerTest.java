@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("통합 알림 스케줄러 테스트")
+@DisplayName("통합 알림 스케줄러 테스트 (중복 방지)")
 class UnifiedNotificationSchedulerTest {
 
     @Mock
@@ -39,8 +39,8 @@ class UnifiedNotificationSchedulerTest {
     }
 
     @Test
-    @DisplayName("공부 시작 10분 전 알림 - 정상 처리")
-    void sendStudyReminder10Min_Success() {
+    @DisplayName("공부 시작 10분 전 알림 - 정확한 시간 매칭")
+    void sendStudyReminder10Min_ExactTimeMatching() {
         // Given
         NotificationTargetService.StudyTarget target = createMockStudyTarget();
         when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
@@ -54,14 +54,16 @@ class UnifiedNotificationSchedulerTest {
         scheduler.sendStudyReminder10Min();
 
         // Then
-        verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
+        verify(targetService).getStudyTargetsForTime(argThat(dateTime -> 
+            dateTime.getSecond() == 0 && dateTime.getNano() == 0
+        ));
         verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
         verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
     }
 
     @Test
-    @DisplayName("공부 시작 시간 알림 - 정상 처리")
-    void sendStudyStartNotificationAndConnectSessions_Success() {
+    @DisplayName("공부 시작 시간 알림 - 정확한 시간 매칭")
+    void sendStudyStartNotificationAndConnectSessions_ExactTimeMatching() {
         // Given
         NotificationTargetService.StudyTarget target = createMockStudyTarget();
         when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
@@ -77,32 +79,29 @@ class UnifiedNotificationSchedulerTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
         // Then
-        verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
+        verify(targetService).getStudyTargetsForTime(argThat(dateTime -> 
+            dateTime.getSecond() == 0 && dateTime.getNano() == 0
+        ));
         verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
         verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
         verify(studyTimeService).getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
     }
 
-//    @Test
-//    @DisplayName("오늘의 할일 알림 - 정상 처리")
-//    void sendTodayTasksNotification_Success() {
-//        // Given
-//        NotificationTargetService.TaskTarget target = createMockTaskTarget();
-//        when(targetService.getTodayTaskTargets())
-//            .thenReturn(List.of(target));
-//        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
-//            .thenReturn(CompletableFuture.completedFuture(true));
-//        when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
-//            .thenReturn(CompletableFuture.completedFuture(true));
-//
-//        // When
-//        scheduler.sendTodayTasksNotification();
-//
-//        // Then
-//        verify(targetService).getTodayTaskTargets();
-//        verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
-//        verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
-//    }
+    @Test
+    @DisplayName("대상자가 없을 때 알림 발송하지 않음")
+    void sendStudyReminder10Min_NoTargets() {
+        // Given
+        when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
+            .thenReturn(List.of());
+
+        // When
+        scheduler.sendStudyReminder10Min();
+
+        // Then
+        verify(targetService).getStudyTargetsForTime(any(LocalDateTime.class));
+        verify(notificationService, never()).sendNotification(anyLong(), anyString(), any(Map.class));
+        verify(notificationService, never()).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
+    }
 
     @Test
     @DisplayName("미접속 체크 - 정상 처리")
@@ -145,23 +144,41 @@ class UnifiedNotificationSchedulerTest {
         verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
     }
 
+    @Test
+    @DisplayName("중복 방지 - 대상자가 없을 때 알림 발송하지 않음")
+    void preventDuplicateNotifications() {
+        // Given
+        when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
+            .thenReturn(List.of()); // 대상자 없음
+
+        // When
+        scheduler.sendStudyReminder10Min();
+
+        // Then
+        verify(targetService, times(1)).getStudyTargetsForTime(any(LocalDateTime.class));
+        verify(notificationService, never()).sendNotification(anyLong(), anyString(), any(Map.class));
+        verify(notificationService, never()).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
+    }
+
     private NotificationTargetService.StudyTarget createMockStudyTarget() {
         return NotificationTargetService.StudyTarget.builder()
             .studentId(1L)
             .studentName("테스트학생")
             .parentPhone("010-1234-5678")
             .parentNotificationEnabled(true)
+            .startTime(LocalDateTime.now().plusMinutes(10))
+            .endTime(LocalDateTime.now().plusMinutes(70))
             .build();
     }
 
-    private NotificationTargetService.TaskTarget createMockTaskTarget() {
-        return NotificationTargetService.TaskTarget.builder()
+    private NotificationTargetService.StudyTarget createMockStudyTargetWithTime(LocalDateTime startTime) {
+        return NotificationTargetService.StudyTarget.builder()
             .studentId(1L)
             .studentName("테스트학생")
             .parentPhone("010-1234-5678")
             .parentNotificationEnabled(true)
-            .taskCount(3)
-            .taskTitles(List.of("수학 문제집 10페이지", "영어 단어 암기", "물리 실험 보고서"))
+            .startTime(startTime)
+            .endTime(startTime.plusMinutes(60))
             .build();
     }
 
@@ -172,6 +189,8 @@ class UnifiedNotificationSchedulerTest {
             .parentPhone("010-1234-5678")
             .studentNotificationEnabled(true)
             .parentNotificationEnabled(true)
+            .startTime(LocalDateTime.now().minusMinutes(15))
+            .endTime(LocalDateTime.now().plusMinutes(45))
             .build();
     }
 }

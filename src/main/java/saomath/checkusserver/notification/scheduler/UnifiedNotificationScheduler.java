@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "notification.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class UnifiedNotificationScheduler {
     
     private final MultiChannelNotificationService notificationService;
@@ -42,16 +43,27 @@ public class UnifiedNotificationScheduler {
      */
     @Scheduled(cron = "0 * * * * *")
     public void sendStudyReminder10Min() {
-        log.debug("공부 시작 10분 전 알림 체크 시작");
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime targetTime = now.plusMinutes(10).withSecond(0).withNano(0);
         
-        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(10);
+        log.info("공부 시작 10분 전 알림 체크 시작 - 현재: {}, 대상시간: {}", 
+                now.format(TIME_FORMATTER), targetTime.format(TIME_FORMATTER));
+        
         List<NotificationTargetService.StudyTarget> targets = 
             targetService.getStudyTargetsForTime(targetTime);
+        
+        if (targets.isEmpty()) {
+            log.debug("공부 시작 10분 전 알림 대상자 없음 - 대상시간: {}", targetTime.format(TIME_FORMATTER));
+            return;
+        }
         
         for (NotificationTargetService.StudyTarget target : targets) {
             Map<String, String> variables = Map.of(
                 "이름", target.getStudentName()
             );
+            
+            log.info("10분 전 알림 발송 시작 - 학생: {}, 대상시간: {}", 
+                    target.getStudentName(), target.getStartTime().format(TIME_FORMATTER));
             
             // 멀티채널로 학생에게 알림 전송
             notificationService.sendNotification(
@@ -60,19 +72,20 @@ public class UnifiedNotificationScheduler {
                 variables
             ).thenAccept(success -> {
                 if (success) {
-                    log.debug("10분 전 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+                    log.info("10분 전 알림 전송 성공 - 학생: {} (ID: {})", target.getStudentName(), target.getStudentId());
                 } else {
-                    log.warn("10분 전 알림 전송 실패 - 학생 ID: {}", target.getStudentId());
+                    log.warn("10분 전 알림 전송 실패 - 학생: {} (ID: {})", target.getStudentName(), target.getStudentId());
                 }
             });
             
             // 학부모에게도 알림 (설정된 경우)
             if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                log.info("10분 전 알림 학부모 발송 - 학생: {}", target.getStudentName());
                 sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.STUDY_REMINDER_10MIN, variables);
             }
         }
         
-        log.debug("공부 시작 10분 전 알림 발송 완료 - {}건", targets.size());
+        log.info("공부 시작 10분 전 알림 발송 완료 - 총 {}건 발송", targets.size());
     }
     
     /**
@@ -80,36 +93,45 @@ public class UnifiedNotificationScheduler {
      */
     @Scheduled(cron = "0 * * * * *")
     public void sendStudyStartNotificationAndConnectSessions() {
-        LocalDateTime now = LocalDateTime.now();
-        log.debug("공부 시작 시간 알림 및 세션 연결 체크 시작: {}", now);
+        LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
+        
+        log.info("공부 시작 시간 알림 및 세션 연결 체크 시작 - 현재: {}", now.format(TIME_FORMATTER));
         
         // 1. 공부 시작 시간 알림 발송
         List<NotificationTargetService.StudyTarget> targets = 
             targetService.getStudyTargetsForTime(now);
         
-        for (NotificationTargetService.StudyTarget target : targets) {
-            Map<String, String> variables = Map.of(
-                "이름", target.getStudentName()
-            );
-            
-            // 멀티채널로 학생에게 알림 전송
-            notificationService.sendNotification(
-                target.getStudentId(),
-                AlimtalkTemplate.STUDY_START.name(),
-                variables
-            ).thenAccept(success -> {
-                if (success) {
-                    log.debug("공부 시작 알림 전송 성공 - 학생 ID: {}", target.getStudentId());
+        if (!targets.isEmpty()) {
+            for (NotificationTargetService.StudyTarget target : targets) {
+                Map<String, String> variables = Map.of(
+                    "이름", target.getStudentName()
+                );
+                
+                log.info("공부 시작 알림 발송 시작 - 학생: {}, 시작시간: {}", 
+                        target.getStudentName(), target.getStartTime().format(TIME_FORMATTER));
+                
+                // 멀티채널로 학생에게 알림 전송
+                notificationService.sendNotification(
+                    target.getStudentId(),
+                    AlimtalkTemplate.STUDY_START.name(),
+                    variables
+                ).thenAccept(success -> {
+                    if (success) {
+                        log.info("공부 시작 알림 전송 성공 - 학생: {} (ID: {})", target.getStudentName(), target.getStudentId());
+                    }
+                });
+                
+                // 학부모에게도 알림 (설정된 경우)
+                if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
+                    log.info("공부 시작 알림 학부모 발송 - 학생: {}", target.getStudentName());
+                    sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.STUDY_START, variables);
                 }
-            });
-            
-            // 학부모에게도 알림 (설정된 경우)
-            if (target.isParentNotificationEnabled() && target.getParentPhone() != null) {
-                sendDirectAlimtalkToParent(target.getParentPhone(), AlimtalkTemplate.STUDY_START, variables);
             }
+            
+            log.info("공부 시작 시간 알림 발송 완료 - 총 {}건 발송", targets.size());
+        } else {
+            log.debug("공부 시작 시간 알림 대상자 없음 - 현재시간: {}", now.format(TIME_FORMATTER));
         }
-        
-        log.debug("공부 시작 시간 알림 발송 완료 - {}건", targets.size());
         
         // 2. 10분 전에 시작된 공부시간의 세션 연결 체크
         LocalDateTime tenMinutesAgo = now.minusMinutes(10);
@@ -252,7 +274,7 @@ public class UnifiedNotificationScheduler {
 //
 //        log.info("전날 미완료 할일 알림 (저녁) 발송 완료");
 //    }
-    
+
     /**
      * 매 5분마다 실행: 미접속 체크 (공부 시작 후 15분)
      */
