@@ -89,7 +89,7 @@ public class UnifiedNotificationScheduler {
     }
     
     /**
-     * 매 분마다 실행: 공부 시작 시간 알림 + 세션 연결 체크
+     * 매 분마다 실행: 공부 시작 시간 알림 + 즉시 세션 연결 체크
      */
     @Scheduled(cron = "0 * * * * *")
     public void sendStudyStartNotificationAndConnectSessions() {
@@ -97,7 +97,36 @@ public class UnifiedNotificationScheduler {
         
         log.info("공부 시작 시간 알림 및 세션 연결 체크 시작 - 현재: {}", now.format(TIME_FORMATTER));
         
-        // 1. 공부 시작 시간 알림 발송
+        // 1. 현재 시작하는 공부시간 조회 및 즉시 세션 연결
+        List<AssignedStudyTime> currentAssignedStudyTimes = studyTimeService.getAssignedStudyTimesByDateRange(
+                now.minusMinutes(1), 
+                now.plusMinutes(1)
+        );
+        
+        int immediateConnectedSessions = 0;
+        for (AssignedStudyTime assignedStudyTime : currentAssignedStudyTimes) {
+            try {
+                // 해당 할당에 이미 접속중인 세션이 있는지 확인 후 즉시 연결
+                ActualStudyTime connected = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
+                if (connected != null) {
+                    immediateConnectedSessions++;
+                    log.info("공부시간 시작 시점 즉시 세션 연결: 할당 ID={}, 학생 ID={}, 실제 세션 ID={}, 세션 시작시간={}", 
+                            assignedStudyTime.getId(), assignedStudyTime.getStudentId(), connected.getId(), connected.getStartTime());
+                }
+            } catch (ResourceNotFoundException e) {
+                log.warn("할당된 공부시간을 찾을 수 없어 세션 연결 스킵: 할당 ID={}, 오류: {}", 
+                        assignedStudyTime.getId(), e.getMessage());
+            } catch (Exception e) {
+                log.error("즉시 세션 연결 실패: 할당 ID={}, 학생 ID={}", 
+                        assignedStudyTime.getId(), assignedStudyTime.getStudentId(), e);
+            }
+        }
+        
+        if (immediateConnectedSessions > 0) {
+            log.info("공부시간 시작 시점 즉시 세션 연결 완료: {}건", immediateConnectedSessions);
+        }
+        
+        // 2. 공부 시작 시간 알림 발송 (기존처럼 유지)
         List<NotificationTargetService.StudyTarget> targets = 
             targetService.getStudyTargetsForTime(now);
         
@@ -133,32 +162,32 @@ public class UnifiedNotificationScheduler {
             log.debug("공부 시작 시간 알림 대상자 없음 - 현재시간: {}", now.format(TIME_FORMATTER));
         }
         
-        // 2. 10분 전에 시작된 공부시간의 세션 연결 체크
+        // 3. 지연된 세션 연결 체크 (10분 전에 시작된 공부시간 - 백업용)
         LocalDateTime tenMinutesAgo = now.minusMinutes(10);
-        List<AssignedStudyTime> assignedStudyTimes = studyTimeService.getAssignedStudyTimesByDateRange(
+        List<AssignedStudyTime> delayedAssignedStudyTimes = studyTimeService.getAssignedStudyTimesByDateRange(
                 tenMinutesAgo.minusMinutes(1), 
                 tenMinutesAgo.plusMinutes(1)
         );
         
-        int connectedSessions = 0;
-        for (AssignedStudyTime assignedStudyTime : assignedStudyTimes) {
+        int delayedConnectedSessions = 0;
+        for (AssignedStudyTime assignedStudyTime : delayedAssignedStudyTimes) {
             try {
                 ActualStudyTime connected = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
                 if (connected != null) {
-                    connectedSessions++;
-                    log.info("이전 진행중인 세션 연결 성공: 할당 ID={}, 학생 ID={}, 실제 세션 ID={}", 
+                    delayedConnectedSessions++;
+                    log.info("지연된 세션 연결 성공 (백업): 할당 ID={}, 학생 ID={}, 실제 세션 ID={}", 
                             assignedStudyTime.getId(), assignedStudyTime.getStudentId(), connected.getId());
                 }
             } catch (ResourceNotFoundException e) {
-                log.warn("할당된 공부시간을 찾을 수 없어 세션 연결 스킵: 할당 ID={}, 오류: {}", 
+                log.warn("할당된 공부시간을 찾을 수 없어 지연 세션 연결 스킵: 할당 ID={}, 오류: {}", 
                         assignedStudyTime.getId(), e.getMessage());
             } catch (Exception e) {
-                log.error("세션 연결 실패: 할당 ID={}, 학생 ID={}", 
+                log.error("지연 세션 연결 실패: 할당 ID={}, 학생 ID={}", 
                         assignedStudyTime.getId(), assignedStudyTime.getStudentId(), e);
             }
         }
         
-        log.debug("세션 연결 체크 완료 - 대상: {}건, 연결: {}건", assignedStudyTimes.size(), connectedSessions);
+        log.debug("세션 연결 체크 완료 - 즉시연결: {}건, 지연연결: {}건", immediateConnectedSessions, delayedConnectedSessions);
     }
     
 //    /**
