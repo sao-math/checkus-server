@@ -15,6 +15,8 @@ import saomath.checkusserver.service.StudyTimeService;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -87,26 +89,50 @@ class UnifiedNotificationSchedulerMockTest {
     }
 
     @Test
-    @DisplayName("스케줄러 실행 시 즉시 세션 연결과 지연 세션 연결이 순서대로 수행되어야 함")
-    void shouldConnectSessionsInCorrectOrder() {
+    @DisplayName("공부 시작 시간 알림 - 정확한 시간 매칭")
+    void sendStudyStartNotificationAndConnectSessions_ExactTimeMatching() {
+        // Given
+        NotificationTargetService.StudyTarget target = createMockStudyTarget();
+        when(targetService.getStudyTargetsForTime(any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList(target));
+        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
+            .thenReturn(CompletableFuture.completedFuture(true));
+        when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
+            .thenReturn(CompletableFuture.completedFuture(true));
+        // 스케줄러에서 getAssignedStudyTimesByDateRange가 한 번 호출됨
+        when(studyTimeService.getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(Arrays.asList());
+        when(studyTimeService.connectSessionOnStart(anyLong()))
+            .thenReturn(null);
+
+        // When
+        scheduler.sendStudyStartNotificationAndConnectSessions();
+
+        // Then
+        verify(targetService).getStudyTargetsForTime(argThat(dateTime -> 
+            dateTime.getSecond() == 0 && dateTime.getNano() == 0
+        ));
+        verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
+        verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
+        // 한 번만 호출됨
+        verify(studyTimeService, times(1)).getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("스케줄러 실행 시 세션 연결이 올바르게 수행되어야 함")
+    void shouldConnectSessionsCorrectly() {
         // Given: 현재 시간에 시작하는 할당과 연결될 세션
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
         testAssignment.setStartTime(now);
         testSession.setStartTime(now.minusMinutes(10));
         testSession.setAssignedStudyTimeId(testAssignment.getId());
         
-        // 현재 시간 범위 조회 (즉시 연결용) - 첫 번째 호출
+        // 현재 시간 범위 조회
         when(studyTimeService.getAssignedStudyTimesByDateRange(
                 eq(now.minusMinutes(1)), eq(now.plusMinutes(1))))
                 .thenReturn(Arrays.asList(testAssignment));
                 
-        // 10분 전 시간 범위 조회 (지연 연결용) - 두 번째 호출
-        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
-        when(studyTimeService.getAssignedStudyTimesByDateRange(
-                eq(tenMinutesAgo.minusMinutes(1)), eq(tenMinutesAgo.plusMinutes(1))))
-                .thenReturn(Collections.emptyList()); // 지연 연결 대상 없음
-                
-        when(studyTimeService.connectPreviousOngoingSession(testAssignment.getId()))
+        when(studyTimeService.connectSessionOnStart(testAssignment.getId()))
                 .thenReturn(testSession);
 
         // 알림 대상 Mock 설정
@@ -125,8 +151,8 @@ class UnifiedNotificationSchedulerMockTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
         // Then: 호출 순서와 횟수 검증
-        verify(studyTimeService, times(2)).getAssignedStudyTimesByDateRange(any(), any());
-        verify(studyTimeService).connectPreviousOngoingSession(testAssignment.getId());
+        verify(studyTimeService, times(1)).getAssignedStudyTimesByDateRange(any(), any());
+        verify(studyTimeService).connectSessionOnStart(testAssignment.getId());
         verify(notificationService).sendNotification(eq(testStudent.getId()), any(), any());
     }
 
@@ -183,20 +209,14 @@ class UnifiedNotificationSchedulerMockTest {
         session2.setId(2L);
         session2.setAssignedStudyTimeId(assignment2.getId());
 
-        // 현재 시간 범위 조회 (즉시 연결용)
+        // 현재 시간 범위 조회
         when(studyTimeService.getAssignedStudyTimesByDateRange(
                 eq(now.minusMinutes(1)), eq(now.plusMinutes(1))))
                 .thenReturn(Arrays.asList(assignment1, assignment2));
                 
-        // 10분 전 시간 범위 조회 (지연 연결용)
-        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
-        when(studyTimeService.getAssignedStudyTimesByDateRange(
-                eq(tenMinutesAgo.minusMinutes(1)), eq(tenMinutesAgo.plusMinutes(1))))
-                .thenReturn(Collections.emptyList()); // 지연 연결 대상 없음
-                
-        when(studyTimeService.connectPreviousOngoingSession(assignment1.getId()))
+        when(studyTimeService.connectSessionOnStart(assignment1.getId()))
                 .thenReturn(session1);
-        when(studyTimeService.connectPreviousOngoingSession(assignment2.getId()))
+        when(studyTimeService.connectSessionOnStart(assignment2.getId()))
                 .thenReturn(session2);
 
         // Mock 설정 (알림 대상 없음)
@@ -206,72 +226,66 @@ class UnifiedNotificationSchedulerMockTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
         // Then: 각 학생의 세션이 올바른 할당에 연결되어야 함
-        verify(studyTimeService).connectPreviousOngoingSession(assignment1.getId());
-        verify(studyTimeService).connectPreviousOngoingSession(assignment2.getId());
+        verify(studyTimeService).connectSessionOnStart(assignment1.getId());
+        verify(studyTimeService).connectSessionOnStart(assignment2.getId());
     }
 
     @Test
-    @DisplayName("즉시 연결과 지연 연결이 모두 정상 작동해야 함")
-    void shouldHandleBothImmediateAndDelayedConnections() {
-        // Given: 현재 시간과 10분 전 시간의 할당
+    @DisplayName("여러 할당이 동시에 시작할 때 모두 올바르게 처리되어야 함")
+    void shouldHandleMultipleSimultaneousAssignments() {
+        // Given: 동시에 시작하는 두 할당
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
-        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
 
-        // 현재 시간 할당 (즉시 연결 대상)
-        AssignedStudyTime currentAssignment = AssignedStudyTime.builder()
+        // 첫 번째 할당
+        AssignedStudyTime assignment1 = AssignedStudyTime.builder()
                 .studentId(testStudent.getId())
-                .title("현재 수학 공부")
+                .title("수학 공부")
                 .activityId(testActivity.getId())
                 .startTime(now)
                 .endTime(now.plusHours(1))
                 .assignedBy(testStudent.getId())
                 .build();
-        currentAssignment.setId(1L);
-        currentAssignment.setStudent(testStudent);
+        assignment1.setId(1L);
+        assignment1.setStudent(testStudent);
 
-        // 10분 전 할당 (지연 연결 대상)
-        AssignedStudyTime delayedAssignment = AssignedStudyTime.builder()
+        // 두 번째 할당 (같은 시간)
+        AssignedStudyTime assignment2 = AssignedStudyTime.builder()
                 .studentId(testStudent.getId())
-                .title("이전 영어 공부")
+                .title("영어 공부")
                 .activityId(testActivity.getId())
-                .startTime(tenMinutesAgo)
-                .endTime(tenMinutesAgo.plusHours(1))
+                .startTime(now)
+                .endTime(now.plusHours(1))
                 .assignedBy(testStudent.getId())
                 .build();
-        delayedAssignment.setId(2L);
-        delayedAssignment.setStudent(testStudent);
+        assignment2.setId(2L);
+        assignment2.setStudent(testStudent);
 
         // 각각에 연결될 세션들
-        ActualStudyTime currentSession = ActualStudyTime.builder()
+        ActualStudyTime session1 = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
                 .startTime(now.minusMinutes(5))
                 .source("discord")
                 .build();
-        currentSession.setId(1L);
-        currentSession.setAssignedStudyTimeId(currentAssignment.getId());
+        session1.setId(1L);
+        session1.setAssignedStudyTimeId(assignment1.getId());
 
-        ActualStudyTime delayedSession = ActualStudyTime.builder()
+        ActualStudyTime session2 = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
-                .startTime(tenMinutesAgo.minusMinutes(5))
+                .startTime(now.minusMinutes(10))
                 .source("discord")
                 .build();
-        delayedSession.setId(2L);
-        delayedSession.setAssignedStudyTimeId(delayedAssignment.getId());
+        session2.setId(2L);
+        session2.setAssignedStudyTimeId(assignment2.getId());
 
-        // 현재 시간 범위 조회 (즉시 연결용)
+        // 현재 시간 범위 조회
         when(studyTimeService.getAssignedStudyTimesByDateRange(
                 eq(now.minusMinutes(1)), eq(now.plusMinutes(1))))
-                .thenReturn(Arrays.asList(currentAssignment));
+                .thenReturn(Arrays.asList(assignment1, assignment2));
                 
-        // 10분 전 시간 범위 조회 (지연 연결용)
-        when(studyTimeService.getAssignedStudyTimesByDateRange(
-                eq(tenMinutesAgo.minusMinutes(1)), eq(tenMinutesAgo.plusMinutes(1))))
-                .thenReturn(Arrays.asList(delayedAssignment));
-                
-        when(studyTimeService.connectPreviousOngoingSession(currentAssignment.getId()))
-                .thenReturn(currentSession);
-        when(studyTimeService.connectPreviousOngoingSession(delayedAssignment.getId()))
-                .thenReturn(delayedSession);
+        when(studyTimeService.connectSessionOnStart(assignment1.getId()))
+                .thenReturn(session1);
+        when(studyTimeService.connectSessionOnStart(assignment2.getId()))
+                .thenReturn(session2);
 
         // Mock 설정 (알림 대상 없음)
         when(targetService.getStudyTargetsForTime(now)).thenReturn(Collections.emptyList());
@@ -279,9 +293,9 @@ class UnifiedNotificationSchedulerMockTest {
         // When: 스케줄러 실행
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
-        // Then: 두 세션 모두 적절한 할당에 연결되어야 함
-        verify(studyTimeService).connectPreviousOngoingSession(currentAssignment.getId());
-        verify(studyTimeService).connectPreviousOngoingSession(delayedAssignment.getId());
+        // Then: 두 할당 모두 적절하게 처리되어야 함
+        verify(studyTimeService).connectSessionOnStart(assignment1.getId());
+        verify(studyTimeService).connectSessionOnStart(assignment2.getId());
     }
 
     @Test
@@ -296,14 +310,8 @@ class UnifiedNotificationSchedulerMockTest {
                 eq(now.minusMinutes(1)), eq(now.plusMinutes(1))))
                 .thenReturn(Arrays.asList(testAssignment));
                 
-        when(studyTimeService.connectPreviousOngoingSession(testAssignment.getId()))
+        when(studyTimeService.connectSessionOnStart(testAssignment.getId()))
                 .thenReturn(testSession);
-
-        // 지연 연결용 Mock (빈 리스트)
-        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
-        when(studyTimeService.getAssignedStudyTimesByDateRange(
-                eq(tenMinutesAgo.minusMinutes(1)), eq(tenMinutesAgo.plusMinutes(1))))
-                .thenReturn(Collections.emptyList());
 
         // 알림 대상 Mock 설정
         NotificationTargetService.StudyTarget target = NotificationTargetService.StudyTarget.builder()
@@ -321,12 +329,24 @@ class UnifiedNotificationSchedulerMockTest {
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
         // Then: 세션 연결이 알림 발송보다 먼저 호출되어야 함
-        verify(studyTimeService).connectPreviousOngoingSession(testAssignment.getId());
+        verify(studyTimeService).connectSessionOnStart(testAssignment.getId());
         verify(notificationService).sendNotification(eq(testStudent.getId()), any(), any());
         
         // 호출 순서 검증을 위해 InOrder 사용
         var inOrder = inOrder(studyTimeService, notificationService);
-        inOrder.verify(studyTimeService).connectPreviousOngoingSession(testAssignment.getId());
+        inOrder.verify(studyTimeService).connectSessionOnStart(testAssignment.getId());
         inOrder.verify(notificationService).sendNotification(eq(testStudent.getId()), any(), any());
+    }
+
+    private NotificationTargetService.StudyTarget createMockStudyTarget() {
+        return NotificationTargetService.StudyTarget.builder()
+                .studentId(testStudent.getId())
+                .studentName(testStudent.getName())
+                .startTime(LocalDateTime.now())
+                .endTime(LocalDateTime.now().plusHours(1))
+                .studentNotificationEnabled(true)
+                .parentNotificationEnabled(true)
+                .parentPhone("010-9999-9999")
+                .build();
     }
 }

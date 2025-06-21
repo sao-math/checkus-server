@@ -102,16 +102,7 @@ public class StudyTimeService {
                 .assignedBy(assignedBy)
                 .build();
 
-        AssignedStudyTime saved = assignedStudyTimeRepository.save(assignedStudyTime);
-        
-        // 할당 후 즉시 기존 접속중인 세션들과 연결 시도
-        List<ActualStudyTime> connectedSessions = connectCurrentOngoingSessions(saved.getId());
-        if (!connectedSessions.isEmpty()) {
-            log.info("공부시간 할당 시 {} 개의 기존 세션을 연결했습니다: 할당 ID={}, 학생 ID={}", 
-                    connectedSessions.size(), saved.getId(), studentId);
-        }
-        
-        return saved;
+        return assignedStudyTimeRepository.save(assignedStudyTime);
     }
 
     /**
@@ -224,6 +215,7 @@ public class StudyTimeService {
 
     /**
      * 디스코드 봇용: 학생 접속 시작을 기록합니다.
+     * 세션 시작 시간 <= 현재 시간 <= 세션 종료 시간인 할당된 세션에 연결합니다.
      * @param studentId 학생 ID
      * @param startTime 접속 시작 시간
      * @param source 접속 소스 (discord)
@@ -316,154 +308,64 @@ public class StudyTimeService {
     }
 
     /**
-     * 할당 시점에 해당 시간대에 이미 접속중인 세션들을 새로 할당된 공부시간에 연결합니다.
-     * 할당 시간 이전에 들어온 세션도 포함하여 연결합니다.
-     * @param assignedStudyTimeId 할당된 공부시간 ID
-     * @return 연결된 실제 공부시간 기록 리스트
-     */
-    public List<ActualStudyTime> connectCurrentOngoingSessions(Long assignedStudyTimeId) {
-        AssignedStudyTime assignedStudyTime = assignedStudyTimeRepository.findById(assignedStudyTimeId)
-                .orElseThrow(() -> new ResourceNotFoundException("할당된 공부시간을 찾을 수 없습니다."));
-        
-        Long studentId = assignedStudyTime.getStudentId();
-        LocalDateTime startTime = assignedStudyTime.getStartTime();
-        LocalDateTime endTime = assignedStudyTime.getEndTime();
-        
-        List<ActualStudyTime> connectedSessions = new ArrayList<>();
-        
-        // 1. 할당 시간 이전에 들어와서 아직 진행중인 미할당 세션 연결
-        List<ActualStudyTime> earlyOngoingSessions = actualStudyTimeRepository
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        studentId, startTime);
-        
-        for (ActualStudyTime session : earlyOngoingSessions) {
-            session.setAssignedStudyTimeId(assignedStudyTimeId);
-            ActualStudyTime saved = actualStudyTimeRepository.save(session);
-            connectedSessions.add(saved);
-            
-            log.info("할당 시간 이전 진행중인 세션 연결: 할당 ID={}, 세션 ID={}, 학생 ID={}, 세션 시작시간={} (할당 시작시간: {})",
-                    assignedStudyTimeId, saved.getId(), studentId, session.getStartTime(), startTime);
-        }
-        
-        // 2. 할당된 시간 범위 내에 시작되어 아직 할당되지 않은 세션들 연결
-        List<ActualStudyTime> withinRangeSessions = actualStudyTimeRepository
-                .findByStudentIdAndStartTimeBetweenAndAssignedStudyTimeIdIsNull(
-                        studentId, startTime, endTime);
-        
-        for (ActualStudyTime session : withinRangeSessions) {
-            session.setAssignedStudyTimeId(assignedStudyTimeId);
-            ActualStudyTime saved = actualStudyTimeRepository.save(session);
-            connectedSessions.add(saved);
-            
-            log.info("할당 시간 범위 내 세션 연결: 할당 ID={}, 세션 ID={}, 학생 ID={}, 세션 시작시간={}, 세션 종료시간={}",
-                    assignedStudyTimeId, saved.getId(), studentId, session.getStartTime(), 
-                    session.getEndTime() != null ? session.getEndTime() : "진행중");
-        }
-        
-        if (connectedSessions.isEmpty()) {
-            log.info("연결할 미할당 세션이 없음: 할당 ID={}, 학생 ID={}, 시간범위={} ~ {}", 
-                    assignedStudyTimeId, studentId, startTime, endTime);
-        } else {
-            log.info("전체 {} 개 세션을 할당된 공부시간에 연결 완료: 할당 ID={}, 학생 ID={} (이전세션: {}개, 범위내세션: {}개)", 
-                    connectedSessions.size(), assignedStudyTimeId, studentId, 
-                    earlyOngoingSessions.size(), withinRangeSessions.size());
-        }
-        
-        return connectedSessions;
-    }
-
-    /**
-     * 스케줄러용: 할당된 공부시간에 연결할 수 있는 진행중인 세션이 있는지 확인하고 연결합니다.
-     * 할당 시간 이전에 들어와서 아직 나가지 않은 세션을 우선적으로 연결합니다.
+     * 스케줄러용: 세션 시작 시 학생이 먼저 접속해 있었던 경우 연결 처리합니다.
      * @param assignedStudyTimeId 할당된 공부시간 ID
      * @return 연결된 실제 공부시간 기록 (없으면 null)
      */
-    public ActualStudyTime connectPreviousOngoingSession(Long assignedStudyTimeId) {
+    public ActualStudyTime connectSessionOnStart(Long assignedStudyTimeId) {
         AssignedStudyTime assignedStudyTime = assignedStudyTimeRepository.findById(assignedStudyTimeId)
                 .orElseThrow(() -> new ResourceNotFoundException("할당된 공부시간을 찾을 수 없습니다."));
         
         Long studentId = assignedStudyTime.getStudentId();
         LocalDateTime assignedStartTime = assignedStudyTime.getStartTime();
-        LocalDateTime assignedEndTime = assignedStudyTime.getEndTime();
         
-        // 1. 우선순위: 할당 시간 이전에 시작되어 아직 진행중이고 미할당된 세션
-        List<ActualStudyTime> earlyOngoingSessions = actualStudyTimeRepository
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        studentId, assignedStartTime);
+        // 현재 진행중인 ActualStudyTime 조회 (endTime이 null인 것들)
+        List<ActualStudyTime> ongoingSessions = actualStudyTimeRepository
+                .findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId);
         
-        if (!earlyOngoingSessions.isEmpty()) {
-            // 가장 최근에 시작된 세션을 연결 (할당 시간에 가장 가까운 세션)
-            ActualStudyTime latestEarlySession = earlyOngoingSessions.stream()
-                    .max((a, b) -> a.getStartTime().compareTo(b.getStartTime()))
-                    .orElse(null);
-            
-            if (latestEarlySession != null) {
-                latestEarlySession.setAssignedStudyTimeId(assignedStudyTimeId);
-                ActualStudyTime saved = actualStudyTimeRepository.save(latestEarlySession);
-                
-                log.info("할당 시간 이전 진행중인 세션을 연결: 할당 ID={}, 실제 세션 ID={}, 학생 ID={}, 세션 시작시간={}, 할당 시작시간={}",
-                        assignedStudyTimeId, saved.getId(), studentId, 
-                        latestEarlySession.getStartTime(), assignedStartTime);
-                
-                return saved;
-            }
+        if (ongoingSessions.isEmpty()) {
+            log.debug("진행중인 세션이 없음: 할당 ID={}, 학생 ID={}", assignedStudyTimeId, studentId);
+            return null;
         }
         
-        // 2. 차선책: 할당된 시간 범위 내에 시작되어 아직 미할당된 세션
-        List<ActualStudyTime> withinRangeSessions = actualStudyTimeRepository
-                .findByStudentIdAndStartTimeBetweenAndAssignedStudyTimeIdIsNull(
-                        studentId, assignedStartTime, assignedEndTime);
+        // 가장 최근 진행중인 세션 선택
+        ActualStudyTime currentSession = ongoingSessions.get(0);
         
-        if (!withinRangeSessions.isEmpty()) {
-            // 할당 시간에 가장 가까운 세션 선택
-            ActualStudyTime closestSession = withinRangeSessions.stream()
-                    .min((a, b) -> {
-                        long diffA = Math.abs(java.time.Duration.between(assignedStartTime, a.getStartTime()).toMinutes());
-                        long diffB = Math.abs(java.time.Duration.between(assignedStartTime, b.getStartTime()).toMinutes());
-                        return Long.compare(diffA, diffB);
-                    })
-                    .orElse(null);
+        if (currentSession.getAssignedStudyTimeId() != null) {
+            // 2-1. 기존 ActualStudyTime이 다른 할당에 연결된 경우
+            // 기존 세션 종료 후 새로운 세션 생성
+            currentSession.setEndTime(assignedStartTime);
+            actualStudyTimeRepository.save(currentSession);
             
-            if (closestSession != null) {
-                closestSession.setAssignedStudyTimeId(assignedStudyTimeId);
-                ActualStudyTime saved = actualStudyTimeRepository.save(closestSession);
-                
-                log.info("할당 시간 범위 내 세션을 연결: 할당 ID={}, 실제 세션 ID={}, 학생 ID={}, 세션 시작시간={}",
-                        assignedStudyTimeId, saved.getId(), studentId, closestSession.getStartTime());
-                
-                return saved;
-            }
+            log.info("기존 세션 종료 후 새 세션 생성: 기존 세션 ID={}, 종료시간={}, 할당 ID={}", 
+                    currentSession.getId(), assignedStartTime, assignedStudyTimeId);
+            
+            // 새로운 ActualStudyTime 생성
+            ActualStudyTime newSession = ActualStudyTime.builder()
+                    .studentId(studentId)
+                    .assignedStudyTimeId(assignedStudyTimeId)
+                    .startTime(assignedStartTime)
+                    .source(currentSession.getSource())
+                    .build();
+            
+            ActualStudyTime saved = actualStudyTimeRepository.save(newSession);
+            log.info("새 세션 생성 완료: 세션 ID={}, 할당 ID={}, 시작시간={}", 
+                    saved.getId(), assignedStudyTimeId, assignedStartTime);
+            
+            return saved;
+            
+        } else {
+            // 2-2. 기존 ActualStudyTime이 미할당 상태인 경우
+            // 해당 세션을 새 할당에 연결
+            currentSession.setAssignedStudyTimeId(assignedStudyTimeId);
+            ActualStudyTime saved = actualStudyTimeRepository.save(currentSession);
+            
+            log.info("미할당 세션을 새 할당에 연결: 세션 ID={}, 할당 ID={}, 세션 시작시간={}, 할당 시작시간={}", 
+                    saved.getId(), assignedStudyTimeId, currentSession.getStartTime(), assignedStartTime);
+            
+            return saved;
         }
-        
-        log.debug("연결할 미할당 세션이 없음: 할당 ID={}, 학생 ID={}, 할당 시간={}", 
-                assignedStudyTimeId, studentId, assignedStartTime);
-        return null;
     }
-    
-    /*
-     * TODO: 연속 할당 시간 문제 해결 방안 검토 필요
-     * 
-     * 현재 문제 상황:
-     * - 13:00-14:00 수학, 14:00-15:00 영어가 연속으로 할당됨
-     * - 학생이 13:00-15:00 연속 접속 시 하나의 실제 세션만 생성됨
-     * - 현재 DB 구조상 하나의 실제 세션은 하나의 할당에만 연결 가능 (N:1 관계)
-     * 
-     * 해결 방안 후보:
-     * 1. 세션 분할 로직: 14:00 시점에서 기존 세션을 종료하고 새 세션 생성
-     *    - 장점: 각 할당별 정확한 시간 추적 가능
-     *    - 단점: 복잡한 분할 로직, 데이터 정합성 문제 가능성
-     * 
-     * 2. 다대다 관계 도입: actual_study_time_assignment 중간 테이블
-     *    - 장점: 모든 케이스 완벽 처리 가능
-     *    - 단점: DB 구조 대폭 변경, 기존 코드 수정 필요
-     * 
-     * 3. 중복 할당 방지: UI에서 연속 시간 할당 제한
-     *    - 장점: 가장 간단한 해결책
-     *    - 단점: 사용자 편의성 제한
-     * 
-     * 현재는 첫 번째 겹치는 할당에 연결하는 정책으로 우선 운영하고,
-     * 실제 사용 패턴 분석 후 적절한 해결책 선택 예정
-     */
 
     /**
      * ID로 배정된 공부 시간을 연관 엔티티와 함께 조회합니다.

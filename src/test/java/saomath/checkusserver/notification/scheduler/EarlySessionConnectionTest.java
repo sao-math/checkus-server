@@ -19,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("일찍 들어온 세션 연결 테스트")
-class EarlySessionConnectionTest {
+@DisplayName("세션 연결 로직 테스트")
+class SessionConnectionTest {
 
     @Autowired
     private StudyTimeService studyTimeService;
@@ -61,9 +61,9 @@ class EarlySessionConnectionTest {
     }
 
     @Test
-    @DisplayName("할당 시간 이전에 들어온 세션이 할당 생성 시 즉시 연결되어야 함")
-    void shouldConnectEarlySessionWhenAssigningStudyTime() {
-        // Given: 09:30에 학생이 접속 (할당 시간 이전)
+    @DisplayName("할당 생성 시에는 자동 연결하지 않아야 함")
+    void shouldNotAutoConnectWhenAssigningStudyTime() {
+        // Given: 할당 시간 이전에 접속한 세션
         LocalDateTime earlyConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
         ActualStudyTime earlySession = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
@@ -72,7 +72,7 @@ class EarlySessionConnectionTest {
                 .build();
         earlySession = actualStudyTimeRepository.save(earlySession);
 
-        // When: 09:40-10:40 공부시간 할당
+        // When: 09:40-10:40 공부시간 할당 (새로운 로직에서는 자동 연결하지 않음)
         LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
         LocalDateTime assignedEndTime = LocalDateTime.of(2025, 6, 21, 10, 40);
 
@@ -85,18 +85,18 @@ class EarlySessionConnectionTest {
                 testStudent.getId()
         );
 
-        // Then: 기존 세션이 할당된 공부시간에 연결되어야 함
+        // Then: 세션이 자동으로 연결되지 않아야 함
         ActualStudyTime updatedSession = actualStudyTimeRepository.findById(earlySession.getId()).orElse(null);
         assertThat(updatedSession).isNotNull();
-        assertThat(updatedSession.getAssignedStudyTimeId()).isEqualTo(assignedStudyTime.getId());
+        assertThat(updatedSession.getAssignedStudyTimeId()).isNull(); // 연결되지 않음
         assertThat(updatedSession.getStartTime()).isEqualTo(earlyConnectionTime);
         assertThat(updatedSession.getEndTime()).isNull(); // 아직 진행중
     }
 
     @Test
-    @DisplayName("스케줄러에서 할당 시간 이전 세션을 연결할 수 있어야 함")
-    void shouldConnectEarlySessionInScheduler() {
-        // Given: 09:30에 학생이 접속하고 09:40에 공부시간이 할당되었지만 연결되지 않은 상황
+    @DisplayName("스케줄러에서 세션 시작 시 연결 처리를 할 수 있어야 함")
+    void shouldConnectSessionOnStartInScheduler() {
+        // Given: 09:30에 학생이 접속하고 09:40에 공부시간이 할당된 상황
         LocalDateTime earlyConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
         ActualStudyTime earlySession = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
@@ -118,8 +118,8 @@ class EarlySessionConnectionTest {
                 .build();
         assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
 
-        // When: 스케줄러에서 이전 세션 연결 시도
-        ActualStudyTime connectedSession = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
+        // When: 스케줄러에서 세션 시작 시 연결 처리
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assignedStudyTime.getId());
 
         // Then: 세션이 성공적으로 연결되어야 함
         assertThat(connectedSession).isNotNull();
@@ -129,69 +129,12 @@ class EarlySessionConnectionTest {
     }
 
     @Test
-    @DisplayName("여러 이전 세션이 있을 때 가장 최근 세션을 연결해야 함")
-    void shouldConnectLatestEarlySession() {
-        // Given: 여러 시점에 학생이 접속했다가 나갔다가 다시 접속
-        LocalDateTime firstConnection = LocalDateTime.of(2025, 6, 21, 9, 0);
-        LocalDateTime secondConnection = LocalDateTime.of(2025, 6, 21, 9, 20);
-        LocalDateTime thirdConnection = LocalDateTime.of(2025, 6, 21, 9, 35); // 가장 최근
-
-        // 첫 번째 세션 (종료됨)
-        ActualStudyTime firstSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(firstConnection)
-                .endTime(LocalDateTime.of(2025, 6, 21, 9, 15))
-                .source("discord")
-                .build();
-        actualStudyTimeRepository.save(firstSession);
-
-        // 두 번째 세션 (종료됨)
-        ActualStudyTime secondSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(secondConnection)
-                .endTime(LocalDateTime.of(2025, 6, 21, 9, 30))
-                .source("discord")
-                .build();
-        actualStudyTimeRepository.save(secondSession);
-
-        // 세 번째 세션 (진행중)
-        ActualStudyTime thirdSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(thirdConnection)
-                .source("discord")
-                .build();
-        thirdSession = actualStudyTimeRepository.save(thirdSession);
-
-        LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
-        LocalDateTime assignedEndTime = LocalDateTime.of(2025, 6, 21, 10, 40);
-
-        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
-                .studentId(testStudent.getId())
-                .title("수학 공부")
-                .activityId(testActivity.getId())
-                .startTime(assignedStartTime)
-                .endTime(assignedEndTime)
-                .assignedBy(testStudent.getId())
-                .build();
-        assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
-
-        // When: 이전 세션 연결 시도
-        ActualStudyTime connectedSession = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
-
-        // Then: 가장 최근이고 진행중인 세션이 연결되어야 함
-        assertThat(connectedSession).isNotNull();
-        assertThat(connectedSession.getId()).isEqualTo(thirdSession.getId());
-        assertThat(connectedSession.getStartTime()).isEqualTo(thirdConnection);
-        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(assignedStudyTime.getId());
-    }
-
-    @Test
-    @DisplayName("이미 다른 할당에 연결된 세션은 연결하지 않아야 함")
-    void shouldNotConnectAlreadyAssignedSession() {
-        // Given: 이미 다른 할당에 연결된 세션
+    @DisplayName("기존 세션이 다른 할당에 연결된 경우 새 세션을 생성해야 함")
+    void shouldCreateNewSessionWhenPreviousSessionIsAssigned() {
+        // Given: 이미 다른 할당에 연결된 진행중인 세션
         LocalDateTime earlyConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
         
-        // 첫 번째 할당
+        // 첫 번째 할당 (09:00-09:30)
         AssignedStudyTime firstAssignment = AssignedStudyTime.builder()
                 .studentId(testStudent.getId())
                 .title("영어 공부")
@@ -202,46 +145,106 @@ class EarlySessionConnectionTest {
                 .build();
         firstAssignment = assignedStudyTimeRepository.save(firstAssignment);
 
-        // 이미 첫 번째 할당에 연결된 세션
+        // 첫 번째 할당에 연결된 진행중인 세션
         ActualStudyTime existingSession = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
                 .startTime(earlyConnectionTime)
                 .assignedStudyTimeId(firstAssignment.getId())
                 .source("discord")
                 .build();
-        actualStudyTimeRepository.save(existingSession);
+        existingSession = actualStudyTimeRepository.save(existingSession);
 
-        // 두 번째 할당
+        // 두 번째 할당 (09:30-10:30)
+        LocalDateTime secondAssignmentStart = LocalDateTime.of(2025, 6, 21, 9, 30);
         AssignedStudyTime secondAssignment = AssignedStudyTime.builder()
                 .studentId(testStudent.getId())
                 .title("수학 공부")
                 .activityId(testActivity.getId())
-                .startTime(LocalDateTime.of(2025, 6, 21, 9, 40))
-                .endTime(LocalDateTime.of(2025, 6, 21, 10, 40))
+                .startTime(secondAssignmentStart)
+                .endTime(LocalDateTime.of(2025, 6, 21, 10, 30))
                 .assignedBy(testStudent.getId())
                 .build();
         secondAssignment = assignedStudyTimeRepository.save(secondAssignment);
 
-        // When: 두 번째 할당에 이전 세션 연결 시도
-        ActualStudyTime connectedSession = studyTimeService.connectPreviousOngoingSession(secondAssignment.getId());
+        // When: 두 번째 할당 시작 시 연결 처리
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(secondAssignment.getId());
 
-        // Then: 연결할 세션이 없어야 함 (이미 할당된 세션은 제외)
+        // Then: 기존 세션이 종료되고 새 세션이 생성되어야 함
+        assertThat(connectedSession).isNotNull();
+        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(secondAssignment.getId());
+        assertThat(connectedSession.getStartTime()).isEqualTo(secondAssignmentStart);
+        
+        // 기존 세션은 종료되어야 함
+        ActualStudyTime updatedExistingSession = actualStudyTimeRepository.findById(existingSession.getId()).orElse(null);
+        assertThat(updatedExistingSession).isNotNull();
+        assertThat(updatedExistingSession.getEndTime()).isEqualTo(secondAssignmentStart);
+        
+        // 새 세션과 기존 세션은 다른 ID를 가져야 함
+        assertThat(connectedSession.getId()).isNotEqualTo(existingSession.getId());
+    }
+
+    @Test
+    @DisplayName("기존 세션이 미할당 상태인 경우 연결해야 함")
+    void shouldConnectUnassignedOngoingSession() {
+        // Given: 미할당 상태의 진행중인 세션
+        LocalDateTime earlyConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
+        
+        ActualStudyTime unassignedSession = ActualStudyTime.builder()
+                .studentId(testStudent.getId())
+                .startTime(earlyConnectionTime)
+                .source("discord")
+                .build(); // assignedStudyTimeId는 null
+        unassignedSession = actualStudyTimeRepository.save(unassignedSession);
+
+        // 새로운 할당 (09:40-10:40)
+        LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .studentId(testStudent.getId())
+                .title("수학 공부")
+                .activityId(testActivity.getId())
+                .startTime(assignedStartTime)
+                .endTime(LocalDateTime.of(2025, 6, 21, 10, 40))
+                .assignedBy(testStudent.getId())
+                .build();
+        assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
+
+        // When: 할당 시작 시 연결 처리
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assignedStudyTime.getId());
+
+        // Then: 기존 세션이 새 할당에 연결되어야 함
+        assertThat(connectedSession).isNotNull();
+        assertThat(connectedSession.getId()).isEqualTo(unassignedSession.getId());
+        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(assignedStudyTime.getId());
+        assertThat(connectedSession.getStartTime()).isEqualTo(earlyConnectionTime);
+        assertThat(connectedSession.getEndTime()).isNull(); // 여전히 진행중
+    }
+
+    @Test
+    @DisplayName("진행중인 세션이 없으면 null을 반환해야 함")
+    void shouldReturnNullWhenNoOngoingSession() {
+        // Given: 진행중인 세션이 없는 상황
+        LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .studentId(testStudent.getId())
+                .title("수학 공부")
+                .activityId(testActivity.getId())
+                .startTime(assignedStartTime)
+                .endTime(LocalDateTime.of(2025, 6, 21, 10, 40))
+                .assignedBy(testStudent.getId())
+                .build();
+        assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
+
+        // When: 할당 시작 시 연결 처리
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assignedStudyTime.getId());
+
+        // Then: null을 반환해야 함
         assertThat(connectedSession).isNull();
     }
 
     @Test
-    @DisplayName("할당 시간 범위 내 세션도 연결할 수 있어야 함")
-    void shouldConnectSessionWithinAssignedTimeRange() {
-        // Given: 할당 시간 범위 내에 접속한 세션
-        LocalDateTime connectionTime = LocalDateTime.of(2025, 6, 21, 9, 45); // 할당 시간 내
-
-        ActualStudyTime withinRangeSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(connectionTime)
-                .source("discord")
-                .build();
-        withinRangeSession = actualStudyTimeRepository.save(withinRangeSession);
-
+    @DisplayName("학생 접속 시 정확한 시간 범위 매칭으로 연결해야 함")
+    void shouldConnectWithExactTimeRangeMatching() {
+        // Given: 할당된 공부시간 (09:40-10:40)
         LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
         LocalDateTime assignedEndTime = LocalDateTime.of(2025, 6, 21, 10, 40);
 
@@ -255,57 +258,46 @@ class EarlySessionConnectionTest {
                 .build();
         assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
 
-        // When: 세션 연결 시도
-        ActualStudyTime connectedSession = studyTimeService.connectPreviousOngoingSession(assignedStudyTime.getId());
+        // When: 할당된 시간 범위 내에 접속 (09:45)
+        LocalDateTime connectionTime = LocalDateTime.of(2025, 6, 21, 9, 45);
+        ActualStudyTime actualStudyTime = studyTimeService.recordStudyStart(
+                testStudent.getId(), 
+                connectionTime, 
+                "discord"
+        );
 
-        // Then: 범위 내 세션이 연결되어야 함
-        assertThat(connectedSession).isNotNull();
-        assertThat(connectedSession.getId()).isEqualTo(withinRangeSession.getId());
-        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(assignedStudyTime.getId());
+        // Then: 할당된 공부시간에 연결되어야 함
+        assertThat(actualStudyTime.getAssignedStudyTimeId()).isEqualTo(assignedStudyTime.getId());
+        assertThat(actualStudyTime.getStartTime()).isEqualTo(connectionTime);
     }
 
     @Test
-    @DisplayName("할당 생성 시 이전 세션과 범위 내 세션을 모두 연결해야 함")
-    void shouldConnectBothEarlyAndWithinRangeSessions() {
-        // Given: 할당 시간 이전 세션과 범위 내 세션이 모두 존재
-        LocalDateTime earlyConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
-        LocalDateTime withinRangeConnectionTime = LocalDateTime.of(2025, 6, 21, 9, 45);
-
-        ActualStudyTime earlySession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(earlyConnectionTime)
-                .source("discord")
-                .build();
-        earlySession = actualStudyTimeRepository.save(earlySession);
-
-        ActualStudyTime withinRangeSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(withinRangeConnectionTime)
-                .endTime(LocalDateTime.of(2025, 6, 21, 10, 0)) // 종료된 세션
-                .source("discord")
-                .build();
-        withinRangeSession = actualStudyTimeRepository.save(withinRangeSession);
-
-        // When: 공부시간 할당
+    @DisplayName("할당 시간 범위 밖 접속은 연결하지 않아야 함")
+    void shouldNotConnectOutsideTimeRange() {
+        // Given: 할당된 공부시간 (09:40-10:40)
         LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
         LocalDateTime assignedEndTime = LocalDateTime.of(2025, 6, 21, 10, 40);
 
-        AssignedStudyTime assignedStudyTime = studyTimeService.assignStudyTime(
-                testStudent.getId(),
-                "수학 공부",
-                testActivity.getId(),
-                assignedStartTime,
-                assignedEndTime,
-                testStudent.getId()
+        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
+                .studentId(testStudent.getId())
+                .title("수학 공부")
+                .activityId(testActivity.getId())
+                .startTime(assignedStartTime)
+                .endTime(assignedEndTime)
+                .assignedBy(testStudent.getId())
+                .build();
+        assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
+
+        // When: 할당된 시간 범위 밖에 접속 (09:30 - 할당 시간 이전)
+        LocalDateTime connectionTime = LocalDateTime.of(2025, 6, 21, 9, 30);
+        ActualStudyTime actualStudyTime = studyTimeService.recordStudyStart(
+                testStudent.getId(), 
+                connectionTime, 
+                "discord"
         );
 
-        // Then: 두 세션 모두 연결되어야 함
-        List<ActualStudyTime> connectedSessions = actualStudyTimeRepository
-                .findByAssignedStudyTimeId(assignedStudyTime.getId());
-
-        assertThat(connectedSessions).hasSize(2);
-        assertThat(connectedSessions)
-                .extracting(ActualStudyTime::getId)
-                .containsExactlyInAnyOrder(earlySession.getId(), withinRangeSession.getId());
+        // Then: 할당된 공부시간에 연결되지 않아야 함
+        assertThat(actualStudyTime.getAssignedStudyTimeId()).isNull();
+        assertThat(actualStudyTime.getStartTime()).isEqualTo(connectionTime);
     }
 }
