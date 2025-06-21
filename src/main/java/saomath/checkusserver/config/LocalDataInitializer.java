@@ -222,7 +222,11 @@ public class LocalDataInitializer implements CommandLineRunner {
             .endTime(java.time.LocalTime.of(19, 0))
             .build());
 
-// 오늘 날짜로 세 학생의 다양한 샘플 데이터 추가
+        //addActualStudyTime(student1, selfStudy, teacher1, student2, teacher2, student3);
+    }
+
+    private void addActualStudyTime(User student1, Activity selfStudy, User teacher1, User student2, User teacher2, User student3) {
+        // 오늘 날짜로 세 학생의 다양한 샘플 데이터 추가
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         log.info("오늘 날짜 샘플 데이터 추가: {}", today.toLocalDate());
 

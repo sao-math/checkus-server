@@ -98,9 +98,9 @@ public class NotificationPreferenceReadOnlyTest {
         Role studentRole = createOrGetRole("STUDENT");
         createUserRole(student, studentRole, UserRole.RoleStatus.ACTIVE);
         
-        // When & Then: 공부시작 알림의 카카오톡 설정을 ON으로 변경 시도 (변경불가 - OFF 고정)
+        // When & Then: 공부시작 알림의 카카오톡 설정을 OFF으로 변경 시도 (변경불가 - ON 고정)
         NotificationSettingUpdateDto updateDto = new NotificationSettingUpdateDto();
-        updateDto.setEnabled(true); // 기본값 false를 true로 변경 시도
+        updateDto.setEnabled(false); // 기본값 true를 false로 변경 시도
         
         assertThatThrownBy(() -> {
             notificationPreferenceService.updateNotificationSetting(
@@ -113,7 +113,7 @@ public class NotificationPreferenceReadOnlyTest {
         .isInstanceOf(BusinessException.class)
         .hasMessageContaining("변경할 수 없습니다")
         .hasMessageContaining("카카오톡")
-        .hasMessageContaining("고정: 비활성화");
+        .hasMessageContaining("고정: 활성화");
     }
     
     @Test
