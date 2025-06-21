@@ -100,8 +100,20 @@ public class ProductionDataInitializer {
             log.info("Initializing schools...");
             
             List<School> schools = Arrays.asList(
-                new School(null, "리플랜고등학교"),
-                new School(null, "사오중학교")
+                new School(null, "이현중"),
+                new School(null, "손곡중"),
+                new School(null, "신봉중"),
+                new School(null, "수지중"),
+                new School(null, "서원중"),
+                new School(null, "홍천중"),
+                new School(null, "성서중"),
+                new School(null, "상현중"),
+                new School(null, "정평중"),
+                new School(null, "한빛중"),
+                new School(null, "성복중"),
+                new School(null, "문정중"),
+                new School(null, "소현중"),
+                new School(null, "계원예중")
             );
             
             schoolRepository.saveAll(schools);
