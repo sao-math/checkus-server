@@ -598,7 +598,7 @@ public class StudyTimeService {
             throw new BusinessException("시작 시간이 종료 시간보다 늦을 수 없습니다.");
         }
         
-        if (startTime.isBefore(LocalDateTime.now().minusDays(1))) {
+        if (startTime.isBefore(LocalDateTime.now())) {
             throw new BusinessException("과거 시간으로는 공부 시간을 배정할 수 없습니다.");
         }
     }
