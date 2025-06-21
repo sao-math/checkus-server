@@ -63,6 +63,18 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
     
     List<AssignedStudyTime> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     
+    // 정확한 시간 매칭 (알림용)
+    List<AssignedStudyTime> findByStartTime(LocalDateTime startTime);
+    
+    // 정확한 시간 매칭 - 연관 엔티티와 함께 조회 (알림용)
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.startTime = :startTime " +
+           "ORDER BY ast.startTime")
+    List<AssignedStudyTime> findByStartTimeWithDetails(@Param("startTime") LocalDateTime startTime);
+    
     // 전체 조회용 - 연관 엔티티와 함께 조회
     @Query("SELECT ast FROM AssignedStudyTime ast " +
            "LEFT JOIN FETCH ast.student " +

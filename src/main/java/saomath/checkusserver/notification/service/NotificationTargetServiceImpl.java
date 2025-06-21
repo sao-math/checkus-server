@@ -29,12 +29,12 @@ public class NotificationTargetServiceImpl implements NotificationTargetService 
     
     @Override
     public List<StudyTarget> getStudyTargetsForTime(LocalDateTime targetTime) {
-        // 대상 시간의 공부 일정 조회 (분 단위까지만 비교)
+        // 정확히 해당 분(minute)의 공부 일정만 조회 (초/나노초는 0으로 정규화)
+        LocalDateTime exactMinute = targetTime.withSecond(0).withNano(0);
         List<AssignedStudyTime> studyTimes = assignedStudyTimeRepository
-            .findByStartTimeBetween(
-                targetTime.withSecond(0).withNano(0),
-                targetTime.withSecond(59).withNano(999999999)
-            );
+            .findByStartTimeWithDetails(exactMinute);
+        
+        log.debug("공부 일정 대상자 조회 - 대상시간: {}, 조회결과: {}건", exactMinute, studyTimes.size());
         
         return studyTimes.stream()
             .map(this::convertToStudyTarget)
@@ -57,12 +57,10 @@ public class NotificationTargetServiceImpl implements NotificationTargetService 
     
     @Override
     public List<NoShowTarget> getNoShowTargets(LocalDateTime startTime) {
-        // 시작 시간 기준으로 공부 일정 조회
+        // 시작 시간 기준으로 공부 일정 조회 (정확한 시간 매칭)
+        LocalDateTime exactMinute = startTime.withSecond(0).withNano(0);
         List<AssignedStudyTime> studyTimes = assignedStudyTimeRepository
-            .findByStartTimeBetween(
-                startTime.withSecond(0).withNano(0),
-                startTime.withSecond(59).withNano(999999999)
-            );
+            .findByStartTimeWithDetails(exactMinute);
         
         List<NoShowTarget> noShowTargets = new ArrayList<>();
         
