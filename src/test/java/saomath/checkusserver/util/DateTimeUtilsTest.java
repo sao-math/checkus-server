@@ -1,10 +1,18 @@
 package saomath.checkusserver.util;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
+import java.util.TimeZone;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DateTimeUtilsTest {
+    
+    @BeforeEach
+    void setUp() {
+        // 테스트 환경의 기본 타임존을 UTC로 설정
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    }
     
     @Test
     void formatToKoreanTime_오전시간_정상변환() {
