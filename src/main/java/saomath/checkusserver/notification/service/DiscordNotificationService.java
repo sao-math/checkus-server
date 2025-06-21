@@ -103,7 +103,7 @@ public class DiscordNotificationService implements NotificationService {
      */
     private String convertToDiscordMarkdown(String message) {
         // [체크어스] 태그를 볼드체로
-        message = message.replace("[체크어스]", "**[체크어스]**");
+        message = message.replace("[사오수학]", "**[사오수학]**");
         
         // 구분선 추가
         message = message.replace("\n\n", "\n━━━━━━━━━━━━━━━━━━━━━━\n");
