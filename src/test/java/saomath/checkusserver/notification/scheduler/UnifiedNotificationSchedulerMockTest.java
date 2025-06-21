@@ -147,6 +147,10 @@ class UnifiedNotificationSchedulerMockTest {
                 .build();
 
         when(targetService.getStudyTargetsForTime(now)).thenReturn(Arrays.asList(target));
+        
+        // 알림 서비스 Mock 설정 (NullPointerException 방지)
+        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
+                .thenReturn(CompletableFuture.completedFuture(true));
 
         // When: 스케줄러 실행
         scheduler.sendStudyStartNotificationAndConnectSessions();
@@ -325,6 +329,10 @@ class UnifiedNotificationSchedulerMockTest {
                 .build();
 
         when(targetService.getStudyTargetsForTime(now)).thenReturn(Arrays.asList(target));
+        
+        // 알림 서비스 Mock 설정 (NullPointerException 방지)
+        when(notificationService.sendNotification(anyLong(), anyString(), any(Map.class)))
+                .thenReturn(CompletableFuture.completedFuture(true));
 
         // When: 스케줄러 실행
         scheduler.sendStudyStartNotificationAndConnectSessions();
