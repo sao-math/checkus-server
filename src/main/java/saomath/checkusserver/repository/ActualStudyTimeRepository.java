@@ -30,22 +30,7 @@ public interface ActualStudyTimeRepository extends JpaRepository<ActualStudyTime
     // 진행 중인 공부 시간 조회 (종료 시간이 null인 것)
     List<ActualStudyTime> findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(Long studentId);
     
-    // 할당된 시간 이전에 시작되어 아직 진행중이며 아직 할당되지 않은 세션들 조회
-    List<ActualStudyTime> findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-            Long studentId, 
-            LocalDateTime beforeTime
-    );
-    
-    // 특정 시간 범위 내에 시작되어 아직 할당되지 않은 모든 세션들 조회 (진행중 + 종료된 세션 모두)
-    @Query("SELECT ast FROM ActualStudyTime ast WHERE ast.studentId = :studentId " +
-           "AND ast.startTime BETWEEN :startTime AND :endTime " +
-           "AND ast.assignedStudyTimeId IS NULL " +
-           "ORDER BY ast.startTime ASC")
-    List<ActualStudyTime> findByStudentIdAndStartTimeBetweenAndAssignedStudyTimeIdIsNull(
-            @Param("studentId") Long studentId,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-    );
+
     
     // 특정 날짜 범위에서 할당되지 않은 실제 접속 기록 조회
     @Query("SELECT ast FROM ActualStudyTime ast WHERE ast.studentId = :studentId " +

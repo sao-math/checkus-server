@@ -72,6 +72,7 @@ class UnifiedNotificationSchedulerTest {
             .thenReturn(CompletableFuture.completedFuture(true));
         when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
             .thenReturn(CompletableFuture.completedFuture(true));
+        // 스케줄러에서 getAssignedStudyTimesByDateRange가 한 번 호출됨 (즉시 연결용만)
         when(studyTimeService.getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class)))
             .thenReturn(List.of());
 
@@ -84,7 +85,8 @@ class UnifiedNotificationSchedulerTest {
         ));
         verify(notificationService, times(1)).sendNotification(anyLong(), anyString(), any(Map.class));
         verify(notificationService, times(1)).sendNotificationToChannel(anyString(), anyString(), any(Map.class), any());
-        verify(studyTimeService).getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
+        // 즉시 연결용만 1번 호출
+        verify(studyTimeService, times(1)).getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
     }
 
     @Test

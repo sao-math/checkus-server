@@ -42,8 +42,8 @@ public class StudyTimeServiceConnectionTest {
     private AssignedStudyTimeRepository assignedStudyTimeRepository;
 
     @Test
-    @DisplayName("할당 시점에 기존 접속중인 세션이 자동으로 연결되어야 한다")
-    void shouldConnectExistingSessionsWhenAssigning() {
+    @DisplayName("할당 시점에 기존 접속중인 세션이 자동으로 연결되지 않아야 한다")
+    void shouldNotAutoConnectExistingSessionsWhenAssigning() {
         // Given
         User student = TestDataFactory.createStudent("student1", "학생1", "01012345678");
         User teacher = TestDataFactory.createTeacher("teacher1", "선생님1", "01087654321");
@@ -94,21 +94,18 @@ public class StudyTimeServiceConnectionTest {
                 teacher.getId()
         );
 
-        // Then: 기존 세션들이 자동으로 연결되어야 함
+        // Then: 새로운 로직에서는 기존 세션들이 자동으로 연결되지 않아야 함
         List<ActualStudyTime> connectedSessions = actualStudyTimeRepository
                 .findByAssignedStudyTimeId(assigned.getId());
 
-        assertThat(connectedSessions).hasSize(2);
-        assertThat(connectedSessions)
-                .extracting(ActualStudyTime::getStartTime)
-                .containsExactlyInAnyOrder(sessionStart1, sessionStart2);
+        assertThat(connectedSessions).hasSize(0); // 자동 연결되지 않음
         
-        // 원본 세션들도 업데이트되었는지 확인
+        // 원본 세션들은 여전히 할당되지 않은 상태여야 함
         ActualStudyTime updatedSession1 = actualStudyTimeRepository.findById(session1.getId()).orElseThrow();
         ActualStudyTime updatedSession2 = actualStudyTimeRepository.findById(session2.getId()).orElseThrow();
         
-        assertThat(updatedSession1.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
-        assertThat(updatedSession2.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
+        assertThat(updatedSession1.getAssignedStudyTimeId()).isNull(); // 연결되지 않음
+        assertThat(updatedSession2.getAssignedStudyTimeId()).isNull(); // 연결되지 않음
     }
 
     @Test
@@ -165,7 +162,7 @@ public class StudyTimeServiceConnectionTest {
     }
 
     @Test
-    @DisplayName("connectCurrentOngoingSessions 메서드가 직접 호출되어도 올바르게 동작해야 한다")
+    @DisplayName("connectSessionOnStart 메서드가 직접 호출되어도 올바르게 동작해야 한다")
     void shouldConnectSessionsWhenDirectlyCallingConnectMethod() {
         // Given
         User student = TestDataFactory.createStudent("student3", "학생3", "01012345680");
@@ -203,17 +200,17 @@ public class StudyTimeServiceConnectionTest {
         session = actualStudyTimeRepository.save(session);
 
         // When: 직접 연결 메서드 호출
-        List<ActualStudyTime> connectedSessions = studyTimeService.connectCurrentOngoingSessions(assigned.getId());
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assigned.getId());
 
         // Then
-        assertThat(connectedSessions).hasSize(1);
-        assertThat(connectedSessions.get(0).getId()).isEqualTo(session.getId());
-        assertThat(connectedSessions.get(0).getAssignedStudyTimeId()).isEqualTo(assigned.getId());
+        assertThat(connectedSession).isNotNull();
+        assertThat(connectedSession.getId()).isEqualTo(session.getId());
+        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
     }
 
     @Test
-    @DisplayName("연결할 세션이 없을 때 빈 리스트를 반환해야 한다")
-    void shouldReturnEmptyListWhenNoSessionsToConnect() {
+    @DisplayName("연결할 세션이 없을 때 null을 반환해야 한다")
+    void shouldReturnNullWhenNoSessionsToConnect() {
         // Given
         User student = TestDataFactory.createStudent("student4", "학생4", "01012345681");
         User teacher = TestDataFactory.createTeacher("teacher4", "선생님4", "01087654324");
@@ -240,9 +237,9 @@ public class StudyTimeServiceConnectionTest {
         assigned = assignedStudyTimeRepository.save(assigned);
 
         // When: 연결 시도
-        List<ActualStudyTime> connectedSessions = studyTimeService.connectCurrentOngoingSessions(assigned.getId());
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assigned.getId());
 
         // Then
-        assertThat(connectedSessions).isEmpty();
+        assertThat(connectedSession).isNull();
     }
 }

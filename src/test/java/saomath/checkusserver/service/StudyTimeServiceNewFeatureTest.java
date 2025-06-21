@@ -123,8 +123,8 @@ class StudyTimeServiceNewFeatureTest {
     }
 
     @Test
-    @DisplayName("이전 진행중인 세션 연결 성공")
-    void connectPreviousOngoingSession_Success() {
+    @DisplayName("세션 시작 시 연결 처리 성공")
+    void connectSessionOnStart_Success() {
         // Given
         Long assignedStudyTimeId = 1L;
         Long studentId = 10L;
@@ -160,14 +160,13 @@ class StudyTimeServiceNewFeatureTest {
 
         when(assignedStudyTimeRepository.findById(assignedStudyTimeId))
                 .thenReturn(Optional.of(assignedStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                studentId, assignedStartTime))
+        when(actualStudyTimeRepository.findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId))
                 .thenReturn(ongoingSessions);
         when(actualStudyTimeRepository.save(any(ActualStudyTime.class)))
                 .thenReturn(expectedResult);
 
         // When
-        ActualStudyTime result = studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
+        ActualStudyTime result = studyTimeService.connectSessionOnStart(assignedStudyTimeId);
 
         // Then
         assertNotNull(result);
@@ -177,15 +176,13 @@ class StudyTimeServiceNewFeatureTest {
         assertNull(result.getEndTime());
 
         verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
-        verify(actualStudyTimeRepository)
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        studentId, assignedStartTime);
+        verify(actualStudyTimeRepository).findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId);
         verify(actualStudyTimeRepository).save(any(ActualStudyTime.class));
     }
 
     @Test
-    @DisplayName("이전 진행중인 세션 연결 - 세션이 없는 경우")
-    void connectPreviousOngoingSession_NoSession() {
+    @DisplayName("세션 시작 시 연결 처리 - 진행중인 세션이 없는 경우")
+    void connectSessionOnStart_NoSession() {
         // Given
         Long assignedStudyTimeId = 1L;
         Long studentId = 10L;
@@ -200,26 +197,23 @@ class StudyTimeServiceNewFeatureTest {
 
         when(assignedStudyTimeRepository.findById(assignedStudyTimeId))
                 .thenReturn(Optional.of(assignedStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                studentId, assignedStartTime))
+        when(actualStudyTimeRepository.findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId))
                 .thenReturn(new ArrayList<>());
 
         // When
-        ActualStudyTime result = studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
+        ActualStudyTime result = studyTimeService.connectSessionOnStart(assignedStudyTimeId);
 
         // Then
         assertNull(result);
 
         verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
-        verify(actualStudyTimeRepository)
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        studentId, assignedStartTime);
+        verify(actualStudyTimeRepository).findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(studentId);
         verify(actualStudyTimeRepository, never()).save(any(ActualStudyTime.class));
     }
 
     @Test
-    @DisplayName("이전 진행중인 세션 연결 - 할당된 공부시간을 찾을 수 없는 경우")
-    void connectPreviousOngoingSession_AssignedNotFound() {
+    @DisplayName("세션 시작 시 연결 처리 - 할당된 공부시간을 찾을 수 없는 경우")
+    void connectSessionOnStart_AssignedNotFound() {
         // Given
         Long assignedStudyTimeId = 999L;
 
@@ -228,85 +222,16 @@ class StudyTimeServiceNewFeatureTest {
 
         // When & Then
         assertThrows(ResourceNotFoundException.class, () -> {
-            studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
+            studyTimeService.connectSessionOnStart(assignedStudyTimeId);
         });
 
         verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
         verify(actualStudyTimeRepository, never())
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        any(), any());
+                .findByStudentIdAndEndTimeIsNullOrderByStartTimeDesc(any());
         verify(actualStudyTimeRepository, never()).save(any(ActualStudyTime.class));
     }
 
-    @Test
-    @DisplayName("이전 진행중인 세션 연결 - 여러 세션 중 가장 최근 세션 선택")
-    void connectPreviousOngoingSession_SelectLatestSession() {
-        // Given
-        Long assignedStudyTimeId = 1L;
-        Long studentId = 10L;
-        LocalDateTime assignedStartTime = LocalDateTime.now();
-        LocalDateTime olderSessionStart = assignedStartTime.minusHours(2);
-        LocalDateTime laterSessionStart = assignedStartTime.minusMinutes(30);
 
-        AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
-                .id(assignedStudyTimeId)
-                .studentId(studentId)
-                .startTime(assignedStartTime)
-                .endTime(assignedStartTime.plusHours(2))
-                .build();
-
-        ActualStudyTime olderSession = ActualStudyTime.builder()
-                .id(100L)
-                .studentId(studentId)
-                .startTime(olderSessionStart)
-                .endTime(null)
-                .assignedStudyTimeId(null)
-                .source("discord")
-                .build();
-
-        ActualStudyTime laterSession = ActualStudyTime.builder()
-                .id(101L)
-                .studentId(studentId)
-                .startTime(laterSessionStart) // 더 최근
-                .endTime(null)
-                .assignedStudyTimeId(null)
-                .source("discord")
-                .build();
-
-        List<ActualStudyTime> ongoingSessions = List.of(olderSession, laterSession);
-
-        ActualStudyTime expectedResult = ActualStudyTime.builder()
-                .id(101L)
-                .studentId(studentId)
-                .startTime(laterSessionStart)
-                .endTime(null)
-                .assignedStudyTimeId(assignedStudyTimeId) // 연결됨
-                .source("discord")
-                .build();
-
-        when(assignedStudyTimeRepository.findById(assignedStudyTimeId))
-                .thenReturn(Optional.of(assignedStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                studentId, assignedStartTime))
-                .thenReturn(ongoingSessions);
-        when(actualStudyTimeRepository.save(any(ActualStudyTime.class)))
-                .thenReturn(expectedResult);
-
-        // When
-        ActualStudyTime result = studyTimeService.connectPreviousOngoingSession(assignedStudyTimeId);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(studentId, result.getStudentId());
-        assertEquals(assignedStudyTimeId, result.getAssignedStudyTimeId());
-        assertEquals(laterSessionStart, result.getStartTime()); // 더 최근 세션이 선택됨
-
-        verify(assignedStudyTimeRepository).findById(assignedStudyTimeId);
-        verify(actualStudyTimeRepository)
-                .findByStudentIdAndStartTimeBeforeAndEndTimeIsNullAndAssignedStudyTimeIdIsNull(
-                        studentId, assignedStartTime);
-        verify(actualStudyTimeRepository).save(any(ActualStudyTime.class));
-    }
 
     @Test
     @DisplayName("전체 기간별 배정된 공부 시간 조회 성공")
