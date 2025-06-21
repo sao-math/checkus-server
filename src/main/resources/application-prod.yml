@@ -14,7 +14,7 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DATABASE}?useSSL=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DATABASE}?useSSL=true&serverTimezone=UTC
     username: ${RDS_USERNAME}
     password: ${RDS_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -26,6 +26,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        jdbc:
+          time_zone: UTC
 
   sql:
     init:
