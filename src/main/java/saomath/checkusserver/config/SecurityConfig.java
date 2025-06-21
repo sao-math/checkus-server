@@ -63,6 +63,7 @@ public class SecurityConfig {
 
                         // 공개 엔드포인트
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/schools").permitAll()
                         .requestMatchers("/public/**").permitAll()
                         
                         // Swagger UI 요청 허용
@@ -79,6 +80,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
 
                         // 교사 전용 엔드포인트
+                        .requestMatchers(HttpMethod.POST, "/schools").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/teachers/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/students/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
