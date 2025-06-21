@@ -165,7 +165,7 @@ public class StudyTimeServiceConnectionTest {
     }
 
     @Test
-    @DisplayName("connectCurrentOngoingSessions 메서드가 직접 호출되어도 올바르게 동작해야 한다")
+    @DisplayName("connectSessionOnStart 메서드가 직접 호출되어도 올바르게 동작해야 한다")
     void shouldConnectSessionsWhenDirectlyCallingConnectMethod() {
         // Given
         User student = TestDataFactory.createStudent("student3", "학생3", "01012345680");
@@ -203,17 +203,17 @@ public class StudyTimeServiceConnectionTest {
         session = actualStudyTimeRepository.save(session);
 
         // When: 직접 연결 메서드 호출
-        List<ActualStudyTime> connectedSessions = studyTimeService.connectCurrentOngoingSessions(assigned.getId());
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assigned.getId());
 
         // Then
-        assertThat(connectedSessions).hasSize(1);
-        assertThat(connectedSessions.get(0).getId()).isEqualTo(session.getId());
-        assertThat(connectedSessions.get(0).getAssignedStudyTimeId()).isEqualTo(assigned.getId());
+        assertThat(connectedSession).isNotNull();
+        assertThat(connectedSession.getId()).isEqualTo(session.getId());
+        assertThat(connectedSession.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
     }
 
     @Test
-    @DisplayName("연결할 세션이 없을 때 빈 리스트를 반환해야 한다")
-    void shouldReturnEmptyListWhenNoSessionsToConnect() {
+    @DisplayName("연결할 세션이 없을 때 null을 반환해야 한다")
+    void shouldReturnNullWhenNoSessionsToConnect() {
         // Given
         User student = TestDataFactory.createStudent("student4", "학생4", "01012345681");
         User teacher = TestDataFactory.createTeacher("teacher4", "선생님4", "01087654324");
@@ -240,9 +240,9 @@ public class StudyTimeServiceConnectionTest {
         assigned = assignedStudyTimeRepository.save(assigned);
 
         // When: 연결 시도
-        List<ActualStudyTime> connectedSessions = studyTimeService.connectCurrentOngoingSessions(assigned.getId());
+        ActualStudyTime connectedSession = studyTimeService.connectSessionOnStart(assigned.getId());
 
         // Then
-        assertThat(connectedSessions).isEmpty();
+        assertThat(connectedSession).isNull();
     }
 }

@@ -101,7 +101,7 @@ class UnifiedNotificationSchedulerMockTest {
             .thenReturn(CompletableFuture.completedFuture(true));
         // 스케줄러에서 getAssignedStudyTimesByDateRange가 한 번 호출됨
         when(studyTimeService.getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class)))
-            .thenReturn(Arrays.asList());
+            .thenReturn(Collections.emptyList());
         when(studyTimeService.connectSessionOnStart(anyLong()))
             .thenReturn(null);
 
