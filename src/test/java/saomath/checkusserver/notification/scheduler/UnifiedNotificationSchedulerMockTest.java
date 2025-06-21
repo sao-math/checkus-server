@@ -83,9 +83,9 @@ class UnifiedNotificationSchedulerMockTest {
                 .build();
         testSession.setId(1L);
 
-        // Mock 기본 설정
-        when(notificationService.sendNotification(any(), any(), any()))
-                .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(true));
+        // Remove unnecessary mock setup - only add when needed in specific tests
+        // when(notificationService.sendNotification(any(), any(), any()))
+        //         .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(true));
     }
 
     @Test
@@ -99,11 +99,12 @@ class UnifiedNotificationSchedulerMockTest {
             .thenReturn(CompletableFuture.completedFuture(true));
         when(notificationService.sendNotificationToChannel(anyString(), anyString(), any(Map.class), any()))
             .thenReturn(CompletableFuture.completedFuture(true));
-        // 스케줄러에서 getAssignedStudyTimesByDateRange가 한 번 호출됨
+        // 스케줄러에서 getAssignedStudyTimesByDateRange가 한 번만 호출됨
         when(studyTimeService.getAssignedStudyTimesByDateRange(any(LocalDateTime.class), any(LocalDateTime.class)))
             .thenReturn(Collections.emptyList());
-        when(studyTimeService.connectSessionOnStart(anyLong()))
-            .thenReturn(null);
+        // Remove unused stubbing
+        // when(studyTimeService.connectSessionOnStart(anyLong()))
+        //     .thenReturn(null);
 
         // When
         scheduler.sendStudyStartNotificationAndConnectSessions();

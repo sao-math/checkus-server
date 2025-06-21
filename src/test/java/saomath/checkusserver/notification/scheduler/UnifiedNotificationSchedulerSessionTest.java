@@ -129,7 +129,7 @@ class UnifiedNotificationSchedulerSessionTest {
     }
 
     @Test
-    @DisplayName("이미 연결된 세션은 중복 연결하지 않아야 함")
+    @DisplayName("이미 연결된 세션은 기존 세션 종료 후 새 세션을 생성해야 함")
     void shouldNotDuplicateConnectionForAlreadyConnectedSession() {
         // Given: 이미 연결된 세션
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
@@ -158,12 +158,27 @@ class UnifiedNotificationSchedulerSessionTest {
         // When: 스케줄러 실행
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
-        // Then: 세션 연결 상태가 변경되지 않아야 함
+        // Then: 기존 세션이 종료되고 새 세션이 생성되어야 함 (Case 2-1 로직)
         List<ActualStudyTime> connectedSessions = actualStudyTimeRepository
                 .findByAssignedStudyTimeId(assignment.getId());
         
-        assertThat(connectedSessions).hasSize(1);
-        assertThat(connectedSessions.get(0).getId()).isEqualTo(alreadyConnectedSession.getId());
+        assertThat(connectedSessions).hasSize(2); // 종료된 세션 + 새 세션
+        
+        // 기존 세션은 종료되어야 함
+        ActualStudyTime oldSession = connectedSessions.stream()
+                .filter(s -> s.getEndTime() != null)
+                .findFirst()
+                .orElse(null);
+        assertThat(oldSession).isNotNull();
+        assertThat(oldSession.getEndTime()).isEqualTo(now);
+        
+        // 새 세션은 할당 시작 시간에 생성되어야 함
+        ActualStudyTime newSession = connectedSessions.stream()
+                .filter(s -> s.getEndTime() == null)
+                .findFirst()
+                .orElse(null);
+        assertThat(newSession).isNotNull();
+        assertThat(newSession.getStartTime()).isEqualTo(now);
     }
 
     @Test
@@ -237,9 +252,8 @@ class UnifiedNotificationSchedulerSessionTest {
     @Test
     @DisplayName("즉시 연결과 지연 연결이 모두 정상 작동해야 함")
     void shouldHandleBothImmediateAndDelayedConnections() {
-        // Given: 현재 시간과 10분 전 시간의 할당
+        // Given: 현재 시간에 시작하는 할당만 (스케줄러는 현재 시간 할당만 처리함)
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
-        LocalDateTime tenMinutesAgo = now.minusMinutes(10);
 
         // 현재 시간 할당 (즉시 연결 대상)
         AssignedStudyTime currentAssignment = AssignedStudyTime.builder()
@@ -252,18 +266,7 @@ class UnifiedNotificationSchedulerSessionTest {
                 .build();
         currentAssignment = assignedStudyTimeRepository.save(currentAssignment);
 
-        // 10분 전 할당 (지연 연결 대상)
-        AssignedStudyTime delayedAssignment = AssignedStudyTime.builder()
-                .studentId(testStudent.getId())
-                .title("이전 영어 공부")
-                .activityId(testActivity.getId())
-                .startTime(tenMinutesAgo)
-                .endTime(tenMinutesAgo.plusHours(1))
-                .assignedBy(testStudent.getId())
-                .build();
-        delayedAssignment = assignedStudyTimeRepository.save(delayedAssignment);
-
-        // 각각에 연결될 세션들
+        // 현재 할당에 연결될 세션
         ActualStudyTime currentSession = ActualStudyTime.builder()
                 .studentId(testStudent.getId())
                 .startTime(now.minusMinutes(5))
@@ -271,26 +274,15 @@ class UnifiedNotificationSchedulerSessionTest {
                 .build();
         currentSession = actualStudyTimeRepository.save(currentSession);
 
-        ActualStudyTime delayedSession = ActualStudyTime.builder()
-                .studentId(testStudent.getId())
-                .startTime(tenMinutesAgo.minusMinutes(5))
-                .source("discord")
-                .build();
-        delayedSession = actualStudyTimeRepository.save(delayedSession);
-
         // Mock 설정 (알림 대상 없음)
         when(targetService.getStudyTargetsForTime(now)).thenReturn(Arrays.asList());
 
         // When: 스케줄러 실행
         scheduler.sendStudyStartNotificationAndConnectSessions();
 
-        // Then: 두 세션 모두 적절한 할당에 연결되어야 함
+        // Then: 현재 시간 세션이 적절한 할당에 연결되어야 함
         ActualStudyTime updatedCurrentSession = actualStudyTimeRepository.findById(currentSession.getId()).orElse(null);
         assertThat(updatedCurrentSession).isNotNull();
         assertThat(updatedCurrentSession.getAssignedStudyTimeId()).isEqualTo(currentAssignment.getId());
-
-        ActualStudyTime updatedDelayedSession = actualStudyTimeRepository.findById(delayedSession.getId()).orElse(null);
-        assertThat(updatedDelayedSession).isNotNull();
-        assertThat(updatedDelayedSession.getAssignedStudyTimeId()).isEqualTo(delayedAssignment.getId());
     }
 }

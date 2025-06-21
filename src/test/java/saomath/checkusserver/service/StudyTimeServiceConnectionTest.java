@@ -42,8 +42,8 @@ public class StudyTimeServiceConnectionTest {
     private AssignedStudyTimeRepository assignedStudyTimeRepository;
 
     @Test
-    @DisplayName("할당 시점에 기존 접속중인 세션이 자동으로 연결되어야 한다")
-    void shouldConnectExistingSessionsWhenAssigning() {
+    @DisplayName("할당 시점에 기존 접속중인 세션이 자동으로 연결되지 않아야 한다")
+    void shouldNotAutoConnectExistingSessionsWhenAssigning() {
         // Given
         User student = TestDataFactory.createStudent("student1", "학생1", "01012345678");
         User teacher = TestDataFactory.createTeacher("teacher1", "선생님1", "01087654321");
@@ -94,21 +94,18 @@ public class StudyTimeServiceConnectionTest {
                 teacher.getId()
         );
 
-        // Then: 기존 세션들이 자동으로 연결되어야 함
+        // Then: 새로운 로직에서는 기존 세션들이 자동으로 연결되지 않아야 함
         List<ActualStudyTime> connectedSessions = actualStudyTimeRepository
                 .findByAssignedStudyTimeId(assigned.getId());
 
-        assertThat(connectedSessions).hasSize(2);
-        assertThat(connectedSessions)
-                .extracting(ActualStudyTime::getStartTime)
-                .containsExactlyInAnyOrder(sessionStart1, sessionStart2);
+        assertThat(connectedSessions).hasSize(0); // 자동 연결되지 않음
         
-        // 원본 세션들도 업데이트되었는지 확인
+        // 원본 세션들은 여전히 할당되지 않은 상태여야 함
         ActualStudyTime updatedSession1 = actualStudyTimeRepository.findById(session1.getId()).orElseThrow();
         ActualStudyTime updatedSession2 = actualStudyTimeRepository.findById(session2.getId()).orElseThrow();
         
-        assertThat(updatedSession1.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
-        assertThat(updatedSession2.getAssignedStudyTimeId()).isEqualTo(assigned.getId());
+        assertThat(updatedSession1.getAssignedStudyTimeId()).isNull(); // 연결되지 않음
+        assertThat(updatedSession2.getAssignedStudyTimeId()).isNull(); // 연결되지 않음
     }
 
     @Test
