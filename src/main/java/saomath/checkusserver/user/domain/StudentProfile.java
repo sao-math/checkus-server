@@ -9,7 +9,9 @@ import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.school.domain.School;
 
 @Entity
-@Table(name = "student_profile")
+@Table(name = "student_profile", indexes = {
+    @Index(name = "idx_school_id", columnList = "school_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

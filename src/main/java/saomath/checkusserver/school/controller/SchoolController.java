@@ -16,6 +16,8 @@ import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.school.dto.SchoolRequest;
 import saomath.checkusserver.school.dto.SchoolResponse;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
+import saomath.checkusserver.common.exception.ResourceNotFoundException;
+import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.school.service.SchoolService;
 
 import java.util.List;
@@ -47,11 +49,13 @@ public class SchoolController {
                                   "data": [
                                     {
                                       "id": 1,
-                                      "name": "이현중"
+                                      "name": "이현중",
+                                      "studentCount": 15
                                     },
                                     {
                                       "id": 2,
-                                      "name": "손곡중"
+                                      "name": "손곡중",
+                                      "studentCount": 8
                                     }
                                   ]
                                 }
@@ -112,7 +116,8 @@ public class SchoolController {
                                   "message": "학교가 성공적으로 생성되었습니다.",
                                   "data": {
                                     "id": 15,
-                                    "name": "새로운중학교"
+                                    "name": "새로운중학교",
+                                    "studentCount": 0
                                   }
                                 }
                                 """
@@ -191,6 +196,104 @@ public class SchoolController {
             log.error("학교 생성 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseBase.error("학교 생성에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "학교 삭제",
+            description = "지정된 학교를 삭제합니다. 연결된 학생이 있는 경우 삭제할 수 없습니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "학교 삭제 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "학교 삭제 응답",
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "학교가 성공적으로 삭제되었습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "연결된 학생이 있어 삭제할 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "연결된 학생이 있어 학교를 삭제할 수 없습니다. 학생 수: 5",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "학교를 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "학교를 찾을 수 없습니다: 999",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "인증이 필요합니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/{schoolId}")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ResponseBase<Void>> deleteSchool(@PathVariable Long schoolId) {
+        try {
+            log.info("학교 삭제 요청: schoolId={}", schoolId);
+
+            schoolService.deleteSchool(schoolId);
+
+            log.info("학교 삭제 성공: schoolId={}", schoolId);
+            
+            return ResponseEntity.ok(ResponseBase.success("학교가 성공적으로 삭제되었습니다.", null));
+
+        } catch (ResourceNotFoundException e) {
+            log.warn("존재하지 않는 학교 삭제 시도: schoolId={}", schoolId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (BusinessException e) {
+            log.warn("연결된 학생이 있는 학교 삭제 시도: schoolId={}", schoolId);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("학교 삭제 실패: schoolId={}", schoolId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("학교 삭제에 실패했습니다: " + e.getMessage()));
         }
     }
 } 
