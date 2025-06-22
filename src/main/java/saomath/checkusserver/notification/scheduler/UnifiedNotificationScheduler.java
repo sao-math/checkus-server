@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import saomath.checkusserver.study.domain.AssignedStudyTime;
-import saomath.checkusserver.study.domain.ActualStudyTime;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
 import saomath.checkusserver.notification.service.NotificationService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
-import saomath.checkusserver.study.service.StudyTimeService;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

@@ -7,11 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.weeklySchedule.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleResponse;
-import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.studyTime.domain.Activity;
 import saomath.checkusserver.weeklySchedule.domain.WeeklySchedule;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.study.repository.ActivityRepository;
+import saomath.checkusserver.studyTime.repository.ActivityRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.weeklySchedule.repository.WeeklyScheduleRepository;
 

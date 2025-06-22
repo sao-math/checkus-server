@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.dto;
+package saomath.checkusserver.studyTime.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.studyTime.domain.Activity;
 
 import java.time.LocalTime;
 

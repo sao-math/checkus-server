@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.dto;
+package saomath.checkusserver.studyTime.dto;
 
 import lombok.Data;
 import jakarta.validation.constraints.Size;

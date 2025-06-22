@@ -2,7 +2,7 @@ package saomath.checkusserver.entity;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
 
 import java.time.LocalDateTime;
 

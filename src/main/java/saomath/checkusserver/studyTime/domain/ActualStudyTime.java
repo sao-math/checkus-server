@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.domain;
+package saomath.checkusserver.studyTime.domain;
 
 import lombok.*;
 import jakarta.persistence.*;

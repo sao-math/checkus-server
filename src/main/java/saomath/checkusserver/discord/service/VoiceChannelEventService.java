@@ -4,14 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.entity.VoiceChannelEvent;
-import saomath.checkusserver.study.domain.AssignedStudyTime;
-import saomath.checkusserver.study.domain.ActualStudyTime;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.notification.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
-import saomath.checkusserver.study.repository.AssignedStudyTimeRepository;
+import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
-import saomath.checkusserver.study.service.StudyTimeService;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -9,13 +9,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.repository.UserRepository;
-import saomath.checkusserver.study.domain.Activity;
-import saomath.checkusserver.study.domain.ActualStudyTime;
-import saomath.checkusserver.study.domain.AssignedStudyTime;
-import saomath.checkusserver.study.repository.ActivityRepository;
-import saomath.checkusserver.study.repository.ActualStudyTimeRepository;
-import saomath.checkusserver.study.repository.AssignedStudyTimeRepository;
-import saomath.checkusserver.study.service.StudyTimeService;
+import saomath.checkusserver.studyTime.domain.Activity;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.repository.ActivityRepository;
+import saomath.checkusserver.studyTime.repository.ActualStudyTimeRepository;
+import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 

@@ -1,8 +1,8 @@
-package saomath.checkusserver.study.repository;
+package saomath.checkusserver.studyTime.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.studyTime.domain.Activity;
 
 import java.util.List;
 

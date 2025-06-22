@@ -11,9 +11,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import saomath.checkusserver.study.dto.StudyTimeMonitorResponse;
-import saomath.checkusserver.study.service.StudyTimeService;
-import saomath.checkusserver.study.controller.StudyTimeController;
+import saomath.checkusserver.studyTime.dto.StudyTimeMonitorResponse;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
+import saomath.checkusserver.studyTime.controller.StudyTimeController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

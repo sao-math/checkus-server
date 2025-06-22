@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.controller;
+package saomath.checkusserver.studyTime.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,16 +18,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.domain.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
-import saomath.checkusserver.study.dto.ActualStudyTimeResponse;
-import saomath.checkusserver.study.dto.ActivityResponse;
-import saomath.checkusserver.study.dto.AssignedStudyTimeResponse;
-import saomath.checkusserver.study.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.study.dto.StudyTimeMonitorResponse;
-import saomath.checkusserver.study.dto.UpdateStudyTimeRequest;
-import saomath.checkusserver.study.domain.Activity;
-import saomath.checkusserver.study.domain.AssignedStudyTime;
-import saomath.checkusserver.study.domain.ActualStudyTime;
-import saomath.checkusserver.study.service.StudyTimeService;
+import saomath.checkusserver.studyTime.dto.ActualStudyTimeResponse;
+import saomath.checkusserver.studyTime.dto.ActivityResponse;
+import saomath.checkusserver.studyTime.dto.AssignedStudyTimeResponse;
+import saomath.checkusserver.studyTime.dto.AssignStudyTimeRequest;
+import saomath.checkusserver.studyTime.dto.StudyTimeMonitorResponse;
+import saomath.checkusserver.studyTime.dto.UpdateStudyTimeRequest;
+import saomath.checkusserver.studyTime.domain.Activity;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
