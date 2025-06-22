@@ -1,4 +1,4 @@
-package saomath.checkusserver.util;
+package saomath.checkusserver.common.util;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

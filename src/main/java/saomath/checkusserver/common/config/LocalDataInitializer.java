@@ -1,4 +1,4 @@
-package saomath.checkusserver.config;
+package saomath.checkusserver.common.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

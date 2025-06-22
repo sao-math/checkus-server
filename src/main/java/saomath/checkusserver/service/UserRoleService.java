@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.Role;
 import saomath.checkusserver.entity.User;
 import saomath.checkusserver.entity.UserRole;
-import saomath.checkusserver.exception.BusinessException;
+import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.repository.RoleRepository;
 import saomath.checkusserver.repository.UserRepository;
 import saomath.checkusserver.repository.UserRoleRepository;

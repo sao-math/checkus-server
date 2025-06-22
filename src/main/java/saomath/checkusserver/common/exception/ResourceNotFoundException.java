@@ -1,4 +1,4 @@
-package saomath.checkusserver.exception;
+package saomath.checkusserver.common.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

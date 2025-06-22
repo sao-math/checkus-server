@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import saomath.checkusserver.entity.NotificationSetting;
 import saomath.checkusserver.entity.User;
 import saomath.checkusserver.entity.UserRole;
-import saomath.checkusserver.exception.BusinessException;
+import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.domain.DefaultNotificationSetting;
 import saomath.checkusserver.notification.dto.NotificationSettingDto;

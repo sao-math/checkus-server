@@ -1,15 +1,15 @@
-package saomath.checkusserver.validation;
+package saomath.checkusserver.common.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
 @Documented
-@Constraint(validatedBy = ValidUsernameValidator.class)
+@Constraint(validatedBy = ValidPhoneNumberValidator.class)
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidUsername {
-    String message() default "사용자명은 4-20자의 영문자, 숫자, 언더스코어만 사용 가능합니다.";
+public @interface ValidPhoneNumber {
+    String message() default "전화번호는 010-0000-0000 형태로 입력해주세요.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

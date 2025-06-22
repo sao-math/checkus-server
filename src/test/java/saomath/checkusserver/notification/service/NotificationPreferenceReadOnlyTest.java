@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.*;
-import saomath.checkusserver.exception.BusinessException;
+import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
 import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;

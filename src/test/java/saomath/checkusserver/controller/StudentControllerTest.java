@@ -17,7 +17,7 @@ import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
 import saomath.checkusserver.dto.StudentUpdateRequest;
 import saomath.checkusserver.entity.StudentProfile;
-import saomath.checkusserver.exception.ResourceNotFoundException;
+import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.service.StudentService;
 
 import java.time.LocalDateTime;

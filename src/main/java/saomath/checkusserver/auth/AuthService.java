@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.dto.*;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.entity.*;
-import saomath.checkusserver.exception.AuthenticationException;
-import saomath.checkusserver.exception.BusinessException;
-import saomath.checkusserver.exception.DuplicateResourceException;
+import saomath.checkusserver.common.exception.AuthenticationException;
+import saomath.checkusserver.common.exception.BusinessException;
+import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.repository.*;
 import saomath.checkusserver.service.UserRoleService;
 

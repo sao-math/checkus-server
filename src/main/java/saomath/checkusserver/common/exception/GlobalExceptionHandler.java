@@ -1,4 +1,4 @@
-package saomath.checkusserver.exception;
+package saomath.checkusserver.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,9 +43,9 @@ public class GlobalExceptionHandler {
     /**
      * 비즈니스 로직 예외 처리
      */
-    @ExceptionHandler(saomath.checkusserver.exception.BusinessException.class)
+    @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ResponseBase<Object>> handleBusinessException(
-            saomath.checkusserver.exception.BusinessException ex, WebRequest request) {
+            BusinessException ex, WebRequest request) {
         
         log.warn("Business exception: {}", ex.getMessage());
         return ResponseEntity.badRequest()
@@ -55,9 +55,9 @@ public class GlobalExceptionHandler {
     /**
      * 인증 예외 처리
      */
-    @ExceptionHandler(saomath.checkusserver.exception.AuthenticationException.class)
+    @ExceptionHandler(saomath.checkusserver.common.exception.AuthenticationException.class)
     public ResponseEntity<ResponseBase<Object>> handleAuthenticationException(
-            saomath.checkusserver.exception.AuthenticationException ex, WebRequest request) {
+            saomath.checkusserver.common.exception.AuthenticationException ex, WebRequest request) {
         
         log.warn("Authentication exception: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

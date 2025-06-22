@@ -11,7 +11,7 @@ import saomath.checkusserver.auth.dto.StudentRegisterRequest;
 import saomath.checkusserver.auth.dto.RegisterResponse;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.entity.*;
-import saomath.checkusserver.exception.DuplicateResourceException;
+import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.repository.*;
 import saomath.checkusserver.service.UserRoleService;
 

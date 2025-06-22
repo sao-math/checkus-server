@@ -1,4 +1,4 @@
-package saomath.checkusserver.validation;
+package saomath.checkusserver.common.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

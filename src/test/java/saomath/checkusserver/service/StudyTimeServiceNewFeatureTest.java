@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.exception.ResourceNotFoundException;
+import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;

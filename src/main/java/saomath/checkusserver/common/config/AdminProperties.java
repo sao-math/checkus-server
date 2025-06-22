@@ -1,4 +1,4 @@
-package saomath.checkusserver.config;
+package saomath.checkusserver.common.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package saomath.checkusserver.config;
+package saomath.checkusserver.common.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

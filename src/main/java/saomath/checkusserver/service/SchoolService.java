@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.dto.SchoolRequest;
 import saomath.checkusserver.dto.SchoolResponse;
 import saomath.checkusserver.entity.School;
-import saomath.checkusserver.exception.DuplicateResourceException;
+import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.repository.SchoolRepository;
 
 import java.util.List;

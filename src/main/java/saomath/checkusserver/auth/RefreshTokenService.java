@@ -6,11 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.entity.RefreshToken;
-import saomath.checkusserver.exception.InvalidTokenException;
+import saomath.checkusserver.common.exception.InvalidTokenException;
 import saomath.checkusserver.repository.RefreshTokenRepository;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Slf4j
 @Service

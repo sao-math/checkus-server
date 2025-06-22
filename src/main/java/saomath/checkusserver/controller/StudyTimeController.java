@@ -27,7 +27,6 @@ import saomath.checkusserver.dto.UpdateStudyTimeRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.exception.BusinessException;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;

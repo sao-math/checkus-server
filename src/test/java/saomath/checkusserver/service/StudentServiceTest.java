@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;
 import saomath.checkusserver.entity.*;
-import saomath.checkusserver.exception.ResourceNotFoundException;
+import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.*;
 
 import java.time.LocalDateTime;

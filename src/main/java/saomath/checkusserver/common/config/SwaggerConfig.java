@@ -1,4 +1,4 @@
-package saomath.checkusserver.config;
+package saomath.checkusserver.common.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

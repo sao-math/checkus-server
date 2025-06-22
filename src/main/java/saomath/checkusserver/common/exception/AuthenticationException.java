@@ -1,4 +1,4 @@
-package saomath.checkusserver.exception;
+package saomath.checkusserver.common.exception;
 
 public class AuthenticationException extends RuntimeException {
     public AuthenticationException(String message) {
