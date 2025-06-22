@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -69,7 +69,6 @@ public class NotificationController {
         }
     )
     @PostMapping("/send")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseBase<NotificationSendResponse>> sendNotification(
             @Valid @RequestBody NotificationSendRequest request) {
 
@@ -99,7 +98,6 @@ public class NotificationController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping("/templates")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<ResponseBase<List<NotificationTemplateDto>>> getNotificationTemplates() {
         try {
             List<NotificationTemplateDto> templates = notificationSendService.getAvailableTemplates();
@@ -118,7 +116,6 @@ public class NotificationController {
     )
     @GetMapping("/settings/grouped")
     @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
     public ResponseEntity<ResponseBase<List<NotificationSettingGroupDto>>> getGroupedNotificationSettings() {
         try {
             Long userId = getCurrentUserId();
@@ -139,7 +136,6 @@ public class NotificationController {
     )
     @PutMapping("/settings/grouped/{notificationTypeId}/{deliveryMethod}")
     @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasRole('STUDENT') or hasRole('GUARDIAN')")
     public ResponseEntity<ResponseBase<String>> updateNotificationSettingGroup(
             @PathVariable("notificationTypeId") String notificationTypeId,
             @PathVariable("deliveryMethod") String deliveryMethod,

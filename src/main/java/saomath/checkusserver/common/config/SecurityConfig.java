@@ -76,6 +76,7 @@ public class SecurityConfig {
                         //알림 발송 API
                         .requestMatchers("/notifications/send").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/notifications/templates").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/notifications/settings/**").hasAnyRole("STUDENT", "GUARDIAN")
 
                         // 헬스체크 및 모니터링
                         .requestMatchers("/actuator/health").permitAll()
