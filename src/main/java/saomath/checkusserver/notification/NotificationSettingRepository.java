@@ -1,10 +1,10 @@
-package saomath.checkusserver.repository;
+package saomath.checkusserver.notification;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import saomath.checkusserver.notification.NotificationSetting;
+import saomath.checkusserver.notification.domain.NotificationSetting;
 
 import java.util.List;
 import java.util.Optional;

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.notification.NotificationSetting;
+import saomath.checkusserver.notification.domain.NotificationSetting;
 import saomath.checkusserver.auth.domain.Role;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.domain.UserRole;
@@ -15,7 +15,7 @@ import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
 import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;
-import saomath.checkusserver.repository.NotificationSettingRepository;
+import saomath.checkusserver.notification.NotificationSettingRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.repository.UserRoleRepository;
 

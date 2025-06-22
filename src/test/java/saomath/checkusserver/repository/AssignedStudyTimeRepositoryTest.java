@@ -10,6 +10,8 @@ import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.study.repository.ActivityRepository;
+import saomath.checkusserver.study.repository.AssignedStudyTimeRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

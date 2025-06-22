@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import saomath.checkusserver.auth.domain.CustomUserPrincipal;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.dto.AssignStudyTimeRequest;
+import saomath.checkusserver.study.dto.AssignStudyTimeRequest;
 import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.study.domain.ActualStudyTime;

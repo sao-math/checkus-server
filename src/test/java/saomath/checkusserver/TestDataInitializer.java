@@ -16,7 +16,7 @@ import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.repository.PermissionRepository;
 import saomath.checkusserver.auth.repository.RoleRepository;
 import saomath.checkusserver.school.repository.SchoolRepository;
-import saomath.checkusserver.repository.TaskTypeRepository;
+import saomath.checkusserver.study.repository.TaskTypeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 
 import java.util.Arrays;

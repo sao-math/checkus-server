@@ -1,4 +1,4 @@
-package saomath.checkusserver.repository;
+package saomath.checkusserver.study.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

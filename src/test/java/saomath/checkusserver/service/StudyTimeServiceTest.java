@@ -10,9 +10,9 @@ import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.study.domain.ActualStudyTime;
 import saomath.checkusserver.common.exception.BusinessException;
-import saomath.checkusserver.repository.ActivityRepository;
-import saomath.checkusserver.repository.AssignedStudyTimeRepository;
-import saomath.checkusserver.repository.ActualStudyTimeRepository;
+import saomath.checkusserver.study.repository.ActivityRepository;
+import saomath.checkusserver.study.repository.AssignedStudyTimeRepository;
+import saomath.checkusserver.study.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.study.service.StudyTimeService;
 

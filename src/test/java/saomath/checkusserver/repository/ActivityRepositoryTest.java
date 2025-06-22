@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.repository.ActivityRepository;
 
 import java.util.List;
 
