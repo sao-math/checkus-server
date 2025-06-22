@@ -413,16 +413,15 @@ public class StudyTimeService {
     }
 
     /**
-     * 특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다.
-     * @param date 조회할 날짜
-     * @return 날짜별 학생 모니터링 응답
+     * 시간 범위별 학생 공부시간 모니터링 정보를 조회합니다.
+     * @param startTime 조회 시작 시간
+     * @param endTime 조회 종료 시간
+     * @return 시간 범위별 학생 모니터링 응답
      */
     @Transactional(readOnly = true)
-    public StudyTimeMonitorResponse getStudyTimeMonitorByDate(LocalDate date) {
-        // TODO: 쿼리 파라미터로 반/학생/담임 필터링 기능 추가 예정
+    public StudyTimeMonitorResponse getStudyTimeMonitorByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRangeForQuery(startTime, endTime);
         
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
         LocalDateTime now = LocalDateTime.now();
         
         // 모든 학생 조회 (실제로는 특정 반/담임으로 필터링될 예정)
@@ -443,9 +442,9 @@ public class StudyTimeService {
             List<StudyTimeMonitorResponse.GuardianInfo> guardians = getGuardianInfos(studentId);
             studentInfo.setGuardians(guardians);
             
-            // 해당 날짜의 할당된 공부시간 조회
+            // 해당 시간 범위의 할당된 공부시간 조회
             List<AssignedStudyTime> assignedStudyTimes = assignedStudyTimeRepository
-                    .findByStudentIdAndStartTimeBetweenWithDetails(studentId, startOfDay, endOfDay);
+                    .findByStudentIdAndStartTimeBetweenWithDetails(studentId, startTime, endTime);
             
             // 할당된 공부시간 정보 생성
             List<StudyTimeMonitorResponse.AssignedStudyInfo> assignedInfos = new ArrayList<>();
@@ -473,9 +472,9 @@ public class StudyTimeService {
             }
             studentInfo.setAssignedStudyTimes(assignedInfos);
             
-            // 해당 날짜의 할당되지 않은 실제 접속 기록들
+            // 해당 시간 범위의 할당되지 않은 실제 접속 기록들
             List<ActualStudyTime> unassignedActuals = actualStudyTimeRepository
-                    .findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(studentId, startOfDay, endOfDay);
+                    .findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(studentId, startTime, endTime);
             
             List<StudyTimeMonitorResponse.UnassignedActualStudyInfo> unassignedInfos = unassignedActuals.stream()
                     .map(actual -> new StudyTimeMonitorResponse.UnassignedActualStudyInfo(
@@ -495,12 +494,32 @@ public class StudyTimeService {
         }
         
         StudyTimeMonitorResponse response = new StudyTimeMonitorResponse();
-        response.setDate(date);
+        response.setStartTime(startTime);
+        response.setEndTime(endTime);
         response.setStudents(studentInfos);
         
         return response;
     }
-    
+
+    /**
+     * 날짜별 학생 공부시간 모니터링 정보를 조회합니다.
+     * @param date 조회할 날짜
+     * @return 날짜별 학생 모니터링 응답
+     */
+    @Transactional(readOnly = true)
+    public StudyTimeMonitorResponse getStudyTimeMonitorByDate(LocalDate date) {
+        // 날짜를 시간 범위로 변환 (0시부터 다음날 6시까지)
+        LocalDateTime startTime = date.atTime(0, 0, 0);
+        LocalDateTime endTime = date.plusDays(1).atTime(6, 0, 0);
+        
+        StudyTimeMonitorResponse response = getStudyTimeMonitorByTimeRange(startTime, endTime);
+        
+        // 기존 API 호환성을 위해 date 필드도 설정
+        response.setDate(date);
+        
+        return response;
+    }
+
     /**
      * 학생의 보호자 정보를 조회합니다.
      * @param studentId 학생 ID

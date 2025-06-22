@@ -15,8 +15,14 @@ import java.util.List;
 @Schema(description = "날짜별 학생 공부시간 모니터링 응답")
 public class StudyTimeMonitorResponse {
     
-    @Schema(description = "조회 날짜", example = "2025-06-18")
+    @Schema(description = "조회 날짜 (하위 호환성)", example = "2025-06-18")
     private LocalDate date;
+    
+    @Schema(description = "조회 시작 시간", example = "2025-06-18T00:00:00")
+    private LocalDateTime startTime;
+    
+    @Schema(description = "조회 종료 시간", example = "2025-06-19T06:00:00")
+    private LocalDateTime endTime;
     
     @Schema(description = "학생별 공부시간 정보")
     private List<StudentStudyInfo> students;
