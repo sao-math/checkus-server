@@ -37,3 +37,4 @@ discord:
   bot:
     enabled: ${DISCORD_BOT_ENABLED:true}
     token: ${DISCORD_BOT_TOKEN}
+    notification-channel-id: ${DISCORD_NOTIFICATION_CHANNEL_ID}

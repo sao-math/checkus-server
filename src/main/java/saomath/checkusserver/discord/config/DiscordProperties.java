@@ -11,4 +11,5 @@ public class DiscordProperties {
     private String token;
     private String guildId;
     private boolean enabled;
+    private String notificationChannelId;
 }

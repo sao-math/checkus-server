@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.config.DiscordProperties;
@@ -78,6 +79,56 @@ public class DiscordBotService {
                 return false;
             }
         });
+    }
+
+    /**
+     * 특정 디스코드 채널에 메시지를 전송합니다.
+     * @param channelId 디스코드 채널 ID
+     * @param message 전송할 메시지
+     * @return 성공 여부
+     */
+    public CompletableFuture<Boolean> sendChannelMessage(String channelId, String message) {
+        if (!discordProperties.isEnabled()) {
+            log.debug("Discord bot이 비활성화되어 채널 메시지 전송을 건너뜁니다. 채널 ID: {}", channelId);
+            return CompletableFuture.completedFuture(false);
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // 채널 조회
+                TextChannel channel = jda.getTextChannelById(channelId);
+                if (channel == null) {
+                    log.warn("디스코드 채널을 찾을 수 없습니다. ID: {}", channelId);
+                    return false;
+                }
+
+                // 메시지 전송
+                channel.sendMessage(message).complete();
+                log.debug("디스코드 채널 메시지 전송 성공: 채널={}, 메시지 길이={}", 
+                        channel.getName(), message.length());
+                return true;
+
+            } catch (Exception e) {
+                log.error("디스코드 채널 메시지 전송 실패: 채널 ID={}", channelId, e);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 설정된 알림 채널에 메시지를 전송합니다.
+     * @param message 전송할 메시지
+     * @return 성공 여부
+     */
+    public CompletableFuture<Boolean> sendNotificationMessage(String message) {
+        String notificationChannelId = discordProperties.getNotificationChannelId();
+        
+        if (notificationChannelId == null || notificationChannelId.isEmpty()) {
+            log.debug("알림 채널 ID가 설정되지 않아 메시지 전송을 건너뜁니다.");
+            return CompletableFuture.completedFuture(false);
+        }
+        
+        return sendChannelMessage(notificationChannelId, message);
     }
 
     /**
