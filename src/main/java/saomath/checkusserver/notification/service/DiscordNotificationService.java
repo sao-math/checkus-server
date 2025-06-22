@@ -28,8 +28,15 @@ public class DiscordNotificationService implements NotificationService {
     @Override
     public CompletableFuture<Boolean> sendNotification(String recipient, String templateId, Map<String, String> variables) {
         try {
-            // 템플릿 메시지 생성
-            String message = createMessageFromTemplate(templateId, variables);
+            String message;
+            
+            // 자유 메시지 처리
+            if ("CUSTOM".equals(templateId) && variables.containsKey("message")) {
+                message = variables.get("message");
+            } else {
+                // 템플릿 메시지 생성
+                message = createMessageFromTemplate(templateId, variables);
+            }
             
             // 디스코드 DM 전송
             return discordBotService.sendDirectMessage(recipient, message);
