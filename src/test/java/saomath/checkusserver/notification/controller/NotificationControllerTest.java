@@ -93,7 +93,7 @@ class NotificationControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = "ROLE_TEACHER")
+    @WithMockUser(roles = "TEACHER")
     void sendNotification_Success_WithCustomMessage() throws Exception {
         // Given
         NotificationSendRequest customRequest = new NotificationSendRequest();
