@@ -1,0 +1,29 @@
+# P6Spy 설정으로 실제 쿼리 개수 측정
+# src/test/resources/application-test.yml
+
+spring:
+  datasource:
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false  # P6Spy가 대신 로깅
+    properties:
+      hibernate:
+        format_sql: true
+        generate_statistics: true
+        session:
+          events:
+            log: true
+
+logging:
+  level:
+    com.p6spy: INFO
+    org.hibernate.stat: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    saomath.checkusserver.studyTime.service: DEBUG
