@@ -46,10 +46,9 @@ public class NotificationSendService {
         String message = createMessage(request, student);
 
         // 4. 실제 발송
-        boolean success = sendMessage(request.getDeliveryMethod(), recipient, message, request.getTemplateId());
-
-        if (!success) {
-            throw new BusinessException("알림 발송에 실패했습니다.");
+        String result = sendMessage(request.getDeliveryMethod(), recipient, message, request.getTemplateId());
+        if (result != null) {
+            throw new BusinessException(result);
         }
 
         // 5. 응답 생성
@@ -171,42 +170,72 @@ public class NotificationSendService {
 
     /**
      * 실제 메시지 발송
+     * @return 에러 메시지 (성공시 null, 실패시 구체적인 에러 메시지)
      */
-    private boolean sendMessage(String deliveryMethodValue, String recipient, String message, String templateId) {
+    private String sendMessage(String deliveryMethodValue, String recipient, String message, String templateId) {
         try {
             DeliveryMethod deliveryMethod = DeliveryMethod.fromValue(deliveryMethodValue);
             if (deliveryMethod == null) {
-                log.error("지원하지 않는 발송 방법: {}", deliveryMethodValue);
-                return false;
+                String errorMsg = "지원하지 않는 발송 방법입니다: " + deliveryMethodValue;
+                log.error(errorMsg);
+                return errorMsg;
             }
+            
+            boolean success = false;
+            String errorDetail = "";
             
             switch (deliveryMethod) {
                 case ALIMTALK:
                     // 카카오톡 발송
                     if (templateId != null) {
-                        // 템플릿 사용시
-                        AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
-                        Map<String, String> variables = extractVariablesFromMessage(message, template.getTemplateMessage());
-                        return directAlimtalkService.sendAlimtalk(recipient, template, variables);
+                        try {
+                            // 템플릿 사용시
+                            AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
+                            Map<String, String> variables = extractVariablesFromMessage(message, template.getTemplateMessage());
+                            success = directAlimtalkService.sendAlimtalk(recipient, template, variables);
+                            if (!success) {
+                                errorDetail = "카카오톡 알림톡 발송에 실패했습니다. 전화번호를 확인해주세요.";
+                            }
+                        } catch (IllegalArgumentException e) {
+                            return "지원하지 않는 템플릿 ID입니다: " + templateId;
+                        }
                     } else {
-                        // 이론상 여기는 도달하지 않음 (카카오톡은 자유 메시지 불가)
-                        return false;
+                        return "카카오톡 알림톡은 템플릿을 사용해야 합니다.";
                     }
+                    break;
                 case DISCORD:
-                    // 디스코드 발송
-                    if (templateId != null) {
-                        return discordNotificationService.sendNotification(recipient, templateId, new HashMap<>()).join();
-                    } else {
-                        // 자유 메시지 - 임시로 CUSTOM 템플릿 ID 사용
-                        return discordNotificationService.sendNotification(recipient, "CUSTOM", Map.of("message", message)).join();
+                    try {
+                        // 디스코드 발송
+                        if (templateId != null) {
+                            success = discordNotificationService.sendNotification(recipient, templateId, new HashMap<>()).join();
+                        } else {
+                            // 자유 메시지 - 임시로 CUSTOM 템플릿 ID 사용
+                            success = discordNotificationService.sendNotification(recipient, "CUSTOM", Map.of("message", message)).join();
+                        }
+                        if (!success) {
+                            errorDetail = "디스코드 메시지 발송에 실패했습니다. 디스코드 ID를 확인해주세요.";
+                        }
+                    } catch (Exception e) {
+                        log.error("디스코드 발송 중 오류: ", e);
+                        return "디스코드 발송 중 오류가 발생했습니다: " + e.getMessage();
                     }
+                    break;
                 default:
-                    log.error("처리할 수 없는 발송 방법: {}", deliveryMethod);
-                    return false;
+                    String errorMsg = "처리할 수 없는 발송 방법입니다: " + deliveryMethod;
+                    log.error(errorMsg);
+                    return errorMsg;
             }
+            
+            if (!success && errorDetail.isEmpty()) {
+                errorDetail = "알림 발송에 실패했습니다. 설정을 확인해주세요.";
+            }
+            
+            return success ? null : errorDetail;
+            
         } catch (Exception e) {
+            String errorMsg = "메시지 발송 중 시스템 오류가 발생했습니다: " + e.getMessage();
             log.error("메시지 발송 중 오류 발생", e);
-            return false;
+            return errorMsg;
         }
     }
 
