@@ -272,7 +272,7 @@ public class SchoolController {
     )
     @DeleteMapping("/{schoolId}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ResponseBase<Void>> deleteSchool(@PathVariable Long schoolId) {
+    public ResponseEntity<ResponseBase<Void>> deleteSchool(@PathVariable("schoolId") Long schoolId) {
         try {
             log.info("학교 삭제 요청: schoolId={}", schoolId);
 
