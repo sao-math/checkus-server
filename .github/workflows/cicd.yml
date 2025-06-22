@@ -72,6 +72,7 @@ jobs:
             export DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}"
             export DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}"
             export DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
+            export DISCORD_NOTIFICATION_CHANNEL_ID="${{ secrets.DISCORD_NOTIFICATION_CHANNEL_ID }}"
             export ADMIN_USERNAME="${{ secrets.ADMIN_USERNAME }}"
             export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"

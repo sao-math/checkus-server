@@ -9,6 +9,7 @@ import saomath.checkusserver.studyTime.domain.ActualStudyTime;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.notification.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
+import saomath.checkusserver.notification.event.UnknownUserJoinEvent;
 import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.studyTime.service.StudyTimeService;
@@ -67,6 +68,12 @@ public class VoiceChannelEventService {
         Optional<User> userOpt = userRepository.findByDiscordId(event.getUserId());
         if (userOpt.isEmpty()) {
             log.warn("디스코드 ID {}에 해당하는 시스템 사용자를 찾을 수 없습니다.", event.getUserId());
+            
+            // 음성채널 입장 이벤트인 경우에만 알 수 없는 사용자 알림 발송
+            if (event.getEventType() == VoiceChannelEvent.EventType.JOIN || 
+                event.getEventType() == VoiceChannelEvent.EventType.MOVE) {
+                publishUnknownUserJoinEvent(event);
+            }
             return;
         }
         
@@ -303,5 +310,31 @@ public class VoiceChannelEventService {
      */
     public Map<String, List<String>> getAllChannelMembers() {
         return new ConcurrentHashMap<>(currentVoiceChannelMembers);
+    }
+
+    /**
+     * 알 수 없는 사용자 입장 이벤트 발행
+     */
+    private void publishUnknownUserJoinEvent(VoiceChannelEvent event) {
+        try {
+            UnknownUserJoinEvent unknownUserEvent = UnknownUserJoinEvent.builder()
+                .discordUserId(event.getUserId())
+                .discordUsername(event.getUsername())
+                .discordDisplayName(event.getDisplayName())
+                .guildId(event.getGuildId())
+                .guildName(event.getGuildName())
+                .channelId(event.getChannelId())
+                .channelName(event.getChannelName())
+                .joinTime(event.getTimestamp())
+                .currentChannelMembers(event.getCurrentChannelMembers())
+                .build();
+            
+            eventPublisher.publishEvent(unknownUserEvent);
+            log.info("알 수 없는 사용자 입장 이벤트 발행: 사용자={}, 채널={}", 
+                event.getUsername(), event.getChannelName());
+        } catch (Exception e) {
+            log.error("알 수 없는 사용자 입장 이벤트 발행 중 오류 발생: 사용자={}", 
+                event.getUsername(), e);
+        }
     }
 }
