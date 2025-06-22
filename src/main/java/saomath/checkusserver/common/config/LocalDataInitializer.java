@@ -24,6 +24,8 @@ import saomath.checkusserver.user.repository.StudentGuardianRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
 import saomath.checkusserver.user.service.UserRoleService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import saomath.checkusserver.weeklySchedule.domain.WeeklySchedule;
+import saomath.checkusserver.weeklySchedule.repository.WeeklyScheduleRepository;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

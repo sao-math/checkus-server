@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.domain;
+package saomath.checkusserver.weeklySchedule.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.study.domain.Activity;
 
 import java.time.LocalTime;
 

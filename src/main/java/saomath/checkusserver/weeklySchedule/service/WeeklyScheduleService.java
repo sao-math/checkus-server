@@ -1,19 +1,19 @@
-package saomath.checkusserver.study.service;
+package saomath.checkusserver.weeklySchedule.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.study.dto.WeeklySchedulePeriodResponse;
-import saomath.checkusserver.study.dto.WeeklyScheduleRequest;
-import saomath.checkusserver.study.dto.WeeklyScheduleResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklySchedulePeriodResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleRequest;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleResponse;
 import saomath.checkusserver.study.domain.Activity;
-import saomath.checkusserver.study.domain.WeeklySchedule;
+import saomath.checkusserver.weeklySchedule.domain.WeeklySchedule;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.study.repository.ActivityRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
-import saomath.checkusserver.study.repository.WeeklyScheduleRepository;
+import saomath.checkusserver.weeklySchedule.repository.WeeklyScheduleRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

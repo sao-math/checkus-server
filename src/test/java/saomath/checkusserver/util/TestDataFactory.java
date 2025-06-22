@@ -3,11 +3,11 @@ package saomath.checkusserver.util;
 import saomath.checkusserver.auth.dto.StudentRegisterRequest;
 import saomath.checkusserver.auth.dto.GuardianRegisterRequest;
 import saomath.checkusserver.auth.dto.TeacherRegisterRequest;
-import saomath.checkusserver.study.dto.WeeklyScheduleRequest;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.study.domain.WeeklySchedule;
+import saomath.checkusserver.weeklySchedule.domain.WeeklySchedule;
 
 import java.time.LocalTime;
 

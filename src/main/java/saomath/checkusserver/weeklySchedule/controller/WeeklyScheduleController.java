@@ -1,4 +1,4 @@
-package saomath.checkusserver.study.controller;
+package saomath.checkusserver.weeklySchedule.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,13 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.study.dto.ActivityResponse;
-import saomath.checkusserver.study.dto.WeeklySchedulePeriodResponse;
-import saomath.checkusserver.study.dto.WeeklyScheduleRequest;
-import saomath.checkusserver.study.dto.WeeklyScheduleResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklySchedulePeriodResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleRequest;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleResponse;
 import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.study.service.WeeklyScheduleService;
+import saomath.checkusserver.weeklySchedule.service.WeeklyScheduleService;
 
 import java.time.LocalDate;
 import java.util.List;

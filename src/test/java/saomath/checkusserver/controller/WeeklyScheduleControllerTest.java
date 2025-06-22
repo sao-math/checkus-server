@@ -12,13 +12,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.auth.service.CustomUserDetailsService;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
-import saomath.checkusserver.study.dto.WeeklySchedulePeriodResponse;
-import saomath.checkusserver.study.dto.WeeklyScheduleRequest;
-import saomath.checkusserver.study.dto.WeeklyScheduleResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklySchedulePeriodResponse;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleRequest;
+import saomath.checkusserver.weeklySchedule.dto.WeeklyScheduleResponse;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.study.service.WeeklyScheduleService;
-import saomath.checkusserver.study.controller.WeeklyScheduleController;
+import saomath.checkusserver.weeklySchedule.service.WeeklyScheduleService;
+import saomath.checkusserver.weeklySchedule.controller.WeeklyScheduleController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
