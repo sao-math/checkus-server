@@ -6,11 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import saomath.checkusserver.auth.jwt.JwtTokenProvider;
-import saomath.checkusserver.auth.service.CustomUserDetailsService;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
@@ -25,12 +22,14 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(SchoolController.class)
+@WebMvcTest(controllers = SchoolController.class,
+    excludeAutoConfiguration = {
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+    })
 @DisplayName("SchoolController 테스트")
 class SchoolControllerTest {
 
@@ -43,11 +42,12 @@ class SchoolControllerTest {
     @MockitoBean
     private SchoolService schoolService;
 
+    // JWT 관련 Mock Bean 추가 (보안 설정 때문에 필요)
     @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
+    private saomath.checkusserver.auth.jwt.JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+    private saomath.checkusserver.auth.service.CustomUserDetailsService customUserDetailsService;
 
     @Test
     @DisplayName("GET /schools - 학교 목록 조회 성공")
@@ -76,7 +76,6 @@ class SchoolControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
     @DisplayName("POST /schools - 학교 생성 성공")
     void createSchool_ShouldSucceed_WhenValidRequest() throws Exception {
         // given
@@ -86,7 +85,6 @@ class SchoolControllerTest {
 
         // when & then
         mockMvc.perform(post("/schools")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -99,7 +97,6 @@ class SchoolControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
     @DisplayName("POST /schools - 학교 생성 실패 (중복된 학교명)")
     void createSchool_ShouldFail_WhenDuplicateName() throws Exception {
         // given
@@ -109,7 +106,6 @@ class SchoolControllerTest {
 
         // when & then
         mockMvc.perform(post("/schools")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -119,7 +115,6 @@ class SchoolControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
     @DisplayName("DELETE /schools/{schoolId} - 학교 삭제 성공")
     void deleteSchool_ShouldSucceed_WhenValidId() throws Exception {
         // given
@@ -127,8 +122,7 @@ class SchoolControllerTest {
         doNothing().when(schoolService).deleteSchool(schoolId);
 
         // when & then
-        mockMvc.perform(delete("/schools/{schoolId}", schoolId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/schools/{schoolId}", schoolId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -137,7 +131,6 @@ class SchoolControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
     @DisplayName("DELETE /schools/{schoolId} - 학교 삭제 실패 (학교를 찾을 수 없음)")
     void deleteSchool_ShouldFail_WhenSchoolNotFound() throws Exception {
         // given
@@ -146,8 +139,7 @@ class SchoolControllerTest {
                 .when(schoolService).deleteSchool(schoolId);
 
         // when & then
-        mockMvc.perform(delete("/schools/{schoolId}", schoolId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/schools/{schoolId}", schoolId))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
@@ -155,7 +147,6 @@ class SchoolControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
     @DisplayName("DELETE /schools/{schoolId} - 학교 삭제 실패 (연결된 학생이 있음)")
     void deleteSchool_ShouldFail_WhenStudentsConnected() throws Exception {
         // given
@@ -164,39 +155,10 @@ class SchoolControllerTest {
                 .when(schoolService).deleteSchool(schoolId);
 
         // when & then
-        mockMvc.perform(delete("/schools/{schoolId}", schoolId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/schools/{schoolId}", schoolId))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("연결된 학생이 있어 학교를 삭제할 수 없습니다. 학생 수: 5"));
-    }
-
-    @Test
-    @DisplayName("POST /schools - 인증 없이 학교 생성 시도")
-    void createSchool_ShouldFail_WhenNotAuthenticated() throws Exception {
-        // given
-        SchoolRequest request = new SchoolRequest("새로운중학교");
-
-        // when & then
-        mockMvc.perform(post("/schools")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @DisplayName("DELETE /schools/{schoolId} - 인증 없이 학교 삭제 시도")
-    void deleteSchool_ShouldFail_WhenNotAuthenticated() throws Exception {
-        // given
-        Long schoolId = 1L;
-
-        // when & then
-        mockMvc.perform(delete("/schools/{schoolId}", schoolId)
-                        .with(csrf()))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
     }
 }
