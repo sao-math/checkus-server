@@ -15,6 +15,8 @@ import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.classroom.repository.StudentClassRepository;
 import saomath.checkusserver.studyTime.domain.*;
 import saomath.checkusserver.studyTime.repository.*;
+import saomath.checkusserver.task.domain.TaskType;
+import saomath.checkusserver.task.repository.TaskTypeRepository;
 import saomath.checkusserver.user.domain.RoleConstants;
 import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentGuardian;

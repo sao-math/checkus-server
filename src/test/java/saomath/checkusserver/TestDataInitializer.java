@@ -11,12 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.domain.Permission;
 import saomath.checkusserver.auth.domain.Role;
 import saomath.checkusserver.school.domain.School;
-import saomath.checkusserver.studyTime.domain.TaskType;
+import saomath.checkusserver.task.domain.TaskType;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.repository.PermissionRepository;
 import saomath.checkusserver.auth.repository.RoleRepository;
 import saomath.checkusserver.school.repository.SchoolRepository;
-import saomath.checkusserver.studyTime.repository.TaskTypeRepository;
+import saomath.checkusserver.task.repository.TaskTypeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 
 import java.util.Arrays;

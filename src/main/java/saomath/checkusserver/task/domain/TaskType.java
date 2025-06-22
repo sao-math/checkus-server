@@ -1,4 +1,4 @@
-package saomath.checkusserver.studyTime.domain;
+package saomath.checkusserver.task.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
