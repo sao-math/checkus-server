@@ -83,3 +83,10 @@ logging:
     org.springframework.security: WARN
     org.hibernate.SQL: WARN  # SQL 로그 줄이기
     org.springframework.boot.autoconfigure.sql.init: WARN
+
+# 테스트용 관리자 설정
+app:
+  admin:
+    username: testadmin
+    password: testpassword
+    name: 테스트관리자

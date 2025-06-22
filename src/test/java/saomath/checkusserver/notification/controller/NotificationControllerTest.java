@@ -6,9 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.notification.dto.NotificationSendRequest;
@@ -29,8 +32,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-@WebMvcTest(NotificationController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@AutoConfigureMockMvc
 class NotificationControllerTest {
 
     @Autowired
@@ -38,10 +44,6 @@ class NotificationControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    // JWT 관련 Mock Bean 추가 (보안 설정 때문에 필요)
-    @MockitoBean
-    private saomath.checkusserver.auth.jwt.JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
     private NotificationSendService notificationSendService;
