@@ -7,9 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.notification.dto.NotificationSendRequest;
 import saomath.checkusserver.notification.dto.NotificationSendResponse;
@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,13 +39,17 @@ class NotificationControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    // JWT 관련 Mock Bean 추가 (보안 설정 때문에 필요)
+    @MockitoBean
+    private saomath.checkusserver.auth.jwt.JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
     private NotificationSendService notificationSendService;
 
-    @MockBean
+    @MockitoBean
     private DirectAlimtalkService directAlimtalkService;
 
-    @MockBean
+    @MockitoBean
     private NotificationPreferenceService notificationPreferenceService;
 
     private NotificationSendRequest validRequest;
@@ -86,7 +91,7 @@ class NotificationControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
+    @WithMockUser(authorities = "ROLE_TEACHER")
     void sendNotification_Success_WithCustomMessage() throws Exception {
         // Given
         NotificationSendRequest customRequest = new NotificationSendRequest();
@@ -125,6 +130,18 @@ class NotificationControllerTest {
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isForbidden());
     }
+    
+    @Test
+    void sendNotification_Unauthorized_NoAuthentication() throws Exception {
+        // Given - 인증 없이 요청
+        
+        // When & Then - 인증 부족으로 401 예상
+        mockMvc.perform(post("/notifications/send")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest)))
+                .andExpect(status().isUnauthorized());
+    }
 
     @Test
     @WithMockUser(roles = "TEACHER")
@@ -143,7 +160,7 @@ class NotificationControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TEACHER")
+    @WithMockUser(authorities = "ROLE_TEACHER")
     void getNotificationTemplates_Success() throws Exception {
         // Given
         List<NotificationTemplateDto> mockTemplates = Arrays.asList(
@@ -183,6 +200,6 @@ class NotificationControllerTest {
         // When & Then
         mockMvc.perform(get("/notifications/templates")
                         .with(csrf()))
-                .andExpected(status().isForbidden());
+                .andExpect(status().isForbidden());
     }
 }
