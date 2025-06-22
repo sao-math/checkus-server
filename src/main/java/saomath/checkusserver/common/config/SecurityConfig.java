@@ -81,6 +81,7 @@ public class SecurityConfig {
 
                         // 교사 전용 엔드포인트
                         .requestMatchers(HttpMethod.POST, "/schools").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/schools/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/teachers/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/students/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
