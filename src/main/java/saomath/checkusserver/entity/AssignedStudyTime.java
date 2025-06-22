@@ -2,6 +2,8 @@ package saomath.checkusserver.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+import saomath.checkusserver.auth.domain.User;
+
 import java.time.LocalDateTime;
 
 @Entity

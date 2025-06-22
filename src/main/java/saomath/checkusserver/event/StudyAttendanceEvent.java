@@ -3,7 +3,7 @@ package saomath.checkusserver.event;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 
 /**
  * 출석 관련 이벤트

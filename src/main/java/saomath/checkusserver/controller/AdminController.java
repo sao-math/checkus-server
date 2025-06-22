@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.auth.dto.UserRoleResponse;
-import saomath.checkusserver.entity.UserRole;
+import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.service.UserRoleService;
 
 import java.util.List;

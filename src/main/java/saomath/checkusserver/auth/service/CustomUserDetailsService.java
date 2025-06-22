@@ -1,4 +1,4 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,10 +8,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.User;
-import saomath.checkusserver.entity.UserRole;
-import saomath.checkusserver.repository.UserRepository;
-import saomath.checkusserver.repository.UserRoleRepository;
+import saomath.checkusserver.auth.domain.CustomUserPrincipal;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.domain.UserRole;
+import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRoleRepository;
 
 import java.util.Collection;
 import java.util.List;

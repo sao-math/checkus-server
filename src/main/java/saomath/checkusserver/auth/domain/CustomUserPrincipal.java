@@ -1,4 +1,4 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.auth.domain;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

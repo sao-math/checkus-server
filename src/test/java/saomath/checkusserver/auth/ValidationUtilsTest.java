@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import saomath.checkusserver.common.validation.ValidationUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import saomath.checkusserver.auth.CustomUserDetailsService;
+import saomath.checkusserver.auth.service.CustomUserDetailsService;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;

@@ -1,4 +1,4 @@
-package saomath.checkusserver.entity;
+package saomath.checkusserver.auth.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -6,11 +6,11 @@ import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "role")
+@Table(name = "permission")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

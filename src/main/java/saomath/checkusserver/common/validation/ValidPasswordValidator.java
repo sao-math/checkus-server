@@ -2,7 +2,6 @@ package saomath.checkusserver.common.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import saomath.checkusserver.auth.ValidationUtils;
 
 public class ValidPasswordValidator implements ConstraintValidator<ValidPassword, String> {
 

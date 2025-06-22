@@ -19,11 +19,11 @@ import saomath.checkusserver.dto.UpdateStudyTimeRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.ActualStudyTime;
 import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.util.JwtTestUtils;
 
 import java.time.LocalDateTime;

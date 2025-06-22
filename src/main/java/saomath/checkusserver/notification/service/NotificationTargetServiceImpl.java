@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.StudentGuardian;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.StudentGuardianRepository;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

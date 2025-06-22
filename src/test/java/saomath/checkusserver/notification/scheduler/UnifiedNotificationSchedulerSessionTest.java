@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
 import saomath.checkusserver.notification.service.NotificationTargetService;

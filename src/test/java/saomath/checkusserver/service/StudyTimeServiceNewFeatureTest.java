@@ -12,7 +12,7 @@ import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

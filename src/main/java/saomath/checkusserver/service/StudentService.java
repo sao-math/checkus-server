@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.dto.GuardianResponse;
 import saomath.checkusserver.dto.StudentDetailResponse;
 import saomath.checkusserver.dto.StudentListResponse;

@@ -1,4 +1,4 @@
-package saomath.checkusserver.entity;
+package saomath.checkusserver.auth.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;

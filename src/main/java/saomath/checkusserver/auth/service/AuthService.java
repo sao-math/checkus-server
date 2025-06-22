@@ -1,4 +1,4 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,8 +9,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import saomath.checkusserver.auth.domain.CustomUserPrincipal;
+import saomath.checkusserver.common.validation.ValidationUtils;
+import saomath.checkusserver.auth.domain.RefreshToken;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.auth.dto.*;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.common.exception.AuthenticationException;
 import saomath.checkusserver.common.exception.BusinessException;

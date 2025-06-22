@@ -1,13 +1,13 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
-import saomath.checkusserver.entity.RefreshToken;
+import saomath.checkusserver.auth.domain.RefreshToken;
 import saomath.checkusserver.common.exception.InvalidTokenException;
-import saomath.checkusserver.repository.RefreshTokenRepository;
+import saomath.checkusserver.auth.repository.RefreshTokenRepository;
 
 import java.time.LocalDateTime;
 

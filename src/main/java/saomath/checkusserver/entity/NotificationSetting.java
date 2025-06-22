@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import saomath.checkusserver.auth.domain.User;
 
 /**
  * 사용자별 알림 설정 Entity

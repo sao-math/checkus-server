@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.StudentGuardian;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;

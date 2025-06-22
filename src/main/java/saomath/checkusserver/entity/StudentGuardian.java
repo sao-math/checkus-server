@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import jakarta.persistence.*;
+import saomath.checkusserver.auth.domain.User;
 
 @Entity
 @Table(name = "student_guardian")

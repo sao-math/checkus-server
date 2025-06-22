@@ -7,11 +7,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import saomath.checkusserver.entity.StudentGuardian;
 import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
-import saomath.checkusserver.notification.service.NotificationService;
 import saomath.checkusserver.repository.StudentGuardianRepository;
 
 import java.time.format.DateTimeFormatter;

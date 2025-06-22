@@ -6,7 +6,7 @@ import saomath.checkusserver.auth.dto.TeacherRegisterRequest;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.entity.Activity;
 import saomath.checkusserver.entity.StudentProfile;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.entity.WeeklySchedule;
 
 import java.time.LocalTime;

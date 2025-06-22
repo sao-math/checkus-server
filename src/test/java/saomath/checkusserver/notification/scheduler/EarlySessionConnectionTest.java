@@ -7,12 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.repository.*;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static java.time.LocalTime.now;
 import static org.assertj.core.api.Assertions.assertThat;

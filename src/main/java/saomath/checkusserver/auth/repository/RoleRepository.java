@@ -1,8 +1,8 @@
-package saomath.checkusserver.repository;
+package saomath.checkusserver.auth.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import saomath.checkusserver.entity.Role;
+import saomath.checkusserver.auth.domain.Role;
 
 import java.util.Optional;
 

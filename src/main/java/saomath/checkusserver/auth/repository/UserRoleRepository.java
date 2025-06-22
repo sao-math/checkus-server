@@ -1,14 +1,13 @@
-package saomath.checkusserver.repository;
+package saomath.checkusserver.auth.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import saomath.checkusserver.entity.UserRole;
+import saomath.checkusserver.auth.domain.UserRole;
 
 import java.util.List;
 import java.util.Optional;
-import saomath.checkusserver.auth.dto.UserRoleResponse;
 
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.UserRoleId> {

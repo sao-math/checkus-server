@@ -11,12 +11,12 @@ import saomath.checkusserver.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.dto.WeeklyScheduleResponse;
 import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.entity.WeeklySchedule;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.repository.WeeklyScheduleRepository;
 
 import java.time.LocalDate;

@@ -1,4 +1,4 @@
-package saomath.checkusserver.entity;
+package saomath.checkusserver.auth.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

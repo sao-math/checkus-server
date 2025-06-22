@@ -1,7 +1,7 @@
 package saomath.checkusserver.auth.dto;
 
 import org.junit.jupiter.api.Test;
-import saomath.checkusserver.entity.UserRole;
+import saomath.checkusserver.auth.domain.UserRole;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserRoleResponseTest {

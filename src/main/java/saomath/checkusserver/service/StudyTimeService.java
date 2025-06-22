@@ -11,11 +11,11 @@ import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.repository.StudentGuardianRepository;
 import saomath.checkusserver.repository.StudentProfileRepository;
 import saomath.checkusserver.dto.StudyTimeMonitorResponse;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.entity.StudentGuardian;
 
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.common.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 

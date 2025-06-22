@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.entity.VoiceChannelEvent;
 import saomath.checkusserver.entity.AssignedStudyTime;
 import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.service.StudyTimeService;
 
 import java.time.LocalDateTime;

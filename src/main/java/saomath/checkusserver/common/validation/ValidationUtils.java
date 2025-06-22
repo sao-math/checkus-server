@@ -1,4 +1,4 @@
-package saomath.checkusserver.auth;
+package saomath.checkusserver.common.validation;
 
 import java.util.regex.Pattern;
 
