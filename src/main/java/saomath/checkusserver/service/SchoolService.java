@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.dto.SchoolRequest;
-import saomath.checkusserver.dto.SchoolResponse;
-import saomath.checkusserver.entity.School;
+import saomath.checkusserver.user.dto.SchoolRequest;
+import saomath.checkusserver.user.dto.SchoolResponse;
+import saomath.checkusserver.user.domain.School;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
-import saomath.checkusserver.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.SchoolRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -12,9 +12,17 @@ import saomath.checkusserver.auth.repository.PermissionRepository;
 import saomath.checkusserver.auth.repository.RolePermissionRepository;
 import saomath.checkusserver.auth.repository.RoleRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.classroom.repository.StudentClassRepository;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.repository.*;
-import saomath.checkusserver.service.UserRoleService;
+import saomath.checkusserver.user.domain.RoleConstants;
+import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.user.domain.StudentGuardian;
+import saomath.checkusserver.user.domain.StudentProfile;
+import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.StudentGuardianRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.user.service.UserRoleService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;

@@ -15,10 +15,13 @@ import saomath.checkusserver.auth.jwt.JwtTokenProvider;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.service.AuthService;
 import saomath.checkusserver.auth.service.RefreshTokenService;
-import saomath.checkusserver.entity.*;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
-import saomath.checkusserver.repository.*;
-import saomath.checkusserver.service.UserRoleService;
+import saomath.checkusserver.user.domain.RoleConstants;
+import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.user.domain.StudentProfile;
+import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.user.service.UserRoleService;
 
 import java.util.Optional;
 

@@ -5,7 +5,7 @@ import saomath.checkusserver.auth.dto.GuardianRegisterRequest;
 import saomath.checkusserver.auth.dto.TeacherRegisterRequest;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.StudentProfile;
+import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.entity.WeeklySchedule;
 

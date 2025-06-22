@@ -13,8 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
-import saomath.checkusserver.dto.SchoolRequest;
-import saomath.checkusserver.dto.SchoolResponse;
+import saomath.checkusserver.user.dto.SchoolRequest;
+import saomath.checkusserver.user.dto.SchoolResponse;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.service.SchoolService;
 

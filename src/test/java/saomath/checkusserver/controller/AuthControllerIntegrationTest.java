@@ -13,8 +13,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.dto.StudentRegisterRequest;
-import saomath.checkusserver.repository.SchoolRepository;
-import saomath.checkusserver.repository.StudentProfileRepository;
+import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.util.TestDataFactory;
 

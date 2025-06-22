@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import saomath.checkusserver.entity.StudentProfile;
+import saomath.checkusserver.user.domain.StudentProfile;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

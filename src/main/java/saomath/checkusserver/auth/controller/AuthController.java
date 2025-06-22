@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.service.AuthService;
 import saomath.checkusserver.common.validation.ValidationUtils;
 import saomath.checkusserver.auth.dto.*;
-import saomath.checkusserver.service.UserRoleService;
+import saomath.checkusserver.user.service.UserRoleService;
 
 @Slf4j
 @RestController

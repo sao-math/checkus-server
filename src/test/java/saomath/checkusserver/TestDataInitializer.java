@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.domain.Permission;
 import saomath.checkusserver.auth.domain.Role;
-import saomath.checkusserver.entity.School;
+import saomath.checkusserver.user.domain.School;
 import saomath.checkusserver.entity.TaskType;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.repository.PermissionRepository;
 import saomath.checkusserver.auth.repository.RoleRepository;
-import saomath.checkusserver.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.SchoolRepository;
 import saomath.checkusserver.repository.TaskTypeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 

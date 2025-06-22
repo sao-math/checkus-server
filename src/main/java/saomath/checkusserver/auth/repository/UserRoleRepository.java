@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import saomath.checkusserver.auth.domain.UserRole;
+import saomath.checkusserver.user.dto.UserRoleResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.Use
         LEFT JOIN sp.school s
         WHERE r.name = :roleName AND ur.status = :status
         """)
-    List<saomath.checkusserver.auth.dto.UserRoleResponse> findUserRoleResponsesByRoleNameAndStatus(
+    List<UserRoleResponse> findUserRoleResponsesByRoleNameAndStatus(
         @Param("roleName") String roleName, 
         @Param("status") UserRole.RoleStatus status
     );

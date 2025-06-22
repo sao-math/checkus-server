@@ -12,6 +12,9 @@ import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.dto.StudyTimeMonitorResponse;
 import saomath.checkusserver.entity.*;
 import saomath.checkusserver.repository.*;
+import saomath.checkusserver.user.domain.StudentGuardian;
+import saomath.checkusserver.user.repository.StudentGuardianRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

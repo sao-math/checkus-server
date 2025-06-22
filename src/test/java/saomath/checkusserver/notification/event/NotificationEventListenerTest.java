@@ -7,12 +7,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.StudentGuardian;
+import saomath.checkusserver.user.domain.StudentGuardian;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
-import saomath.checkusserver.repository.StudentGuardianRepository;
+import saomath.checkusserver.user.repository.StudentGuardianRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

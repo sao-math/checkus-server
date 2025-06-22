@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.entity.StudentProfile;
+import saomath.checkusserver.user.domain.StudentProfile;
 
 import java.util.List;
 import java.util.Optional;
