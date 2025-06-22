@@ -25,6 +25,22 @@ public class UserRoleResponse {
         this.statusDescription = status.getDescription();
     }
     
+    // 학생 프로필 정보를 포함한 JPQL 생성자 쿼리용 생성자
+    public UserRoleResponse(Long userId, String username, String name, 
+                           Long roleId, String roleName, 
+                           UserRole.RoleStatus status,
+                           String schoolName, Integer grade) {
+        this.userId = userId;
+        this.username = username;
+        this.name = name;
+        this.roleId = roleId;
+        this.roleName = roleName;
+        this.status = status.name();
+        this.statusDescription = status.getDescription();
+        this.schoolName = schoolName;
+        this.grade = grade;
+    }
+
     @Schema(description = "사용자 ID", example = "1")
     private Long userId;
     
@@ -46,16 +62,27 @@ public class UserRoleResponse {
     @Schema(description = "역할 상태 설명", example = "승인 대기")
     private String statusDescription;
     
+    @Schema(description = "학교명 (학생인 경우에만)", example = "서울고등학교")
+    private String schoolName;
+    
+    @Schema(description = "학년 (학생인 경우에만)", example = "2")
+    private Integer grade;
+
+
+
+    //TODO 이거 여기 있어도 되나
+
     // UserRole 엔티티에서 DTO로 변환하는 정적 메서드
     public static UserRoleResponse fromEntity(UserRole userRole) {
-        return new UserRoleResponse(
-            userRole.getId().getUserId(),
-            userRole.getUser().getUsername(),
-            userRole.getUser().getName(),
-            userRole.getId().getRoleId(),
-            userRole.getRole().getName(),
-            userRole.getStatus().name(),
-            userRole.getStatus().getDescription()
-        );
+        UserRoleResponse response = new UserRoleResponse();
+        response.setUserId(userRole.getId().getUserId());
+        response.setUsername(userRole.getUser().getUsername());
+        response.setName(userRole.getUser().getName());
+        response.setRoleId(userRole.getId().getRoleId());
+        response.setRoleName(userRole.getRole().getName());
+        response.setStatus(userRole.getStatus().name());
+        response.setStatusDescription(userRole.getStatus().getDescription());
+        // schoolName과 grade는 이 메서드에서는 설정하지 않음 (null로 유지)
+        return response;
     }
 }

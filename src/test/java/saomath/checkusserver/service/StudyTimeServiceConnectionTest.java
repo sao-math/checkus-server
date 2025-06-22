@@ -57,9 +57,9 @@ public class StudyTimeServiceConnectionTest {
         activity = activityRepository.save(activity);
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime sessionStart1 = now.minusMinutes(30); // 30분 전 시작
-        LocalDateTime sessionEnd1 = now.minusMinutes(20);   // 20분 전 종료
-        LocalDateTime sessionStart2 = now.minusMinutes(10); // 10분 전 시작, 현재 진행중
+        LocalDateTime sessionStart1 = now.plusMinutes(10); // 10분 후 시작
+        LocalDateTime sessionEnd1 = now.plusMinutes(20);   // 20분 후 종료
+        LocalDateTime sessionStart2 = now.plusMinutes(30); // 30분 후 시작, 현재 진행중
 
         // 학생이 먼저 접속 (2개 세션)
         ActualStudyTime session1 = ActualStudyTime.builder()
@@ -82,8 +82,8 @@ public class StudyTimeServiceConnectionTest {
         actualStudyTimeRepository.save(session2);
 
         // When: 선생님이 해당 시간대에 공부시간 할당
-        LocalDateTime assignedStart = now.minusMinutes(35); // 세션들을 포함하는 범위
-        LocalDateTime assignedEnd = now.plusMinutes(25);
+        LocalDateTime assignedStart = now.plusMinutes(5); // 세션들을 포함하는 범위
+        LocalDateTime assignedEnd = now.plusMinutes(65);
 
         AssignedStudyTime assigned = studyTimeService.assignStudyTime(
                 student.getId(),
@@ -124,13 +124,13 @@ public class StudyTimeServiceConnectionTest {
         activity = activityRepository.save(activity);
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime sessionStart = now.minusMinutes(60); // 할당 범위 밖
+        LocalDateTime sessionStart = now.plusMinutes(10); // 할당 범위 밖
 
         // 할당 범위 밖에서 접속
         ActualStudyTime outsideSession = ActualStudyTime.builder()
                 .studentId(student.getId())
                 .startTime(sessionStart)
-                .endTime(now.minusMinutes(50))
+                .endTime(now.plusMinutes(20))
                 .source("discord")
                 .assignedStudyTimeId(null)
                 .build();
@@ -138,8 +138,8 @@ public class StudyTimeServiceConnectionTest {
         actualStudyTimeRepository.save(outsideSession);
 
         // When: 나중 시간대에 공부시간 할당
-        LocalDateTime assignedStart = now.minusMinutes(30);
-        LocalDateTime assignedEnd = now.plusMinutes(30);
+        LocalDateTime assignedStart = now.plusMinutes(40);
+        LocalDateTime assignedEnd = now.plusMinutes(80);
 
         AssignedStudyTime assigned = studyTimeService.assignStudyTime(
                 student.getId(),
@@ -183,8 +183,8 @@ public class StudyTimeServiceConnectionTest {
                 .studentId(student.getId())
                 .title("과학 실험")
                 .activityId(activity.getId())
-                .startTime(now.minusMinutes(20))
-                .endTime(now.plusMinutes(40))
+                .startTime(now.plusMinutes(10))
+                .endTime(now.plusMinutes(70))
                 .assignedBy(teacher.getId())
                 .build();
         assigned = assignedStudyTimeRepository.save(assigned);
@@ -192,7 +192,7 @@ public class StudyTimeServiceConnectionTest {
         // 기존 세션 생성
         ActualStudyTime session = ActualStudyTime.builder()
                 .studentId(student.getId())
-                .startTime(now.minusMinutes(10)) // 할당 범위 내
+                .startTime(now.plusMinutes(20)) // 할당 범위 내
                 .endTime(null) // 진행중
                 .source("discord")
                 .assignedStudyTimeId(null)
@@ -230,8 +230,8 @@ public class StudyTimeServiceConnectionTest {
                 .studentId(student.getId())
                 .title("음악 이론")
                 .activityId(activity.getId())
-                .startTime(now.minusMinutes(20))
-                .endTime(now.plusMinutes(40))
+                .startTime(now.plusMinutes(10))
+                .endTime(now.plusMinutes(70))
                 .assignedBy(teacher.getId())
                 .build();
         assigned = assignedStudyTimeRepository.save(assigned);

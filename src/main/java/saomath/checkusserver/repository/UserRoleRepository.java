@@ -25,15 +25,18 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.Use
     @Query("SELECT ur FROM UserRole ur JOIN FETCH ur.user JOIN FETCH ur.role WHERE ur.role.name = :roleName AND ur.status = :status")
     List<UserRole> findByRoleNameAndStatus(@Param("roleName") String roleName, @Param("status") UserRole.RoleStatus status);
     
-    // 최적화된 DTO 직접 조회 쿼리
+    // 최적화된 DTO 직접 조회 쿼리 (학생 프로필 정보 포함)
     @Query("""
         SELECT new saomath.checkusserver.auth.dto.UserRoleResponse(
             ur.id.userId, u.username, u.name, 
-            ur.id.roleId, r.name, ur.status
+            ur.id.roleId, r.name, ur.status,
+            s.name, sp.grade
         )
         FROM UserRole ur 
         JOIN ur.user u 
         JOIN ur.role r 
+        LEFT JOIN StudentProfile sp ON sp.userId = u.id
+        LEFT JOIN sp.school s
         WHERE r.name = :roleName AND ur.status = :status
         """)
     List<saomath.checkusserver.auth.dto.UserRoleResponse> findUserRoleResponsesByRoleNameAndStatus(
