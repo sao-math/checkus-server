@@ -95,21 +95,26 @@ public class DiscordBotService {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
+                log.info("Discord 채널 메시지 전송 시작: channelId={}, JDA ready={}", 
+                        channelId, jda != null && jda.getStatus() == JDA.Status.CONNECTED);
+                
                 // 채널 조회
                 TextChannel channel = jda.getTextChannelById(channelId);
                 if (channel == null) {
-                    log.warn("디스코드 채널을 찾을 수 없습니다. ID: {}", channelId);
+                    log.error("디스코드 채널을 찾을 수 없습니다. ID: {}. 권한 확인 또는 채널 ID를 확인하세요.", channelId);
                     return false;
                 }
 
+                log.info("Discord 채널 찾음: name={}, guild={}", channel.getName(), channel.getGuild().getName());
+
                 // 메시지 전송
                 channel.sendMessage(message).complete();
-                log.debug("디스코드 채널 메시지 전송 성공: 채널={}, 메시지 길이={}", 
+                log.info("Discord 채널 메시지 전송 성공: 채널={}, 메시지 길이={}", 
                         channel.getName(), message.length());
                 return true;
 
             } catch (Exception e) {
-                log.error("디스코드 채널 메시지 전송 실패: 채널 ID={}", channelId, e);
+                log.error("Discord 채널 메시지 전송 실패: 채널 ID={}, 오류={}", channelId, e.getMessage(), e);
                 return false;
             }
         });
@@ -123,10 +128,21 @@ public class DiscordBotService {
     public CompletableFuture<Boolean> sendNotificationMessage(String message) {
         String notificationChannelId = discordProperties.getNotificationChannelId();
         
-        if (notificationChannelId == null || notificationChannelId.isEmpty()) {
-            log.debug("알림 채널 ID가 설정되지 않아 메시지 전송을 건너뜁니다.");
+        log.info("Discord 알림 메시지 전송 시도 - enabled: {}, channelId: {}, hasMessage: {}", 
+                discordProperties.isEnabled(), notificationChannelId, message != null);
+        
+        if (!discordProperties.isEnabled()) {
+            log.warn("Discord bot이 비활성화되어 알림 메시지 전송을 건너뜁니다.");
             return CompletableFuture.completedFuture(false);
         }
+        
+        if (notificationChannelId == null || notificationChannelId.isEmpty()) {
+            log.warn("알림 채널 ID가 설정되지 않아 메시지 전송을 건너뜁니다. DISCORD_NOTIFICATION_CHANNEL_ID 환경변수를 확인하세요.");
+            return CompletableFuture.completedFuture(false);
+        }
+        
+        log.info("Discord 알림 채널에 메시지 전송: channelId={}, messageLength={}", 
+                notificationChannelId, message != null ? message.length() : 0);
         
         return sendChannelMessage(notificationChannelId, message);
     }

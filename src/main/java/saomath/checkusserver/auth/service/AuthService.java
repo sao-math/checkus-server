@@ -27,6 +27,8 @@ import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
 import saomath.checkusserver.user.service.UserRoleService;
+import saomath.checkusserver.notification.event.UserRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -44,6 +46,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final VoiceChannelEventService voiceChannelEventService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private void checkDuplicateUsernameAndPhoneNumber(String username, String phoneNumber) {
         if (userRepository.existsByUsername(username)) {
@@ -88,15 +91,13 @@ public class AuthService {
         // 학생 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.STUDENT, UserRole.RoleStatus.PENDING);
 
-        // 새로 등록된 사용자가 현재 음성채널에 있는지 확인하고 기록 시작
-        try {
-            voiceChannelEventService.checkAndStartRecordingForNewUser(savedUser);
-        } catch (Exception e) {
-            log.error("새로 등록된 학생 {}의 음성채널 확인 중 오류 발생", savedUser.getUsername(), e);
-            // 오류가 발생해도 회원가입 자체는 성공으로 처리
-        }
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
 
         log.info("학생 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "학생 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
@@ -117,15 +118,13 @@ public class AuthService {
         // 학부모 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.GUARDIAN, UserRole.RoleStatus.PENDING);
 
-        // 새로 등록된 사용자가 현재 음성채널에 있는지 확인하고 기록 시작
-        try {
-            voiceChannelEventService.checkAndStartRecordingForNewUser(savedUser);
-        } catch (Exception e) {
-            log.error("새로 등록된 학부모 {}의 음성채널 확인 중 오류 발생", savedUser.getUsername(), e);
-            // 오류가 발생해도 회원가입 자체는 성공으로 처리
-        }
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
 
         log.info("학부모 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "학부모 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
@@ -147,15 +146,13 @@ public class AuthService {
         // 교사 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.TEACHER, UserRole.RoleStatus.PENDING);
 
-        // 새로 등록된 사용자가 현재 음성채널에 있는지 확인하고 기록 시작
-        try {
-            voiceChannelEventService.checkAndStartRecordingForNewUser(savedUser);
-        } catch (Exception e) {
-            log.error("새로 등록된 교사 {}의 음성채널 확인 중 오류 발생", savedUser.getUsername(), e);
-            // 오류가 발생해도 회원가입 자체는 성공으로 처리
-        }
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
 
         log.info("교사 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "교사 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");

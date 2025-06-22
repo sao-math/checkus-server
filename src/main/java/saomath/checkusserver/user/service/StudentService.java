@@ -23,6 +23,8 @@ import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.user.repository.StudentGuardianRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.notification.event.UserRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +43,7 @@ public class StudentService {
     private final ClassRepository classRepository;
     private final UserRoleService userRoleService;
     private final VoiceChannelEventService voiceChannelEventService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 필터링된 학생 목록을 조회합니다.
@@ -163,6 +166,11 @@ public class StudentService {
         StudentProfile studentProfile = studentProfileRepository.findByUserId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("학생 프로필을 찾을 수 없습니다. ID: " + studentId));
 
+        // Discord ID 변경 여부 확인 (트랜잭션 커밋 후 처리를 위해 미리 저장)
+        String oldDiscordId = student.getDiscordId();
+        String newDiscordId = updateRequest.getDiscordId();
+        boolean discordIdChanged = (newDiscordId != null && !newDiscordId.equals(oldDiscordId));
+
         // 기본 정보 업데이트
         updateBasicInfo(student, updateRequest);
 
@@ -178,8 +186,16 @@ public class StudentService {
         // 저장
         userRepository.save(student);
         studentProfileRepository.save(studentProfile);
+        
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
 
         log.info("학생 정보 수정 성공 - studentId: {}, name: {}", studentId, student.getName());
+
+        // Discord ID 변경된 경우 트랜잭션 커밋 후 음성채널 확인을 위한 이벤트 발행
+        if (discordIdChanged) {
+            applicationEventPublisher.publishEvent(new UserRegisteredEvent(student, "DISCORD_ID_UPDATE", oldDiscordId));
+        }
 
         // 수정된 정보 반환
         return getStudentDetail(studentId);
@@ -189,8 +205,6 @@ public class StudentService {
      * 기본 정보 업데이트
      */
     private void updateBasicInfo(User student, StudentUpdateRequest updateRequest) {
-        String oldDiscordId = student.getDiscordId();
-        
         if (updateRequest.getName() != null) {
             student.setName(updateRequest.getName());
         }
@@ -199,36 +213,6 @@ public class StudentService {
         }
         if (updateRequest.getDiscordId() != null) {
             student.setDiscordId(updateRequest.getDiscordId());
-            
-            // Discord ID가 새로 추가되거나 변경된 경우, 현재 음성채널에 있는지 확인
-            if (!updateRequest.getDiscordId().equals(oldDiscordId)) {
-                checkAndStartRecordingForUpdatedDiscordId(student, oldDiscordId, updateRequest.getDiscordId());
-            }
-        }
-    }
-
-    /**
-     * Discord ID 업데이트 후 음성채널 확인 및 기록 시작
-     */
-    private void checkAndStartRecordingForUpdatedDiscordId(User student, String oldDiscordId, String newDiscordId) {
-        try {
-            if (newDiscordId == null || newDiscordId.trim().isEmpty()) {
-                log.debug("사용자 {}의 Discord ID가 제거되었습니다.", student.getUsername());
-                return;
-            }
-            
-            if (oldDiscordId == null || oldDiscordId.trim().isEmpty()) {
-                log.info("사용자 {}에게 새로운 Discord ID가 추가되었습니다: {}", student.getUsername(), newDiscordId);
-            } else {
-                log.info("사용자 {}의 Discord ID가 변경되었습니다: {} -> {}", student.getUsername(), oldDiscordId, newDiscordId);
-            }
-            
-            // 새로운 Discord ID로 현재 음성채널에 있는지 확인하고 기록 시작
-            voiceChannelEventService.checkAndStartRecordingForNewUser(student);
-            
-        } catch (Exception e) {
-            log.error("사용자 {}의 Discord ID 업데이트 후 음성채널 확인 중 오류 발생", student.getUsername(), e);
-            // 오류가 발생해도 사용자 정보 업데이트는 성공으로 처리
         }
     }
 

@@ -13,6 +13,8 @@ import saomath.checkusserver.notification.event.UnknownUserJoinEvent;
 import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.studyTime.service.StudyTimeService;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -399,6 +401,24 @@ public class VoiceChannelEventService {
         } catch (Exception e) {
             log.error("기존 음성채널 사용자 입장 이벤트 발행 중 오류 발생: 사용자={}", 
                 user.getUsername(), e);
+        }
+    }
+
+    /**
+     * 새로 등록된 사용자 음성채널 확인 (별도 트랜잭션)
+     * 메인 트랜잭션이 커밋된 후 실행되어야 하는 경우 사용
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkAndStartRecordingForNewUserInNewTransaction(Long userId) {
+        try {
+            // DB에서 사용자 다시 조회 (커밋된 데이터 확인)
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+            
+            checkAndStartRecordingForNewUser(user);
+            
+        } catch (Exception e) {
+            log.error("별도 트랜잭션에서 사용자 ID {}의 음성채널 확인 중 오류 발생", userId, e);
         }
     }
 }
