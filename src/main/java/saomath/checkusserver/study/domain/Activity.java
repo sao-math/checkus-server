@@ -1,4 +1,4 @@
-package saomath.checkusserver.entity;
+package saomath.checkusserver.study.domain;
 
 import lombok.*;
 import jakarta.persistence.*;

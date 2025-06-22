@@ -1,4 +1,4 @@
-package saomath.checkusserver.user.dto;
+package saomath.checkusserver.school.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -8,7 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 import saomath.checkusserver.auth.domain.Role;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.domain.UserRole;
-import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.user.dto.UserRoleResponse;
 import saomath.checkusserver.auth.repository.UserRoleRepository;

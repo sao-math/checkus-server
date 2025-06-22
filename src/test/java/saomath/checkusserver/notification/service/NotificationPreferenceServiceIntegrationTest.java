@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.entity.NotificationSetting;
+import saomath.checkusserver.notification.NotificationSetting;
 import saomath.checkusserver.auth.domain.Role;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.domain.UserRole;

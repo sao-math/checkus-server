@@ -3,7 +3,7 @@ package saomath.checkusserver.notification.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import saomath.checkusserver.entity.NotificationSetting;
+import saomath.checkusserver.notification.NotificationSetting;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.common.exception.BusinessException;

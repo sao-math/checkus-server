@@ -10,14 +10,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.dto.WeeklyScheduleResponse;
-import saomath.checkusserver.entity.Activity;
+import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.entity.WeeklySchedule;
+import saomath.checkusserver.study.domain.WeeklySchedule;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.repository.WeeklyScheduleRepository;
+import saomath.checkusserver.study.service.WeeklyScheduleService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

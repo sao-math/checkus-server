@@ -1,14 +1,14 @@
-package saomath.checkusserver.service;
+package saomath.checkusserver.school.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.user.dto.SchoolRequest;
-import saomath.checkusserver.user.dto.SchoolResponse;
-import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.school.dto.SchoolRequest;
+import saomath.checkusserver.school.dto.SchoolResponse;
+import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
-import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.school.repository.SchoolRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;

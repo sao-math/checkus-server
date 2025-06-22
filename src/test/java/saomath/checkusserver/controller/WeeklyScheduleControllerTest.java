@@ -17,7 +17,8 @@ import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.dto.WeeklyScheduleResponse;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.service.WeeklyScheduleService;
+import saomath.checkusserver.study.service.WeeklyScheduleService;
+import saomath.checkusserver.study.controller.WeeklyScheduleController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

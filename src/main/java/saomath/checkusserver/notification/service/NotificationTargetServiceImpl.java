@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.user.domain.StudentGuardian;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;

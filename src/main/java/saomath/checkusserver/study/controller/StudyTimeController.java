@@ -1,4 +1,4 @@
-package saomath.checkusserver.controller;
+package saomath.checkusserver.study.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,10 +24,10 @@ import saomath.checkusserver.dto.AssignedStudyTimeResponse;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
 import saomath.checkusserver.dto.StudyTimeMonitorResponse;
 import saomath.checkusserver.dto.UpdateStudyTimeRequest;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.study.domain.ActualStudyTime;
+import saomath.checkusserver.study.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;

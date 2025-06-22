@@ -6,7 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import saomath.checkusserver.user.domain.StudentGuardian;
-import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;

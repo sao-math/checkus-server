@@ -1,22 +1,20 @@
-package saomath.checkusserver.user.domain;
+package saomath.checkusserver.study.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "school")
+@Table(name = "task_type")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class School {
+public class TaskType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 }

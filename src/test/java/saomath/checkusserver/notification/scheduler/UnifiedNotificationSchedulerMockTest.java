@@ -8,10 +8,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.entity.*;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
 import saomath.checkusserver.notification.service.NotificationTargetService;
-import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.domain.ActualStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.study.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

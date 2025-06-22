@@ -1,4 +1,4 @@
-package saomath.checkusserver.entity;
+package saomath.checkusserver.notification;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

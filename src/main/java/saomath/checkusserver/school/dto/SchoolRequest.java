@@ -1,4 +1,4 @@
-package saomath.checkusserver.user.dto;
+package saomath.checkusserver.school.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

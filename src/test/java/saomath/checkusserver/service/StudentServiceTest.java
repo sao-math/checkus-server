@@ -13,7 +13,7 @@ import saomath.checkusserver.classroom.domain.ClassEntity;
 import saomath.checkusserver.classroom.domain.StudentClass;
 import saomath.checkusserver.classroom.repository.StudentClassRepository;
 import saomath.checkusserver.user.domain.RoleConstants;
-import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentGuardian;
 import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.user.dto.StudentDetailResponse;

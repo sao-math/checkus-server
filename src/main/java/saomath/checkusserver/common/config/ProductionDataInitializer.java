@@ -14,14 +14,15 @@ import saomath.checkusserver.auth.domain.Permission;
 import saomath.checkusserver.auth.domain.Role;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.domain.UserRole;
-import saomath.checkusserver.entity.*;
 import saomath.checkusserver.auth.repository.PermissionRepository;
 import saomath.checkusserver.auth.repository.RoleRepository;
-import saomath.checkusserver.user.domain.School;
-import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.school.domain.School;
+import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.repository.TaskTypeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.repository.ActivityRepository;
+import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.domain.TaskType;
 import saomath.checkusserver.user.service.UserRoleService;
 
 import java.util.Arrays;

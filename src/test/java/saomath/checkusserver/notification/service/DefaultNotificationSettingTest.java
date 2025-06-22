@@ -11,7 +11,7 @@ import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.auth.repository.RoleRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.repository.UserRoleRepository;
-import saomath.checkusserver.entity.*;
+import saomath.checkusserver.notification.NotificationSetting;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.domain.DefaultNotificationSetting;
 import saomath.checkusserver.repository.*;

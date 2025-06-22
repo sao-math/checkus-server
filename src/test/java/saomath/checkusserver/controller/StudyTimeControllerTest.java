@@ -19,12 +19,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import saomath.checkusserver.auth.domain.CustomUserPrincipal;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.ActualStudyTime;
+import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.study.domain.ActualStudyTime;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.study.service.StudyTimeService;
+import saomath.checkusserver.study.controller.StudyTimeController;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = StudyTimeController.class, 
+@WebMvcTest(controllers = StudyTimeController.class,
             excludeAutoConfiguration = {
                     SecurityAutoConfiguration.class, 
                     UserDetailsServiceAutoConfiguration.class,

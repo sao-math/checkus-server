@@ -2,7 +2,7 @@ package saomath.checkusserver.event;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
-import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.auth.domain.User;
 
 /**

@@ -1,4 +1,4 @@
-package saomath.checkusserver.controller;
+package saomath.checkusserver.school.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,10 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
-import saomath.checkusserver.user.dto.SchoolRequest;
-import saomath.checkusserver.user.dto.SchoolResponse;
+import saomath.checkusserver.school.dto.SchoolRequest;
+import saomath.checkusserver.school.dto.SchoolResponse;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
-import saomath.checkusserver.service.SchoolService;
+import saomath.checkusserver.school.service.SchoolService;
 
 import java.util.List;
 

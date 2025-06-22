@@ -1,8 +1,8 @@
-package saomath.checkusserver.user.repository;
+package saomath.checkusserver.school.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.school.domain.School;
 
 import java.util.Optional;
 

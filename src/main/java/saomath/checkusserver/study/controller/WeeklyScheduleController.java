@@ -1,4 +1,4 @@
-package saomath.checkusserver.controller;
+package saomath.checkusserver.study.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,10 +19,10 @@ import saomath.checkusserver.dto.ActivityResponse;
 import saomath.checkusserver.dto.WeeklySchedulePeriodResponse;
 import saomath.checkusserver.dto.WeeklyScheduleRequest;
 import saomath.checkusserver.dto.WeeklyScheduleResponse;
-import saomath.checkusserver.entity.Activity;
+import saomath.checkusserver.study.domain.Activity;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
-import saomath.checkusserver.service.WeeklyScheduleService;
+import saomath.checkusserver.study.service.WeeklyScheduleService;
 
 import java.time.LocalDate;
 import java.util.List;

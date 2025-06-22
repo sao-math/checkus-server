@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.entity.AssignedStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.user.domain.StudentGuardian;
 import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.event.StudyAttendanceEvent;

@@ -1,11 +1,11 @@
-package saomath.checkusserver.service;
+package saomath.checkusserver.study.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.ActualStudyTime;
+import saomath.checkusserver.study.domain.Activity;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.study.domain.ActualStudyTime;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.repository.ActivityRepository;

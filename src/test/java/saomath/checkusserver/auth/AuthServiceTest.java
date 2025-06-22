@@ -17,9 +17,9 @@ import saomath.checkusserver.auth.service.AuthService;
 import saomath.checkusserver.auth.service.RefreshTokenService;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.user.domain.RoleConstants;
-import saomath.checkusserver.user.domain.School;
+import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentProfile;
-import saomath.checkusserver.user.repository.SchoolRepository;
+import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
 import saomath.checkusserver.user.service.UserRoleService;
 

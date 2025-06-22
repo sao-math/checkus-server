@@ -6,13 +6,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.ActualStudyTime;
+import saomath.checkusserver.study.domain.AssignedStudyTime;
+import saomath.checkusserver.study.domain.ActualStudyTime;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.repository.ActualStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.study.service.StudyTimeService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
