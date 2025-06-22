@@ -1,4 +1,4 @@
-package saomath.checkusserver.event;
+package saomath.checkusserver.notification.event;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

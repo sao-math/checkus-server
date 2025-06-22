@@ -15,7 +15,7 @@ import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
 import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;
-import saomath.checkusserver.notification.NotificationSettingRepository;
+import saomath.checkusserver.notification.repository.NotificationSettingRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.repository.UserRoleRepository;
 

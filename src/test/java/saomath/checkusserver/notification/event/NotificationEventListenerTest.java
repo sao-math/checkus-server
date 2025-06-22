@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.user.domain.StudentGuardian;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.MultiChannelNotificationService;
 import saomath.checkusserver.user.repository.StudentGuardianRepository;

@@ -12,7 +12,7 @@ import saomath.checkusserver.auth.repository.RoleRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.repository.UserRoleRepository;
 import saomath.checkusserver.notification.domain.NotificationSetting;
-import saomath.checkusserver.notification.NotificationSettingRepository;
+import saomath.checkusserver.notification.repository.NotificationSettingRepository;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 
 import java.util.List;

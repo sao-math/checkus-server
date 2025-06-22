@@ -13,7 +13,7 @@ import saomath.checkusserver.notification.dto.NotificationSettingDto;
 import saomath.checkusserver.notification.dto.NotificationSettingGroupDto;
 import saomath.checkusserver.notification.dto.NotificationSettingUpdateDto;
 import saomath.checkusserver.notification.dto.NotificationTypeDto;
-import saomath.checkusserver.notification.NotificationSettingRepository;
+import saomath.checkusserver.notification.repository.NotificationSettingRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.auth.repository.UserRoleRepository;
 

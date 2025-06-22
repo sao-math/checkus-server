@@ -7,7 +7,7 @@ import saomath.checkusserver.discord.entity.VoiceChannelEvent;
 import saomath.checkusserver.study.domain.AssignedStudyTime;
 import saomath.checkusserver.study.domain.ActualStudyTime;
 import saomath.checkusserver.auth.domain.User;
-import saomath.checkusserver.event.StudyAttendanceEvent;
+import saomath.checkusserver.notification.event.StudyAttendanceEvent;
 import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
 import saomath.checkusserver.study.repository.AssignedStudyTimeRepository;
 import saomath.checkusserver.auth.repository.UserRepository;
