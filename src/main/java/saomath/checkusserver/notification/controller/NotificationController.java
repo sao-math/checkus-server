@@ -22,6 +22,7 @@ import saomath.checkusserver.notification.dto.*;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.DirectAlimtalkService;
 import saomath.checkusserver.notification.service.NotificationPreferenceService;
+import saomath.checkusserver.notification.service.NotificationSendService;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -36,15 +37,16 @@ public class NotificationController {
 
     private final DirectAlimtalkService directAlimtalkService;
     private final NotificationPreferenceService notificationPreferenceService;
+    private final NotificationSendService notificationSendService;
 
     @Operation(
         summary = "직접 알림 발송",
-        description = "관리자가 특정 템플릿으로 테스트 알림을 발송합니다.",
+        description = "선생님이나 관리자가 특정 학생에게 직접 알림을 발송합니다.",
         security = @SecurityRequirement(name = "bearerAuth"),
         responses = {
             @ApiResponse(
                 responseCode = "200",
-                description = "테스트 알림 발송 성공",
+                description = "알림 발송 성공",
                 content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject(
@@ -52,8 +54,13 @@ public class NotificationController {
                         value = """
                         {
                           "success": true,
-                          "message": "테스트 알림이 발송되었습니다.",
-                          "data": null
+                          "message": "알림이 성공적으로 발송되었습니다.",
+                          "data": {
+                            "deliveryMethod": "alimtalk",
+                            "recipient": "01012345678",
+                            "sentMessage": "[사오수학]\n홍길동 학생, \n곧 공부 시작할 시간이에요!",
+                            "templateUsed": "STUDY_REMINDER_10MIN"
+                          }
                         }
                         """
                     )
@@ -61,48 +68,46 @@ public class NotificationController {
             )
         }
     )
-    @PostMapping("/test")
-    public ResponseEntity<ResponseBase<Void>> sendTestNotification(
-            @Valid @RequestBody NotificationTestRequest request) {
+    @PostMapping("/send")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    public ResponseEntity<ResponseBase<NotificationSendResponse>> sendNotification(
+            @Valid @RequestBody NotificationSendRequest request) {
 
         try {
-            // 템플릿 ID를 AlimtalkTemplate enum으로 변환
-            AlimtalkTemplate template;
-            try {
-                template = AlimtalkTemplate.valueOf(request.getTemplateId());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest()
-                        .body(ResponseBase.error("지원하지 않는 템플릿 ID입니다: " + request.getTemplateId()));
-            }
-
-            // 테스트용 변수 설정
-            Map<String, String> variables = new HashMap<>();
-            variables.put("이름", "테스트학생");
-            variables.put("1", "수학 문제집 10페이지\n영어 단어 암기");
-            variables.put("2", "과학 실험 보고서");
-            variables.put("입장시간", "15:30");
-
-            // 알림톡 발송
-            boolean success = directAlimtalkService.sendAlimtalk(
-                request.getPhoneNumber(),
-                template,
-                variables
-            );
-
-            if (success) {
-                log.info("테스트 알림 발송 성공 - 템플릿: {}, 수신자: {}",
-                    request.getTemplateId(), request.getPhoneNumber());
-                return ResponseEntity.ok(
-                    ResponseBase.success("테스트 알림이 발송되었습니다.", null));
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(ResponseBase.error("알림 발송에 실패했습니다."));
-            }
-
-        } catch (Exception e) {
-            log.error("테스트 알림 발송 실패", e);
+            NotificationSendResponse response = notificationSendService.sendNotification(request);
+            
+            log.info("알림 발송 성공 - 학생ID: {}, 방법: {}, 템플릿: {}", 
+                    request.getStudentId(), request.getDeliveryMethod(), request.getTemplateId());
+            
+            return ResponseEntity.ok(
+                ResponseBase.success("알림이 성공적으로 발송되었습니다.", response));
+                
+        } catch (BusinessException e) {
+            log.warn("알림 발송 실패 - 비즈니스 오류: {}", e.getMessage());
             return ResponseEntity.badRequest()
-                    .body(ResponseBase.error("테스트 알림 발송 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("알림 발송 실패 - 시스템 오류", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("알림 발송 중 오류가 발생했습니다."));
+        }
+    }
+
+    @Operation(
+        summary = "사용 가능한 템플릿 목록 조회",
+        description = "알림 발송에 사용할 수 있는 템플릿 목록을 조회합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/templates")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    public ResponseEntity<ResponseBase<List<NotificationTemplateDto>>> getNotificationTemplates() {
+        try {
+            List<NotificationTemplateDto> templates = notificationSendService.getAvailableTemplates();
+            return ResponseEntity.ok(ResponseBase.success("템플릿 목록 조회 성공", templates));
+        } catch (Exception e) {
+            log.error("템플릿 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ResponseBase.error("템플릿 목록 조회에 실패했습니다."));
         }
     }
 
