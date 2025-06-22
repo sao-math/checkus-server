@@ -16,4 +16,11 @@ public interface StudentGuardianRepository extends JpaRepository<StudentGuardian
     
     @Query("SELECT sg FROM StudentGuardian sg WHERE sg.guardian.id = :guardianId")
     List<StudentGuardian> findByGuardianId(@Param("guardianId") Long guardianId);
+    
+    // 배치 조회: 여러 학생의 보호자 정보를 한 번에 조회
+    @Query("SELECT sg FROM StudentGuardian sg " +
+           "LEFT JOIN FETCH sg.student " +
+           "LEFT JOIN FETCH sg.guardian " +
+           "WHERE sg.student.id IN :studentIds")
+    List<StudentGuardian> findByStudentIds(@Param("studentIds") List<Long> studentIds);
 }

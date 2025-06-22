@@ -276,8 +276,6 @@ public class StudyTimeController {
         }
     }
 
-
-
     @Operation(
         summary = "공부 배정 가능한 활동 목록 조회",
         description = "공부 시간 배정에 사용할 수 있는 활동 목록을 조회합니다.",
@@ -304,8 +302,8 @@ public class StudyTimeController {
     }
 
     @Operation(
-        summary = "날짜별 학생 공부시간 모니터링 조회",
-        description = "특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다.",
+        summary = "시간 범위별 학생 공부시간 모니터링 조회",
+        description = "특정 시간 범위의 모든 학생 공부시간 모니터링 정보를 조회합니다. 무한스크롤 지원을 위한 범위 조회입니다.",
         security = @SecurityRequirement(name = "bearerAuth"),
         responses = {
             @ApiResponse(
@@ -320,7 +318,8 @@ public class StudyTimeController {
                           "success": true,
                           "message": "학생 모니터링 정보를 성공적으로 조회했습니다.",
                           "data": {
-                            "date": "2025-06-18",
+                            "startTime": "2025-06-18T00:00:00",
+                            "endTime": "2025-06-19T06:00:00",
                             "students": [
                               {
                                 "studentId": 1,
@@ -360,15 +359,15 @@ public class StudyTimeController {
             ),
             @ApiResponse(
                 responseCode = "400",
-                description = "잘못된 날짜 형식",
+                description = "잘못된 시간 형식 또는 범위",
                 content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject(
-                        name = "날짜 형식 오류",
+                        name = "시간 형식 오류",
                         value = """
                         {
                           "success": false,
-                          "message": "날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식으로 입력해주세요.",
+                          "message": "시간 형식이 올바르지 않습니다. yyyy-MM-dd'T'HH:mm:ss 형식으로 입력해주세요.",
                           "data": null
                         }
                         """
@@ -377,14 +376,55 @@ public class StudyTimeController {
             )
         }
     )
-    @GetMapping("/monitor/{date}")
-    public ResponseEntity<ResponseBase<StudyTimeMonitorResponse>> getStudyTimeMonitor(
-            @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", example = "2025-06-18") 
-            @PathVariable("date") String dateStr
+    @GetMapping("/monitor")
+    public ResponseEntity<ResponseBase<StudyTimeMonitorResponse>> getStudyTimeMonitorByTimeRange(
+            @Parameter(description = "조회 시작 시간 (yyyy-MM-dd'T'HH:mm:ss)", example = "2025-06-18T00:00:00") 
+            @RequestParam("startTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = "조회 종료 시간 (yyyy-MM-dd'T'HH:mm:ss)", example = "2025-06-19T06:00:00") 
+            @RequestParam("endTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
             // TODO: 향후 구현 예정 - 쿼리 파라미터로 필터링
             // @RequestParam(value = "classId", required = false) Long classId,
             // @RequestParam(value = "studentId", required = false) Long studentId,
             // @RequestParam(value = "teacherId", required = false) Long teacherId
+    ) {
+        
+        try {
+            // 시간 범위 유효성 검증
+            if (startTime.isAfter(endTime)) {
+                return ResponseEntity.badRequest()
+                        .body(ResponseBase.error("시작 시간이 종료 시간보다 늦을 수 없습니다."));
+            }
+            
+            // 최대 조회 범위 제한 (예: 7일)
+            if (startTime.plusDays(7).isBefore(endTime)) {
+                return ResponseEntity.badRequest()
+                        .body(ResponseBase.error("조회 범위가 너무 큽니다. 최대 7일까지 조회 가능합니다."));
+            }
+            
+            StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByTimeRange(startTime, endTime);
+            
+            return ResponseEntity.ok(
+                    ResponseBase.success("학생 모니터링 정보를 성공적으로 조회했습니다.", result));
+                    
+        } catch (Exception e) {
+            log.error("학생 모니터링 정보 조회 실패: startTime={}, endTime={}", startTime, endTime, e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseBase.error(e.getMessage()));
+        }
+    }
+
+    // 기존 날짜 기반 API 유지 (하위 호환성)
+    @Operation(
+        summary = "날짜별 학생 공부시간 모니터링 조회 (Deprecated)",
+        description = "특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다. 시간 범위 기반 API 사용을 권장합니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        deprecated = true
+    )
+    @GetMapping("/monitor/{date}")
+    @Deprecated
+    public ResponseEntity<ResponseBase<StudyTimeMonitorResponse>> getStudyTimeMonitor(
+            @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", example = "2025-06-18") 
+            @PathVariable("date") String dateStr
     ) {
         
         try {
@@ -397,6 +437,7 @@ public class StudyTimeController {
                         .body(ResponseBase.error("날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식으로 입력해주세요."));
             }
             
+            // 날짜 기반 서비스 메서드 호출 (date 필드가 설정됨)
             StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(date);
             
             return ResponseEntity.ok(

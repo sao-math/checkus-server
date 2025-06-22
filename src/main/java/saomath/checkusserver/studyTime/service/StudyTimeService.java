@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -413,94 +416,133 @@ public class StudyTimeService {
     }
 
     /**
-     * 특정 날짜의 모든 학생 공부시간 모니터링 정보를 조회합니다.
+     * 시간 범위별 학생 공부시간 모니터링 정보를 조회합니다. (기존 버전 - 호환성 유지)
+     * @param startTime 조회 시작 시간
+     * @param endTime 조회 종료 시간
+     * @return 시간 범위별 학생 모니터링 응답
+     */
+    @Transactional(readOnly = true)
+    public StudyTimeMonitorResponse getStudyTimeMonitorByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        // 최적화된 버전으로 위임
+        return getStudyTimeMonitorByTimeRangeOptimized(startTime, endTime);
+    }
+
+    /**
+     * 날짜별 학생 공부시간 모니터링 정보를 조회합니다.
      * @param date 조회할 날짜
      * @return 날짜별 학생 모니터링 응답
      */
     @Transactional(readOnly = true)
     public StudyTimeMonitorResponse getStudyTimeMonitorByDate(LocalDate date) {
-        // TODO: 쿼리 파라미터로 반/학생/담임 필터링 기능 추가 예정
+        // 날짜를 시간 범위로 변환 (0시부터 다음날 6시까지)
+        LocalDateTime startTime = date.atTime(0, 0, 0);
+        LocalDateTime endTime = date.plusDays(1).atTime(6, 0, 0);
         
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
-        LocalDateTime now = LocalDateTime.now();
+        StudyTimeMonitorResponse response = getStudyTimeMonitorByTimeRangeOptimized(startTime, endTime);
         
-        // 모든 학생 조회 (실제로는 특정 반/담임으로 필터링될 예정)
-        List<User> allStudents = userRepository.findAllStudents();
-        
-        List<StudyTimeMonitorResponse.StudentStudyInfo> studentInfos = new ArrayList<>();
-        
-        for (User student : allStudents) {
-            Long studentId = student.getId();
-            
-            // 학생 기본 정보
-            StudyTimeMonitorResponse.StudentStudyInfo studentInfo = new StudyTimeMonitorResponse.StudentStudyInfo();
-            studentInfo.setStudentId(studentId);
-            studentInfo.setStudentName(student.getName());
-            studentInfo.setStudentPhone(student.getPhoneNumber());
-            
-            // 보호자 정보
-            List<StudyTimeMonitorResponse.GuardianInfo> guardians = getGuardianInfos(studentId);
-            studentInfo.setGuardians(guardians);
-            
-            // 해당 날짜의 할당된 공부시간 조회
-            List<AssignedStudyTime> assignedStudyTimes = assignedStudyTimeRepository
-                    .findByStudentIdAndStartTimeBetweenWithDetails(studentId, startOfDay, endOfDay);
-            
-            // 할당된 공부시간 정보 생성
-            List<StudyTimeMonitorResponse.AssignedStudyInfo> assignedInfos = new ArrayList<>();
-            for (AssignedStudyTime assignedTime : assignedStudyTimes) {
-                StudyTimeMonitorResponse.AssignedStudyInfo assignedInfo = new StudyTimeMonitorResponse.AssignedStudyInfo();
-                assignedInfo.setAssignedStudyTimeId(assignedTime.getId());
-                assignedInfo.setTitle(assignedTime.getTitle());
-                assignedInfo.setStartTime(assignedTime.getStartTime());
-                assignedInfo.setEndTime(assignedTime.getEndTime());
-                
-                // 이 할당에 연결된 실제 접속 기록들
-                List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
-                        .findByAssignedStudyTimeId(assignedTime.getId());
-                
-                List<StudyTimeMonitorResponse.ConnectedActualStudyInfo> connectedInfos = connectedActuals.stream()
-                        .map(actual -> new StudyTimeMonitorResponse.ConnectedActualStudyInfo(
-                                actual.getId(),
-                                actual.getStartTime(),
-                                actual.getEndTime()
-                        ))
-                        .collect(Collectors.toList());
-                
-                assignedInfo.setConnectedActualStudyTimes(connectedInfos);
-                assignedInfos.add(assignedInfo);
-            }
-            studentInfo.setAssignedStudyTimes(assignedInfos);
-            
-            // 해당 날짜의 할당되지 않은 실제 접속 기록들
-            List<ActualStudyTime> unassignedActuals = actualStudyTimeRepository
-                    .findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(studentId, startOfDay, endOfDay);
-            
-            List<StudyTimeMonitorResponse.UnassignedActualStudyInfo> unassignedInfos = unassignedActuals.stream()
-                    .map(actual -> new StudyTimeMonitorResponse.UnassignedActualStudyInfo(
-                            actual.getId(),
-                            actual.getStartTime(),
-                            actual.getEndTime()
-                    ))
-                    .collect(Collectors.toList());
-            studentInfo.setUnassignedActualStudyTimes(unassignedInfos);
-            
-            // 학생 현재 상태 결정
-            StudyTimeMonitorResponse.StudentCurrentStatus status = determineStudentStatus(
-                    assignedStudyTimes, unassignedActuals, now);
-            studentInfo.setStatus(status);
-            
-            studentInfos.add(studentInfo);
-        }
-        
-        StudyTimeMonitorResponse response = new StudyTimeMonitorResponse();
+        // 기존 API 호환성을 위해 date 필드도 설정
         response.setDate(date);
-        response.setStudents(studentInfos);
         
         return response;
     }
     
+    /**
+     * 시간 범위별 학생 공부시간 모니터링 정보를 조회합니다. (최적화된 버전)
+     * N+1 쿼리 문제를 해결하기 위해 배치 쿼리와 메모리 그룹핑을 사용합니다.
+     * @param startTime 조회 시작 시간
+     * @param endTime 조회 종료 시간
+     * @return 시간 범위별 학생 모니터링 응답
+     */
+    @Transactional(readOnly = true)
+    public StudyTimeMonitorResponse getStudyTimeMonitorByTimeRangeOptimized(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRangeForQuery(startTime, endTime);
+        
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 1. 모든 학생 조회 (1개 쿼리)
+        List<User> allStudents = userRepository.findAllStudents();
+        if (allStudents.isEmpty()) {
+            return createEmptyResponse(startTime, endTime);
+        }
+        
+        // 학생 ID 리스트 추출
+        List<Long> studentIds = allStudents.stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+        
+        // 대량 데이터 처리를 위한 배치 크기 설정 (IN 절 최대 크기 제한)
+        final int BATCH_SIZE = 1000;
+        List<List<Long>> studentIdBatches = partitionList(studentIds, BATCH_SIZE);
+        
+        // 2. 배치로 모든 관련 데이터 조회 (배치당 4개 쿼리)
+        Map<Long, List<StudentGuardian>> guardianMap = new HashMap<>();
+        Map<Long, List<AssignedStudyTime>> assignedStudyTimeMap = new HashMap<>();
+        Map<Long, List<ActualStudyTime>> unassignedActualMap = new HashMap<>();
+        List<AssignedStudyTime> allAssignedStudyTimes = new ArrayList<>();
+        
+        for (List<Long> batch : studentIdBatches) {
+            // 보호자 정보 배치 조회
+            List<StudentGuardian> guardians = studentGuardianRepository.findByStudentIds(batch);
+            guardians.forEach(sg -> 
+                guardianMap.computeIfAbsent(sg.getStudent().getId(), k -> new ArrayList<>()).add(sg)
+            );
+            
+            // 할당된 공부시간 배치 조회
+            List<AssignedStudyTime> assignedTimes = assignedStudyTimeRepository
+                    .findByStudentIdsAndDateRangeWithDetails(batch, startTime, endTime);
+            assignedTimes.forEach(ast -> {
+                assignedStudyTimeMap.computeIfAbsent(ast.getStudentId(), k -> new ArrayList<>()).add(ast);
+                allAssignedStudyTimes.add(ast);
+            });
+            
+            // 할당되지 않은 실제 접속 기록 배치 조회
+            List<ActualStudyTime> unassignedActuals = actualStudyTimeRepository
+                    .findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(batch, startTime, endTime);
+            unassignedActuals.forEach(aat -> 
+                unassignedActualMap.computeIfAbsent(aat.getStudentId(), k -> new ArrayList<>()).add(aat)
+            );
+        }
+        
+        // 3. 할당된 공부시간에 연결된 실제 접속 기록 배치 조회
+        Map<Long, List<ActualStudyTime>> connectedActualMap = new HashMap<>();
+        if (!allAssignedStudyTimes.isEmpty()) {
+            List<Long> assignedStudyTimeIds = allAssignedStudyTimes.stream()
+                    .map(AssignedStudyTime::getId)
+                    .collect(Collectors.toList());
+            
+            List<List<Long>> assignedIdBatches = partitionList(assignedStudyTimeIds, BATCH_SIZE);
+            for (List<Long> batch : assignedIdBatches) {
+                List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
+                        .findByAssignedStudyTimeIds(batch);
+                connectedActuals.forEach(cat -> 
+                    connectedActualMap.computeIfAbsent(cat.getAssignedStudyTimeId(), k -> new ArrayList<>()).add(cat)
+                );
+            }
+        }
+        
+        // 4. 메모리에서 데이터 조합
+        List<StudyTimeMonitorResponse.StudentStudyInfo> studentInfos = allStudents.stream()
+                .map(student -> buildStudentStudyInfo(
+                        student,
+                        guardianMap.getOrDefault(student.getId(), Collections.emptyList()),
+                        assignedStudyTimeMap.getOrDefault(student.getId(), Collections.emptyList()),
+                        unassignedActualMap.getOrDefault(student.getId(), Collections.emptyList()),
+                        connectedActualMap,
+                        now
+                ))
+                .collect(Collectors.toList());
+        
+        StudyTimeMonitorResponse response = new StudyTimeMonitorResponse();
+        response.setStartTime(startTime);
+        response.setEndTime(endTime);
+        response.setStudents(studentInfos);
+        
+        log.info("모니터링 데이터 조회 완료: 학생 {}명, 배치 {}개", 
+                allStudents.size(), studentIdBatches.size());
+        
+        return response;
+    }
+
     /**
      * 학생의 보호자 정보를 조회합니다.
      * @param studentId 학생 ID
@@ -522,12 +564,14 @@ public class StudyTimeService {
      * 학생의 현재 상태를 결정합니다.
      * @param assignedStudyTimes 할당된 공부시간 목록
      * @param unassignedActuals 할당되지 않은 실제 접속 기록 목록
+     * @param connectedActualMap 연결된 실제 접속 기록 맵
      * @param now 현재 시간
      * @return 학생 현재 상태
      */
     private StudyTimeMonitorResponse.StudentCurrentStatus determineStudentStatus(
             List<AssignedStudyTime> assignedStudyTimes, 
             List<ActualStudyTime> unassignedActuals, 
+            Map<Long, List<ActualStudyTime>> connectedActualMap,
             LocalDateTime now) {
         
         // 현재 시간에 할당된 공부시간이 있는지 확인
@@ -538,9 +582,9 @@ public class StudyTimeService {
         
         if (currentAssigned != null) {
             // 현재 할당된 시간이 있음
-            // 해당 할당에 연결된 현재 진행중인 접속 기록이 있는지 확인
-            List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
-                    .findByAssignedStudyTimeId(currentAssigned.getId());
+            // 해당 할당에 연결된 현재 진행중인 접속 기록이 있는지 확인 (이미 가져온 데이터 사용)
+            List<ActualStudyTime> connectedActuals = connectedActualMap
+                    .getOrDefault(currentAssigned.getId(), Collections.emptyList());
             
             boolean isCurrentlyAttending = connectedActuals.stream()
                     .anyMatch(actual -> actual.getEndTime() == null || 
@@ -554,6 +598,114 @@ public class StudyTimeService {
             // 현재 할당된 시간이 없음
             return StudyTimeMonitorResponse.StudentCurrentStatus.NO_ASSIGNED_TIME;
         }
+    }
+
+    // 최적화를 위한 헬퍼 메서드들
+    
+    /**
+     * 리스트를 지정된 크기의 배치로 분할합니다.
+     * @param list 분할할 리스트
+     * @param batchSize 배치 크기
+     * @return 분할된 배치 리스트
+     */
+    private <T> List<List<T>> partitionList(List<T> list, int batchSize) {
+        List<List<T>> partitions = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += batchSize) {
+            partitions.add(list.subList(i, Math.min(i + batchSize, list.size())));
+        }
+        return partitions;
+    }
+    
+    /**
+     * 빈 응답 객체를 생성합니다.
+     * @param startTime 시작 시간
+     * @param endTime 종료 시간
+     * @return 빈 모니터링 응답
+     */
+    private StudyTimeMonitorResponse createEmptyResponse(LocalDateTime startTime, LocalDateTime endTime) {
+        StudyTimeMonitorResponse response = new StudyTimeMonitorResponse();
+        response.setStartTime(startTime);
+        response.setEndTime(endTime);
+        response.setStudents(Collections.emptyList());
+        return response;
+    }
+    
+    /**
+     * 학생의 공부 정보를 구성합니다.
+     * @param student 학생 정보
+     * @param guardians 보호자 목록
+     * @param assignedStudyTimes 할당된 공부시간 목록
+     * @param unassignedActuals 할당되지 않은 실제 접속 기록 목록
+     * @param connectedActualMap 연결된 실제 접속 기록 맵
+     * @param now 현재 시간
+     * @return 학생 공부 정보
+     */
+    private StudyTimeMonitorResponse.StudentStudyInfo buildStudentStudyInfo(
+            User student,
+            List<StudentGuardian> guardians,
+            List<AssignedStudyTime> assignedStudyTimes,
+            List<ActualStudyTime> unassignedActuals,
+            Map<Long, List<ActualStudyTime>> connectedActualMap,
+            LocalDateTime now) {
+        
+        StudyTimeMonitorResponse.StudentStudyInfo studentInfo = new StudyTimeMonitorResponse.StudentStudyInfo();
+        studentInfo.setStudentId(student.getId());
+        studentInfo.setStudentName(student.getName());
+        studentInfo.setStudentPhone(student.getPhoneNumber());
+        
+        // 보호자 정보 변환
+        List<StudyTimeMonitorResponse.GuardianInfo> guardianInfos = guardians.stream()
+                .map(sg -> new StudyTimeMonitorResponse.GuardianInfo(
+                        sg.getGuardian().getId(),
+                        sg.getGuardian().getPhoneNumber(),
+                        sg.getRelationship()
+                ))
+                .collect(Collectors.toList());
+        studentInfo.setGuardians(guardianInfos);
+        
+        // 할당된 공부시간 정보 변환
+        List<StudyTimeMonitorResponse.AssignedStudyInfo> assignedInfos = assignedStudyTimes.stream()
+                .map(assignedTime -> {
+                    StudyTimeMonitorResponse.AssignedStudyInfo assignedInfo = new StudyTimeMonitorResponse.AssignedStudyInfo();
+                    assignedInfo.setAssignedStudyTimeId(assignedTime.getId());
+                    assignedInfo.setTitle(assignedTime.getTitle());
+                    assignedInfo.setStartTime(assignedTime.getStartTime());
+                    assignedInfo.setEndTime(assignedTime.getEndTime());
+                    
+                    // 연결된 실제 접속 기록 조회
+                    List<ActualStudyTime> connectedActuals = connectedActualMap
+                            .getOrDefault(assignedTime.getId(), Collections.emptyList());
+                    
+                    List<StudyTimeMonitorResponse.ConnectedActualStudyInfo> connectedInfos = connectedActuals.stream()
+                            .map(actual -> new StudyTimeMonitorResponse.ConnectedActualStudyInfo(
+                                    actual.getId(),
+                                    actual.getStartTime(),
+                                    actual.getEndTime()
+                            ))
+                            .collect(Collectors.toList());
+                    
+                    assignedInfo.setConnectedActualStudyTimes(connectedInfos);
+                    return assignedInfo;
+                })
+                .collect(Collectors.toList());
+        studentInfo.setAssignedStudyTimes(assignedInfos);
+        
+        // 할당되지 않은 실제 접속 기록 변환
+        List<StudyTimeMonitorResponse.UnassignedActualStudyInfo> unassignedInfos = unassignedActuals.stream()
+                .map(actual -> new StudyTimeMonitorResponse.UnassignedActualStudyInfo(
+                        actual.getId(),
+                        actual.getStartTime(),
+                        actual.getEndTime()
+                ))
+                .collect(Collectors.toList());
+        studentInfo.setUnassignedActualStudyTimes(unassignedInfos);
+        
+        // 학생 현재 상태 결정
+        StudyTimeMonitorResponse.StudentCurrentStatus status = determineStudentStatus(
+                assignedStudyTimes, unassignedActuals, connectedActualMap, now);
+        studentInfo.setStatus(status);
+        
+        return studentInfo;
     }
 
     // 검증 메서드들

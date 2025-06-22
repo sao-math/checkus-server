@@ -130,4 +130,18 @@ public interface AssignedStudyTimeRepository extends JpaRepository<AssignedStudy
            "LEFT JOIN FETCH ast.assignedByUser " +
            "WHERE ast.id = :id")
     AssignedStudyTime findByIdWithDetails(@Param("id") Long id);
+    
+    // 배치 조회: 여러 학생의 할당된 공부시간을 한 번에 조회
+    @Query("SELECT ast FROM AssignedStudyTime ast " +
+           "LEFT JOIN FETCH ast.student " +
+           "LEFT JOIN FETCH ast.activity " +
+           "LEFT JOIN FETCH ast.assignedByUser " +
+           "WHERE ast.studentId IN :studentIds " +
+           "AND ast.startTime BETWEEN :startDate AND :endDate " +
+           "ORDER BY ast.studentId, ast.startTime")
+    List<AssignedStudyTime> findByStudentIdsAndDateRangeWithDetails(
+            @Param("studentIds") List<Long> studentIds,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

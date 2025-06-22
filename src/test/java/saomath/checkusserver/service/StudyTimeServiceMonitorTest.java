@@ -110,26 +110,27 @@ class StudyTimeServiceMonitorTest {
     }
 
     @Test
-    @DisplayName("성공: 날짜별 학생 모니터링 정보 조회")
-    void getStudyTimeMonitorByDate_Success() {
+    @DisplayName("성공: 날짜별 학생 모니터링 정보 조회 - 최적화된 버전")
+    void getStudyTimeMonitorByDate_Success_Optimized() {
         // given
         LocalDate targetDate = LocalDate.parse("2025-06-18");
         
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList(testStudentGuardian));
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L)))
+                .thenReturn(Arrays.asList(testStudentGuardian));
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(testAssignedStudyTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(testConnectedActualStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(testUnassignedActualStudyTime));
 
         // when
         StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(targetDate);
 
-        // then
+        // then - 기존 검증 로직과 동일
         assertThat(result).isNotNull();
         assertThat(result.getDate()).isEqualTo(targetDate);
         assertThat(result.getStudents()).hasSize(1);
@@ -193,12 +194,12 @@ class StudyTimeServiceMonitorTest {
         LocalDate targetDate = LocalDate.parse("2025-06-18");
         
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList());
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList());
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList());
 
         // when
@@ -240,14 +241,14 @@ class StudyTimeServiceMonitorTest {
                 .build();
 
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList());
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(currentAssignedTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(ongoingActual));
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList());
 
         // when
@@ -276,14 +277,14 @@ class StudyTimeServiceMonitorTest {
                 .build();
 
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList());
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(currentAssignedTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList());  // 연결된 접속 기록 없음
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList());
 
         // when
@@ -308,26 +309,18 @@ class StudyTimeServiceMonitorTest {
                 .build();
 
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent, student2));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList(testStudentGuardian));
-        when(studentGuardianRepository.findByStudentId(2L)).thenReturn(Arrays.asList());
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L, 2L)))
+                .thenReturn(Arrays.asList(testStudentGuardian)); // 첫 번째 학생만 보호자 있음
         
         // 첫 번째 학생은 할당된 시간이 있음
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(Arrays.asList(testAssignedStudyTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L, 2L)), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testAssignedStudyTime)); // 첫 번째 학생만 할당된 시간 있음
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(testConnectedActualStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(Arrays.asList());
-        
-        // 두 번째 학생은 할당된 시간이 없음
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                eq(2L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(Arrays.asList());
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                eq(2L), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(Arrays.asList());
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L, 2L)), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList()); // 두 학생 모두 할당되지 않은 접속 기록 없음
 
         // when
         StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(targetDate);
@@ -365,14 +358,14 @@ class StudyTimeServiceMonitorTest {
                 .build();
 
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList());
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(testAssignedStudyTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(testConnectedActualStudyTime, secondConnectedActual));
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList());
 
         // when
