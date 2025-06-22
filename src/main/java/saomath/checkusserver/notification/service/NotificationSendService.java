@@ -71,10 +71,17 @@ public class NotificationSendService {
     }
 
     /**
-     * 사용 가능한 템플릿 목록 조회
+     * 사용 가능한 템플릿 목록 조회 (D1, D2, D3만)
      */
     public List<NotificationTemplateDto> getAvailableTemplates() {
-        return Arrays.stream(AlimtalkTemplate.values())
+        // D1, D2, D3에 해당하는 템플릿만 필터링
+        List<AlimtalkTemplate> allowedTemplates = Arrays.asList(
+            AlimtalkTemplate.STUDY_REMINDER_10MIN,  // D0001 (D1)
+            AlimtalkTemplate.STUDY_START,           // D0002 (D2)
+            AlimtalkTemplate.NO_SHOW               // D0003 (D3)
+        );
+        
+        return allowedTemplates.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
