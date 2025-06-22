@@ -27,7 +27,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.Use
     
     // 최적화된 DTO 직접 조회 쿼리 (학생 프로필 정보 포함)
     @Query("""
-        SELECT new saomath.checkusserver.auth.dto.UserRoleResponse(
+        SELECT new saomath.checkusserver.user.dto.UserRoleResponse(
             ur.id.userId, u.username, u.name, 
             ur.id.roleId, r.name, ur.status,
             s.name, sp.grade
