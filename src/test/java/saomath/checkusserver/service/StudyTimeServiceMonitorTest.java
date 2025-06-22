@@ -110,26 +110,27 @@ class StudyTimeServiceMonitorTest {
     }
 
     @Test
-    @DisplayName("성공: 날짜별 학생 모니터링 정보 조회")
-    void getStudyTimeMonitorByDate_Success() {
+    @DisplayName("성공: 날짜별 학생 모니터링 정보 조회 - 최적화된 버전")
+    void getStudyTimeMonitorByDate_Success_Optimized() {
         // given
         LocalDate targetDate = LocalDate.parse("2025-06-18");
         
         when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
-        when(studentGuardianRepository.findByStudentId(1L)).thenReturn(Arrays.asList(testStudentGuardian));
-        when(assignedStudyTimeRepository.findByStudentIdAndStartTimeBetweenWithDetails(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L)))
+                .thenReturn(Arrays.asList(testStudentGuardian));
+        when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(testAssignedStudyTime));
-        when(actualStudyTimeRepository.findByAssignedStudyTimeId(1L))
+        when(actualStudyTimeRepository.findByAssignedStudyTimeIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(testConnectedActualStudyTime));
-        when(actualStudyTimeRepository.findByStudentIdAndDateRangeAndAssignedStudyTimeIdIsNull(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(actualStudyTimeRepository.findByStudentIdsAndDateRangeAndAssignedStudyTimeIdIsNull(
+                eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(testUnassignedActualStudyTime));
 
         // when
         StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(targetDate);
 
-        // then
+        // then - 기존 검증 로직과 동일
         assertThat(result).isNotNull();
         assertThat(result.getDate()).isEqualTo(targetDate);
         assertThat(result.getStudents()).hasSize(1);
