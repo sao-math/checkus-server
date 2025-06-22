@@ -10,6 +10,7 @@ import saomath.checkusserver.classroom.domain.ClassEntity;
 import saomath.checkusserver.classroom.domain.StudentClass;
 import saomath.checkusserver.classroom.repository.ClassRepository;
 import saomath.checkusserver.classroom.repository.StudentClassRepository;
+import saomath.checkusserver.discord.service.VoiceChannelEventService;
 import saomath.checkusserver.user.domain.RoleConstants;
 import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentGuardian;
@@ -22,6 +23,8 @@ import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.user.repository.StudentGuardianRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.notification.event.UserRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,6 +42,8 @@ public class StudentService {
     private final SchoolRepository schoolRepository;
     private final ClassRepository classRepository;
     private final UserRoleService userRoleService;
+    private final VoiceChannelEventService voiceChannelEventService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 필터링된 학생 목록을 조회합니다.
@@ -161,6 +166,11 @@ public class StudentService {
         StudentProfile studentProfile = studentProfileRepository.findByUserId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("학생 프로필을 찾을 수 없습니다. ID: " + studentId));
 
+        // Discord ID 변경 여부 확인 (트랜잭션 커밋 후 처리를 위해 미리 저장)
+        String oldDiscordId = student.getDiscordId();
+        String newDiscordId = updateRequest.getDiscordId();
+        boolean discordIdChanged = (newDiscordId != null && !newDiscordId.equals(oldDiscordId));
+
         // 기본 정보 업데이트
         updateBasicInfo(student, updateRequest);
 
@@ -176,8 +186,16 @@ public class StudentService {
         // 저장
         userRepository.save(student);
         studentProfileRepository.save(studentProfile);
+        
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
 
         log.info("학생 정보 수정 성공 - studentId: {}, name: {}", studentId, student.getName());
+
+        // Discord ID 변경된 경우 트랜잭션 커밋 후 음성채널 확인을 위한 이벤트 발행
+        if (discordIdChanged) {
+            applicationEventPublisher.publishEvent(new UserRegisteredEvent(student, "DISCORD_ID_UPDATE", oldDiscordId));
+        }
 
         // 수정된 정보 반환
         return getStudentDetail(studentId);

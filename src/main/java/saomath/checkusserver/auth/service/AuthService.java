@@ -20,12 +20,15 @@ import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.common.exception.AuthenticationException;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.common.exception.DuplicateResourceException;
+import saomath.checkusserver.discord.service.VoiceChannelEventService;
 import saomath.checkusserver.user.domain.RoleConstants;
 import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentProfile;
 import saomath.checkusserver.school.repository.SchoolRepository;
 import saomath.checkusserver.user.repository.StudentProfileRepository;
 import saomath.checkusserver.user.service.UserRoleService;
+import saomath.checkusserver.notification.event.UserRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -42,6 +45,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final VoiceChannelEventService voiceChannelEventService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private void checkDuplicateUsernameAndPhoneNumber(String username, String phoneNumber) {
         if (userRepository.existsByUsername(username)) {
@@ -86,7 +91,13 @@ public class AuthService {
         // 학생 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.STUDENT, UserRole.RoleStatus.PENDING);
 
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
+
         log.info("학생 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "학생 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
@@ -107,7 +118,13 @@ public class AuthService {
         // 학부모 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.GUARDIAN, UserRole.RoleStatus.PENDING);
 
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
+
         log.info("학부모 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "학부모 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
@@ -129,7 +146,13 @@ public class AuthService {
         // 교사 역할 할당 (승인 필요)
         userRoleService.assignRole(savedUser, RoleConstants.TEACHER, UserRole.RoleStatus.PENDING);
 
+        // 즉시 DB 반영 (Discord 채널 확인 전에 필요)
+        userRepository.flush();
+
         log.info("교사 회원가입 완료: {}", savedUser.getUsername());
+
+        // 트랜잭션 커밋 후 Discord 채널 확인을 위한 이벤트 발행
+        applicationEventPublisher.publishEvent(new UserRegisteredEvent(savedUser, "REGISTER"));
         
         return new RegisterResponse(savedUser.getId(), savedUser.getUsername(), 
                                   "교사 회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
