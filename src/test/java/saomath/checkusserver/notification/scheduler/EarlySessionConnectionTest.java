@@ -250,9 +250,10 @@ class SessionConnectionTest {
     @Test
     @DisplayName("학생 접속 시 정확한 시간 범위 매칭으로 연결해야 함")
     void shouldConnectWithExactTimeRangeMatching() {
-        // Given: 할당된 공부시간 (09:40-10:40)
-        LocalDateTime assignedStartTime = LocalDateTime.of(2025, 6, 21, 9, 40);
-        LocalDateTime assignedEndTime = LocalDateTime.of(2025, 6, 21, 10, 40);
+        // Given: 할당된 공부시간 (현재 시간 기준으로 설정)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime assignedStartTime = now.plusMinutes(10);
+        LocalDateTime assignedEndTime = now.plusMinutes(70);
 
         AssignedStudyTime assignedStudyTime = AssignedStudyTime.builder()
                 .studentId(testStudent.getId())
@@ -265,7 +266,7 @@ class SessionConnectionTest {
         assignedStudyTime = assignedStudyTimeRepository.save(assignedStudyTime);
 
         // When: 할당된 시간 범위 내에 접속
-        LocalDateTime connectionTime = LocalDateTime.now().plusMinutes(30);
+        LocalDateTime connectionTime = now.plusMinutes(30);
         ActualStudyTime actualStudyTime = studyTimeService.recordStudyStart(
                 testStudent.getId(), 
                 connectionTime, 
