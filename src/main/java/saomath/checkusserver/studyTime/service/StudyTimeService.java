@@ -564,12 +564,14 @@ public class StudyTimeService {
      * 학생의 현재 상태를 결정합니다.
      * @param assignedStudyTimes 할당된 공부시간 목록
      * @param unassignedActuals 할당되지 않은 실제 접속 기록 목록
+     * @param connectedActualMap 연결된 실제 접속 기록 맵
      * @param now 현재 시간
      * @return 학생 현재 상태
      */
     private StudyTimeMonitorResponse.StudentCurrentStatus determineStudentStatus(
             List<AssignedStudyTime> assignedStudyTimes, 
             List<ActualStudyTime> unassignedActuals, 
+            Map<Long, List<ActualStudyTime>> connectedActualMap,
             LocalDateTime now) {
         
         // 현재 시간에 할당된 공부시간이 있는지 확인
@@ -580,9 +582,9 @@ public class StudyTimeService {
         
         if (currentAssigned != null) {
             // 현재 할당된 시간이 있음
-            // 해당 할당에 연결된 현재 진행중인 접속 기록이 있는지 확인
-            List<ActualStudyTime> connectedActuals = actualStudyTimeRepository
-                    .findByAssignedStudyTimeId(currentAssigned.getId());
+            // 해당 할당에 연결된 현재 진행중인 접속 기록이 있는지 확인 (이미 가져온 데이터 사용)
+            List<ActualStudyTime> connectedActuals = connectedActualMap
+                    .getOrDefault(currentAssigned.getId(), Collections.emptyList());
             
             boolean isCurrentlyAttending = connectedActuals.stream()
                     .anyMatch(actual -> actual.getEndTime() == null || 
@@ -700,7 +702,7 @@ public class StudyTimeService {
         
         // 학생 현재 상태 결정
         StudyTimeMonitorResponse.StudentCurrentStatus status = determineStudentStatus(
-                assignedStudyTimes, unassignedActuals, now);
+                assignedStudyTimes, unassignedActuals, connectedActualMap, now);
         studentInfo.setStatus(status);
         
         return studentInfo;

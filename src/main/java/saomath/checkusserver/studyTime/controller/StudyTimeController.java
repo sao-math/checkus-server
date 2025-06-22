@@ -437,11 +437,8 @@ public class StudyTimeController {
                         .body(ResponseBase.error("날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식으로 입력해주세요."));
             }
             
-            // 날짜를 시간 범위로 변환 (0시부터 다음날 6시까지)
-            LocalDateTime startTime = date.atTime(0, 0, 0);
-            LocalDateTime endTime = date.plusDays(1).atTime(6, 0, 0);
-            
-            StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByTimeRange(startTime, endTime);
+            // 날짜 기반 서비스 메서드 호출 (date 필드가 설정됨)
+            StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(date);
             
             return ResponseEntity.ok(
                     ResponseBase.success("학생 모니터링 정보를 성공적으로 조회했습니다.", result));
