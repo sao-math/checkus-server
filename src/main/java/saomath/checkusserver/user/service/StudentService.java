@@ -10,6 +10,7 @@ import saomath.checkusserver.classroom.domain.ClassEntity;
 import saomath.checkusserver.classroom.domain.StudentClass;
 import saomath.checkusserver.classroom.repository.ClassRepository;
 import saomath.checkusserver.classroom.repository.StudentClassRepository;
+import saomath.checkusserver.discord.service.VoiceChannelEventService;
 import saomath.checkusserver.user.domain.RoleConstants;
 import saomath.checkusserver.school.domain.School;
 import saomath.checkusserver.user.domain.StudentGuardian;
@@ -39,6 +40,7 @@ public class StudentService {
     private final SchoolRepository schoolRepository;
     private final ClassRepository classRepository;
     private final UserRoleService userRoleService;
+    private final VoiceChannelEventService voiceChannelEventService;
 
     /**
      * 필터링된 학생 목록을 조회합니다.
@@ -187,6 +189,8 @@ public class StudentService {
      * 기본 정보 업데이트
      */
     private void updateBasicInfo(User student, StudentUpdateRequest updateRequest) {
+        String oldDiscordId = student.getDiscordId();
+        
         if (updateRequest.getName() != null) {
             student.setName(updateRequest.getName());
         }
@@ -195,6 +199,36 @@ public class StudentService {
         }
         if (updateRequest.getDiscordId() != null) {
             student.setDiscordId(updateRequest.getDiscordId());
+            
+            // Discord ID가 새로 추가되거나 변경된 경우, 현재 음성채널에 있는지 확인
+            if (!updateRequest.getDiscordId().equals(oldDiscordId)) {
+                checkAndStartRecordingForUpdatedDiscordId(student, oldDiscordId, updateRequest.getDiscordId());
+            }
+        }
+    }
+
+    /**
+     * Discord ID 업데이트 후 음성채널 확인 및 기록 시작
+     */
+    private void checkAndStartRecordingForUpdatedDiscordId(User student, String oldDiscordId, String newDiscordId) {
+        try {
+            if (newDiscordId == null || newDiscordId.trim().isEmpty()) {
+                log.debug("사용자 {}의 Discord ID가 제거되었습니다.", student.getUsername());
+                return;
+            }
+            
+            if (oldDiscordId == null || oldDiscordId.trim().isEmpty()) {
+                log.info("사용자 {}에게 새로운 Discord ID가 추가되었습니다: {}", student.getUsername(), newDiscordId);
+            } else {
+                log.info("사용자 {}의 Discord ID가 변경되었습니다: {} -> {}", student.getUsername(), oldDiscordId, newDiscordId);
+            }
+            
+            // 새로운 Discord ID로 현재 음성채널에 있는지 확인하고 기록 시작
+            voiceChannelEventService.checkAndStartRecordingForNewUser(student);
+            
+        } catch (Exception e) {
+            log.error("사용자 {}의 Discord ID 업데이트 후 음성채널 확인 중 오류 발생", student.getUsername(), e);
+            // 오류가 발생해도 사용자 정보 업데이트는 성공으로 처리
         }
     }
 

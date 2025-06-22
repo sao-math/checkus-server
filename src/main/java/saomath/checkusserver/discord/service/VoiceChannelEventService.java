@@ -337,4 +337,68 @@ public class VoiceChannelEventService {
                 event.getUsername(), e);
         }
     }
+
+    /**
+     * 새로 등록된 사용자가 현재 음성채널에 있는지 확인하고 공부 시간 기록 시작
+     * 사용자 등록 후에 호출되어 이미 음성채널에 있던 사용자의 기록을 시작
+     */
+    public void checkAndStartRecordingForNewUser(User user) {
+        if (user.getDiscordId() == null || user.getDiscordId().isEmpty()) {
+            log.debug("사용자 {}는 Discord ID가 없어 음성채널 확인을 건너뜁니다.", user.getUsername());
+            return;
+        }
+
+        try {
+            // 현재 음성채널 멤버 맵에서 해당 사용자가 있는지 확인
+            for (Map.Entry<String, List<String>> entry : currentVoiceChannelMembers.entrySet()) {
+                String channelId = entry.getKey();
+                List<String> members = entry.getValue();
+                
+                if (members.contains(user.getDiscordId())) {
+                    log.info("새로 등록된 사용자 {}가 현재 음성채널 {}에 있음을 발견. 공부 시간 기록 시작", 
+                            user.getUsername(), channelId);
+                    
+                    // 현재 시간으로 공부 시작 기록
+                    LocalDateTime now = LocalDateTime.now();
+                    ActualStudyTime studyStart = studyTimeService.recordStudyStart(
+                            user.getId(), now, "discord");
+                    
+                    log.info("기존 음성채널 사용자 공부 시작 기록됨: 학생 ID={}, 시작 시간={}", 
+                            user.getId(), now);
+                    
+                    // 스터디룸 입장 이벤트 발행 (채널 정보는 임시로 ID만 사용)
+                    publishStudyRoomEnterEventForExistingUser(user, channelId, now);
+                    
+                    return; // 하나의 채널에만 있을 수 있으므로 찾으면 종료
+                }
+            }
+            
+            log.debug("새로 등록된 사용자 {}는 현재 음성채널에 없습니다.", user.getUsername());
+            
+        } catch (Exception e) {
+            log.error("새로 등록된 사용자 {}의 음성채널 확인 중 오류 발생", user.getUsername(), e);
+        }
+    }
+
+    /**
+     * 기존 음성채널 사용자를 위한 스터디룸 입장 이벤트 발행
+     */
+    private void publishStudyRoomEnterEventForExistingUser(User user, String channelId, LocalDateTime enterTime) {
+        try {
+            StudyRoomEnterEvent enterEvent = StudyRoomEnterEvent.builder()
+                .studentId(user.getId())
+                .studentName(user.getName())
+                .discordId(user.getDiscordId())
+                .enterTime(enterTime)
+                .channelName("음성채널-" + channelId) // 임시 채널명 (실제 채널명 조회 어려움)
+                .build();
+            
+            eventPublisher.publishEvent(enterEvent);
+            log.debug("기존 음성채널 사용자 입장 이벤트 발행: 학생={}, 채널={}", 
+                user.getName(), channelId);
+        } catch (Exception e) {
+            log.error("기존 음성채널 사용자 입장 이벤트 발행 중 오류 발생: 사용자={}", 
+                user.getUsername(), e);
+        }
+    }
 }
