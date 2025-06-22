@@ -1,5 +1,6 @@
 package saomath.checkusserver.notification.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,21 +27,4 @@ public class NotificationSendRequest {
     
     @Schema(description = "자유 메시지 (discord만 가능)", example = "안녕하세요! 오늘 과제 확인 부탁드립니다.")
     private String customMessage;
-    
-    // Validation을 위한 메서드들
-    public boolean hasTemplate() {
-        return templateId != null && !templateId.trim().isEmpty();
-    }
-    
-    public boolean hasCustomMessage() {
-        return customMessage != null && !customMessage.trim().isEmpty();
-    }
-    
-    public boolean isDiscord() {
-        return "discord".equalsIgnoreCase(deliveryMethod);
-    }
-    
-    public boolean isAlimtalk() {
-        return "alimtalk".equalsIgnoreCase(deliveryMethod);
-    }
 }

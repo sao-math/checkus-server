@@ -7,6 +7,7 @@ import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
+import saomath.checkusserver.notification.domain.DeliveryMethod;
 import saomath.checkusserver.notification.dto.NotificationSendRequest;
 import saomath.checkusserver.notification.dto.NotificationSendResponse;
 import saomath.checkusserver.notification.dto.NotificationTemplateDto;
@@ -72,19 +73,25 @@ public class NotificationSendService {
     /**
      * 수신자 정보 검증 및 조회
      */
-    private String validateAndGetRecipient(User student, String deliveryMethod) {
-        if ("alimtalk".equalsIgnoreCase(deliveryMethod)) {
-            if (student.getPhoneNumber() == null || student.getPhoneNumber().trim().isEmpty()) {
-                throw new BusinessException("학생의 전화번호가 등록되지 않았습니다.");
-            }
-            return student.getPhoneNumber();
-        } else if ("discord".equalsIgnoreCase(deliveryMethod)) {
-            if (student.getDiscordId() == null || student.getDiscordId().trim().isEmpty()) {
-                throw new BusinessException("학생의 디스코드 ID가 등록되지 않았습니다.");
-            }
-            return student.getDiscordId();
-        } else {
+    private String validateAndGetRecipient(User student, String deliveryMethodValue) {
+        DeliveryMethod deliveryMethod = DeliveryMethod.fromValue(deliveryMethodValue);
+        if (deliveryMethod == null) {
             throw new BusinessException("지원하지 않는 발송 방법입니다.");
+        }
+        
+        switch (deliveryMethod) {
+            case ALIMTALK:
+                if (student.getPhoneNumber() == null || student.getPhoneNumber().trim().isEmpty()) {
+                    throw new BusinessException("학생의 전화번호가 등록되지 않았습니다.");
+                }
+                return student.getPhoneNumber();
+            case DISCORD:
+                if (student.getDiscordId() == null || student.getDiscordId().trim().isEmpty()) {
+                    throw new BusinessException("학생의 디스코드 ID가 등록되지 않았습니다.");
+                }
+                return student.getDiscordId();
+            default:
+                throw new BusinessException("지원하지 않는 발송 방법입니다.");
         }
     }
 
@@ -92,13 +99,17 @@ public class NotificationSendService {
      * 메시지 생성 (템플릿 또는 자유 메시지)
      */
     private String createMessage(NotificationSendRequest request, User student) {
-        if (request.hasCustomMessage()) {
+        if (hasCustomMessage(request)) {
             // 자유 메시지 사용
             return request.getCustomMessage();
         } else {
             // 템플릿 사용
             return createTemplateMessage(request.getTemplateId(), student);
         }
+    }
+    
+    private boolean hasCustomMessage(NotificationSendRequest request) {
+        return request.getCustomMessage() != null && !request.getCustomMessage().trim().isEmpty();
     }
 
     /**
@@ -161,30 +172,38 @@ public class NotificationSendService {
     /**
      * 실제 메시지 발송
      */
-    private boolean sendMessage(String deliveryMethod, String recipient, String message, String templateId) {
+    private boolean sendMessage(String deliveryMethodValue, String recipient, String message, String templateId) {
         try {
-            if ("alimtalk".equalsIgnoreCase(deliveryMethod)) {
-                // 카카오톡 발송
-                if (templateId != null) {
-                    // 템플릿 사용시
-                    AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
-                    Map<String, String> variables = extractVariablesFromMessage(message, template.getTemplateMessage());
-                    return directAlimtalkService.sendAlimtalk(recipient, template, variables);
-                } else {
-                    // 이론상 여기는 도달하지 않음 (카카오톡은 자유 메시지 불가)
-                    return false;
-                }
-            } else if ("discord".equalsIgnoreCase(deliveryMethod)) {
-                // 디스코드 발송
-                if (templateId != null) {
-                    return discordNotificationService.sendNotification(recipient, templateId, new HashMap<>()).join();
-                } else {
-                    // 자유 메시지 - 임시로 CUSTOM 템플릿 ID 사용
-                    return discordNotificationService.sendNotification(recipient, "CUSTOM", Map.of("message", message)).join();
-                }
+            DeliveryMethod deliveryMethod = DeliveryMethod.fromValue(deliveryMethodValue);
+            if (deliveryMethod == null) {
+                log.error("지원하지 않는 발송 방법: {}", deliveryMethodValue);
+                return false;
             }
             
-            return false;
+            switch (deliveryMethod) {
+                case ALIMTALK:
+                    // 카카오톡 발송
+                    if (templateId != null) {
+                        // 템플릿 사용시
+                        AlimtalkTemplate template = AlimtalkTemplate.valueOf(templateId);
+                        Map<String, String> variables = extractVariablesFromMessage(message, template.getTemplateMessage());
+                        return directAlimtalkService.sendAlimtalk(recipient, template, variables);
+                    } else {
+                        // 이론상 여기는 도달하지 않음 (카카오톡은 자유 메시지 불가)
+                        return false;
+                    }
+                case DISCORD:
+                    // 디스코드 발송
+                    if (templateId != null) {
+                        return discordNotificationService.sendNotification(recipient, templateId, new HashMap<>()).join();
+                    } else {
+                        // 자유 메시지 - 임시로 CUSTOM 템플릿 ID 사용
+                        return discordNotificationService.sendNotification(recipient, "CUSTOM", Map.of("message", message)).join();
+                    }
+                default:
+                    log.error("처리할 수 없는 발송 방법: {}", deliveryMethod);
+                    return false;
+            }
         } catch (Exception e) {
             log.error("메시지 발송 중 오류 발생", e);
             return false;
