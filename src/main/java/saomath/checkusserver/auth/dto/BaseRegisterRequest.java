@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import saomath.checkusserver.validation.ValidPassword;
-import saomath.checkusserver.validation.ValidPhoneNumber;
-import saomath.checkusserver.validation.ValidUsername;
+import saomath.checkusserver.common.validation.ValidPassword;
+import saomath.checkusserver.common.validation.ValidPhoneNumber;
+import saomath.checkusserver.common.validation.ValidUsername;
 
 @Data
 @Schema(description = "회원가입 기본 요청 DTO")

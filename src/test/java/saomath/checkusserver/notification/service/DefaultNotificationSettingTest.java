@@ -5,10 +5,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.*;
+import saomath.checkusserver.auth.domain.Role;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.domain.UserRole;
+import saomath.checkusserver.auth.repository.RoleRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRoleRepository;
+import saomath.checkusserver.notification.domain.NotificationSetting;
+import saomath.checkusserver.notification.repository.NotificationSettingRepository;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.domain.DefaultNotificationSetting;
-import saomath.checkusserver.repository.*;
 
 import java.util.List;
 import java.util.Set;

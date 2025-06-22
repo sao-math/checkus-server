@@ -13,12 +13,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.studyTime.domain.Activity;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.auth.domain.User;
 import saomath.checkusserver.repository.ActivityRepository;
 import saomath.checkusserver.repository.AssignedStudyTimeRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;

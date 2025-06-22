@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import saomath.checkusserver.auth.domain.CustomUserPrincipal;
 
 import java.io.IOException;
 import java.util.List;
@@ -103,8 +104,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             log.info("Creating CustomUserPrincipal with userId: {}, username: {}", userId, username);
             // CustomUserPrincipal 객체 생성
-            saomath.checkusserver.auth.CustomUserPrincipal userPrincipal = 
-                new saomath.checkusserver.auth.CustomUserPrincipal(
+            CustomUserPrincipal userPrincipal =
+                new CustomUserPrincipal(
                     userId,
                     username,
                     null, // password는 JWT에서 제공하지 않음

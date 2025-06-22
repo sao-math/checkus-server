@@ -6,9 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.User;
+import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.studyTime.domain.Activity;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.studyTime.repository.ActivityRepository;
+import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

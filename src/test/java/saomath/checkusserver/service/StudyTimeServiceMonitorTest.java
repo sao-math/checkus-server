@@ -7,14 +7,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import saomath.checkusserver.dto.StudyTimeMonitorResponse;
-import saomath.checkusserver.entity.*;
-import saomath.checkusserver.repository.*;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.studyTime.dto.StudyTimeMonitorResponse;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.repository.ActivityRepository;
+import saomath.checkusserver.studyTime.repository.ActualStudyTimeRepository;
+import saomath.checkusserver.studyTime.repository.AssignedStudyTimeRepository;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
+import saomath.checkusserver.user.domain.StudentGuardian;
+import saomath.checkusserver.user.repository.StudentGuardianRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

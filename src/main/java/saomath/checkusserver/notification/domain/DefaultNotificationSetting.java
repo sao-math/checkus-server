@@ -2,7 +2,7 @@ package saomath.checkusserver.notification.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import saomath.checkusserver.entity.RoleConstants;
+import saomath.checkusserver.user.domain.RoleConstants;
 
 import java.util.Map;
 import java.util.Set;

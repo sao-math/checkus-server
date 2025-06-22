@@ -1,7 +1,6 @@
 package saomath.checkusserver.notification.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,25 +9,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import saomath.checkusserver.auth.CustomUserPrincipal;
+import saomath.checkusserver.auth.domain.CustomUserPrincipal;
 import saomath.checkusserver.auth.dto.ResponseBase;
-import saomath.checkusserver.entity.User;
-import saomath.checkusserver.exception.BusinessException;
+import saomath.checkusserver.common.exception.BusinessException;
 import saomath.checkusserver.notification.dto.*;
-import saomath.checkusserver.notification.event.StudyRoomEnterEvent;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
 import saomath.checkusserver.notification.service.DirectAlimtalkService;
 import saomath.checkusserver.notification.service.NotificationPreferenceService;
-import saomath.checkusserver.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;

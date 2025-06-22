@@ -16,14 +16,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import saomath.checkusserver.auth.CustomUserPrincipal;
-import saomath.checkusserver.dto.AssignStudyTimeRequest;
-import saomath.checkusserver.entity.Activity;
-import saomath.checkusserver.entity.AssignedStudyTime;
-import saomath.checkusserver.entity.ActualStudyTime;
-import saomath.checkusserver.exception.BusinessException;
-import saomath.checkusserver.exception.ResourceNotFoundException;
-import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.auth.domain.CustomUserPrincipal;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.studyTime.dto.AssignStudyTimeRequest;
+import saomath.checkusserver.studyTime.domain.Activity;
+import saomath.checkusserver.studyTime.domain.AssignedStudyTime;
+import saomath.checkusserver.studyTime.domain.ActualStudyTime;
+import saomath.checkusserver.common.exception.BusinessException;
+import saomath.checkusserver.common.exception.ResourceNotFoundException;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
+import saomath.checkusserver.studyTime.controller.StudyTimeController;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = StudyTimeController.class, 
+@WebMvcTest(controllers = StudyTimeController.class,
             excludeAutoConfiguration = {
                     SecurityAutoConfiguration.class, 
                     UserDetailsServiceAutoConfiguration.class,
@@ -61,8 +63,8 @@ class StudyTimeControllerTest {
     private AssignedStudyTime mockAssignedStudyTime;
     private ActualStudyTime mockActualStudyTime;
     private Activity mockActivity;
-    private saomath.checkusserver.entity.User mockStudent;
-    private saomath.checkusserver.entity.User mockTeacher;
+    private User mockStudent;
+    private User mockTeacher;
 
     @BeforeEach
     void setUp() {
@@ -77,12 +79,12 @@ class StudyTimeControllerTest {
         SecurityContextHolder.setContext(securityContext);
         
         // Mock 데이터 설정
-        mockStudent = saomath.checkusserver.entity.User.builder()
+        mockStudent = User.builder()
                 .id(1L)
                 .name("김학생")
                 .build();
         
-        mockTeacher = saomath.checkusserver.entity.User.builder()
+        mockTeacher = User.builder()
                 .id(2L)
                 .name("이선생")
                 .build();

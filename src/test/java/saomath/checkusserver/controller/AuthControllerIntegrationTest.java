@@ -8,15 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import saomath.checkusserver.auth.dto.StudentRegisterRequest;
-import saomath.checkusserver.repository.SchoolRepository;
-import saomath.checkusserver.repository.StudentProfileRepository;
-import saomath.checkusserver.repository.UserRepository;
+import saomath.checkusserver.school.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.auth.repository.UserRepository;
 import saomath.checkusserver.util.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;

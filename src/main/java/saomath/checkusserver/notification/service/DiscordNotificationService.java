@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import saomath.checkusserver.discord.service.DiscordBotService;
 import saomath.checkusserver.notification.domain.AlimtalkTemplate;
-import saomath.checkusserver.util.DateTimeUtils;
+import saomath.checkusserver.common.util.DateTimeUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

@@ -9,8 +9,8 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import saomath.checkusserver.controller.StudyTimeController;
-import saomath.checkusserver.service.StudyTimeService;
+import saomath.checkusserver.studyTime.controller.StudyTimeController;
+import saomath.checkusserver.studyTime.service.StudyTimeService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

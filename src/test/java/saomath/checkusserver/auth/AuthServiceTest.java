@@ -7,13 +7,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.auth.dto.StudentRegisterRequest;
 import saomath.checkusserver.auth.dto.RegisterResponse;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
-import saomath.checkusserver.entity.*;
-import saomath.checkusserver.exception.DuplicateResourceException;
-import saomath.checkusserver.repository.*;
-import saomath.checkusserver.service.UserRoleService;
+import saomath.checkusserver.auth.repository.UserRepository;
+import saomath.checkusserver.auth.service.AuthService;
+import saomath.checkusserver.auth.service.RefreshTokenService;
+import saomath.checkusserver.common.exception.DuplicateResourceException;
+import saomath.checkusserver.user.domain.RoleConstants;
+import saomath.checkusserver.school.domain.School;
+import saomath.checkusserver.user.domain.StudentProfile;
+import saomath.checkusserver.school.repository.SchoolRepository;
+import saomath.checkusserver.user.repository.StudentProfileRepository;
+import saomath.checkusserver.user.service.UserRoleService;
 
 import java.util.Optional;
 
