@@ -31,7 +31,7 @@ public class TestDataFactory {
     public static StudentRegisterRequest createStudentRegisterRequest(String name, StudentProfile.Gender gender) {
         StudentRegisterRequest request = new StudentRegisterRequest();
         request.setUsername("teststudent" + userCounter);
-        request.setPassword("Test123!@#");
+        request.setPassword("test123!@#");
         request.setName(name);
         request.setPhoneNumber("010-" + String.format("%04d", userCounter) + "-" + String.format("%04d", userCounter));
         request.setSchoolName("테스트 고등학교" + userCounter);
@@ -48,7 +48,7 @@ public class TestDataFactory {
     public static GuardianRegisterRequest createGuardianRegisterRequest() {
         GuardianRegisterRequest request = new GuardianRegisterRequest();
         request.setUsername("testguardian" + userCounter);
-        request.setPassword("Test123!@#");
+        request.setPassword("test123!@#");
         request.setName("테스트 학부모" + userCounter);
         request.setPhoneNumber("010-" + String.format("%04d", userCounter) + "-" + String.format("%04d", userCounter));
         
@@ -62,7 +62,7 @@ public class TestDataFactory {
     public static TeacherRegisterRequest createTeacherRegisterRequest() {
         TeacherRegisterRequest request = new TeacherRegisterRequest();
         request.setUsername("testteacher" + userCounter);
-        request.setPassword("Test123!@#");
+        request.setPassword("test123!@#");
         request.setName("테스트 교사" + userCounter);
         request.setPhoneNumber("010-" + String.format("%04d", userCounter) + "-" + String.format("%04d", userCounter));
         

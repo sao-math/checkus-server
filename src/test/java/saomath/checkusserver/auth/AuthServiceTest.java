@@ -7,7 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.ApplicationEventPublisher;
 import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.discord.service.VoiceChannelEventService;
+import saomath.checkusserver.notification.event.UserRegisteredEvent;
 import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.auth.dto.StudentRegisterRequest;
 import saomath.checkusserver.auth.dto.RegisterResponse;
@@ -53,6 +56,12 @@ class AuthServiceTest {
     
     @Mock
     private RefreshTokenService refreshTokenService;
+    
+    @Mock
+    private VoiceChannelEventService voiceChannelEventService;
+    
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private AuthService authService;
@@ -63,7 +72,7 @@ class AuthServiceTest {
         // Given
         StudentRegisterRequest request = new StudentRegisterRequest();
         request.setUsername("testuser");
-        request.setPassword("Test123!@#");
+        request.setPassword("test123!@#");
         request.setName("테스트 사용자");
         request.setPhoneNumber("010-1234-5678");
         request.setSchoolName("테스트 학교");
@@ -80,7 +89,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByPhoneNumber("010-1234-5678")).thenReturn(false);
-        when(passwordEncoder.encode("Test123!@#")).thenReturn("encoded_password");
+        when(passwordEncoder.encode("test123!@#")).thenReturn("encoded_password");
         when(schoolRepository.findByName("테스트 학교")).thenReturn(Optional.of(mockSchool));
         when(userRepository.save(any(User.class))).thenReturn(mockUser);
         when(studentProfileRepository.save(any(StudentProfile.class))).thenReturn(new StudentProfile());
@@ -101,6 +110,7 @@ class AuthServiceTest {
         verify(userRepository).save(any(User.class));
         verify(studentProfileRepository).save(any(StudentProfile.class));
         verify(userRoleService).assignRole(any(User.class), eq(RoleConstants.STUDENT), eq(UserRole.RoleStatus.PENDING));
+        verify(applicationEventPublisher).publishEvent(any(UserRegisteredEvent.class));
     }
 
     @Test
@@ -109,7 +119,7 @@ class AuthServiceTest {
         // Given
         StudentRegisterRequest request = new StudentRegisterRequest();
         request.setUsername("testuser");
-        request.setPassword("Test123!@#");
+        request.setPassword("test123!@#");
         request.setName("테스트 사용자");
         request.setPhoneNumber("010-1234-5678");
         request.setSchoolName("테스트 학교");
