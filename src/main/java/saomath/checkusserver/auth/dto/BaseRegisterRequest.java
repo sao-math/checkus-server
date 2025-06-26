@@ -19,7 +19,7 @@ public abstract class BaseRegisterRequest {
     
     @NotBlank(message = "비밀번호는 필수입니다.")
     @ValidPassword
-    @Schema(description = "비밀번호 (8자 이상, 영문대소문자+숫자+특수문자 포함)", example = "Password123!", required = true)
+    @Schema(description = "비밀번호 (8자 이상, 영문자+숫자+특수문자 포함)", example = "password123!", required = true)
     private String password;
     
     @NotBlank(message = "이름은 필수입니다.")

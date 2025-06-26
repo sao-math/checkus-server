@@ -18,14 +18,16 @@ class ValidationUtilsTest {
         assertTrue(ValidationUtils.isValidPassword("Test123!@#"));
         assertTrue(ValidationUtils.isValidPassword("MyPass1234!"));
         assertTrue(ValidationUtils.isValidPassword("Secure@Pass1"));
+        assertTrue(ValidationUtils.isValidPassword("test123!@#"));  // 소문자 포함
+        assertTrue(ValidationUtils.isValidPassword("TEST123!@#"));  // 대문자 포함
+        assertTrue(ValidationUtils.isValidPassword("abcdef123!"));  // 소문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("ABCDEF123!"));  // 대문자+숫자+특수문자
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
         "test123",          // 특수문자 없음
-        "TEST123!",         // 소문자 없음
-        "testpass!",        // 대문자 없음
-        "TestPass!",        // 숫자 없음
+        "testpass!",        // 숫자 없음
         "123456!@",         // 문자 없음
         "Test1!",           // 8자 미만
         "",                 // 빈 문자열

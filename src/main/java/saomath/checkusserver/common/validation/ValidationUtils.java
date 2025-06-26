@@ -4,9 +4,9 @@ import java.util.regex.Pattern;
 
 public class ValidationUtils {
     
-    // 비밀번호: 8자 이상, 대문자+소문자+숫자+특수문자 포함
+    // 비밀번호: 8자 이상, 영문자+숫자+특수문자 포함
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-        "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$"
+        "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$"
     );
     
     // 전화번호: 010-0000-0000 형태
@@ -32,7 +32,7 @@ public class ValidationUtils {
     }
 
     public static String getPasswordRequirements() {
-        return "비밀번호는 8자 이상이며, 대문자, 소문자, 숫자, 특수문자를 모두 포함해야 합니다.";
+        return "비밀번호는 8자 이상이며, 영문자, 숫자, 특수문자를 모두 포함해야 합니다.";
     }
 
     public static String getPhoneNumberRequirements() {
