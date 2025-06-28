@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import saomath.checkusserver.auth.domain.User;
+import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.user.domain.StudentProfile;
 
 import java.util.List;
@@ -45,4 +46,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "JOIN Role r ON ur.role.id = r.id " +
            "WHERE r.name = 'STUDENT' AND ur.status = 'ACTIVE'")
     List<User> findAllStudents();
+
+    // 교사 상태별 조회
+    @Query("SELECT DISTINCT u FROM User u " +
+           "JOIN UserRole ur ON u.id = ur.user.id " +
+           "JOIN Role r ON ur.role.id = r.id " +
+           "WHERE r.name = 'TEACHER' AND ur.status = :status " +
+           "ORDER BY u.name ASC")
+    List<User> findTeachersByStatus(@Param("status") UserRole.RoleStatus status);
+
+    // 모든 활성화된 교사 조회
+    @Query("SELECT DISTINCT u FROM User u " +
+           "JOIN UserRole ur ON u.id = ur.user.id " +
+           "JOIN Role r ON ur.role.id = r.id " +
+           "WHERE r.name = 'TEACHER' AND ur.status = 'ACTIVE' " +
+           "ORDER BY u.name ASC")
+    List<User> findAllActiveTeachers();
 }
