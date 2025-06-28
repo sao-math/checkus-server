@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.dto.ResponseBase;
 import saomath.checkusserver.user.dto.TeacherListResponse;
 import saomath.checkusserver.user.dto.TeacherDetailResponse;
+import saomath.checkusserver.user.dto.TeacherUpdateRequest;
 import saomath.checkusserver.user.service.TeacherService;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 
@@ -222,6 +224,163 @@ public class TeacherController {
             log.error("교사 상세 정보 조회 실패 - teacherId: {}", teacherId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseBase.error("교사 상세 정보 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "교사 정보 수정",
+            description = "특정 교사의 정보를 수정합니다. null이 아닌 필드만 업데이트됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "교사 정보 수정 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "교사 정보 수정 응답",
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "교사 정보 수정 성공",
+                                  "data": {
+                                    "id": 2,
+                                    "username": "teacher1",
+                                    "name": "김선생님",
+                                    "phoneNumber": "010-1234-5678",
+                                    "discordId": "teacher1#1234",
+                                    "createdAt": "2024-01-01T00:00:00",
+                                    "status": "ACTIVE",
+                                    "classes": [
+                                      {
+                                        "id": 1,
+                                        "name": "고1 수학",
+                                        "studentCount": 15
+                                      }
+                                    ]
+                                  }
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "유효하지 않은 요청데이터입니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "교사를 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "교사를 찾을 수 없습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseBase<TeacherDetailResponse>> updateTeacher(
+            @PathVariable("id") Long teacherId,
+            @RequestBody @Valid TeacherUpdateRequest updateRequest) {
+
+        try {
+            log.info("교사 정보 수정 요청 - teacherId: {}", teacherId);
+
+            TeacherDetailResponse teacher = teacherService.updateTeacher(teacherId, updateRequest);
+
+            log.info("교사 정보 수정 성공 - teacherId: {}", teacherId);
+            
+            return ResponseEntity.ok(ResponseBase.success("교사 정보 수정 성공", teacher));
+
+        } catch (ResourceNotFoundException e) {
+            log.error("교사를 찾을 수 없음 - teacherId: {}", teacherId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error("교사를 찾을 수 없습니다."));
+        } catch (Exception e) {
+            log.error("교사 정보 수정 실패 - teacherId: {}", teacherId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseBase.error("교사 정보 수정에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "교사 삭제",
+            description = "특정 교사를 삭제합니다. 실제로는 역할을 비활성화시킵니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "교사 삭제 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "교사 삭제 성공",
+                                  "data": "success"
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "교사를 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "교사를 찾을 수 없습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ResponseBase<String>> deleteTeacher(
+            @PathVariable("id") Long teacherId) {
+
+        try {
+            log.info("교사 삭제 요청 - teacherId: {}", teacherId);
+
+            teacherService.deleteTeacher(teacherId);
+
+            log.info("교사 삭제 성공 - teacherId: {}", teacherId);
+            
+            return ResponseEntity.ok(ResponseBase.success("교사 삭제 성공", "success"));
+
+        } catch (ResourceNotFoundException e) {
+            log.error("교사를 찾을 수 없음 - teacherId: {}", teacherId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error("교사를 찾을 수 없습니다."));
+        } catch (Exception e) {
+            log.error("교사 삭제 실패 - teacherId: {}", teacherId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("교사 삭제에 실패했습니다: " + e.getMessage()));
         }
     }
 } 
