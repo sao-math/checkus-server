@@ -1,6 +1,7 @@
 package saomath.checkusserver.school.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -272,7 +273,8 @@ public class SchoolController {
     )
     @DeleteMapping("/{schoolId}")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ResponseBase<Void>> deleteSchool(@PathVariable("schoolId") Long schoolId) {
+    public ResponseEntity<ResponseBase<Void>> deleteSchool(
+            @Parameter(description = "학교 ID") @PathVariable("schoolId") Long schoolId) {
         try {
             log.info("학교 삭제 요청: schoolId={}", schoolId);
 
