@@ -145,4 +145,14 @@ public class UserRoleService {
                 .map(userRole -> userRole.getStatus() == UserRole.RoleStatus.ACTIVE)
                 .orElse(false);
     }
+
+    /**
+     * 교사 역할의 상태를 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public UserRole.RoleStatus getTeacherRoleStatus(Long userId) {
+        return userRoleRepository.findByUserIdAndRoleName(userId, "TEACHER")
+                .map(UserRole::getStatus)
+                .orElse(UserRole.RoleStatus.PENDING);
+    }
 }
