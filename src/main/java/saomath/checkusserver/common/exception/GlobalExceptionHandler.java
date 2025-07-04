@@ -3,6 +3,7 @@ package saomath.checkusserver.common.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
@@ -20,6 +21,18 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * HTTP 메시지 읽기 실패 예외 처리 (잘못된 JSON 형식 등)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseBase<Object>> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, WebRequest request) {
+        
+        log.warn("HTTP message not readable exception: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(ResponseBase.error("잘못된 요청 형식입니다. JSON 형식을 확인해 주세요."));
+    }
 
     /**
      * 메서드 인자 타입 불일치 예외 처리 (날짜 형식 오류 등)
@@ -175,18 +188,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 일반적인 런타임 예외 처리
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ResponseBase<Object>> handleRuntimeException(
-            RuntimeException ex, WebRequest request) {
-        
-        log.error("Runtime exception: ", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseBase.error("서버 내부 오류가 발생했습니다."));
-    }
-
-    /**
      * 기타 모든 예외 처리
      */
     @ExceptionHandler(Exception.class)
@@ -196,5 +197,17 @@ public class GlobalExceptionHandler {
         log.error("Unexpected exception: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ResponseBase.error("예상치 못한 오류가 발생했습니다."));
+    }
+
+    /**
+     * 일반적인 런타임 예외 처리 (가장 마지막에 위치)
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ResponseBase<Object>> handleRuntimeException(
+            RuntimeException ex, WebRequest request) {
+        
+        log.error("Runtime exception: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ResponseBase.error("서버 내부 오류가 발생했습니다."));
     }
 }
