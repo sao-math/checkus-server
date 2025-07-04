@@ -13,10 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.auth.domain.UserRole;
 import saomath.checkusserver.auth.jwt.JwtTokenProvider;
-import saomath.checkusserver.auth.jwt.JwtAuthenticationEntryPoint;
-import saomath.checkusserver.auth.jwt.JwtAuthenticationFilter;
 import saomath.checkusserver.auth.service.CustomUserDetailsService;
-import saomath.checkusserver.common.config.SecurityConfig;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.user.dto.TeacherDetailResponse;
 import saomath.checkusserver.user.dto.TeacherListResponse;
@@ -36,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TeacherController.class)
-@Import(SecurityConfig.class)
 @DisplayName("TeacherController 통합 테스트")
 class TeacherControllerTest {
 
@@ -54,12 +50,6 @@ class TeacherControllerTest {
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
-
-    @MockitoBean
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private TeacherListResponse teacherListResponse;
     private TeacherDetailResponse teacherDetailResponse;
