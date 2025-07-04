@@ -6,12 +6,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import saomath.checkusserver.auth.domain.UserRole;
+import saomath.checkusserver.auth.jwt.JwtTokenProvider;
+import saomath.checkusserver.auth.jwt.JwtAuthenticationEntryPoint;
+import saomath.checkusserver.auth.jwt.JwtAuthenticationFilter;
+import saomath.checkusserver.auth.service.CustomUserDetailsService;
 import saomath.checkusserver.common.config.SecurityConfig;
 import saomath.checkusserver.common.exception.ResourceNotFoundException;
 import saomath.checkusserver.user.dto.TeacherDetailResponse;
@@ -42,8 +46,20 @@ class TeacherControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private TeacherService teacherService;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private TeacherListResponse teacherListResponse;
     private TeacherDetailResponse teacherDetailResponse;
