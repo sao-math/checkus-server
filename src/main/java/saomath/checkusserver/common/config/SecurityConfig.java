@@ -86,7 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/schools/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/teachers/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/students/**").hasAnyRole("TEACHER", "ADMIN")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "TEACHER") //TODO 교사는 학생승인만 가능하게 분리
 
                         // 학생/학부모 엔드포인트
                         .requestMatchers("/users/**").hasAnyRole("STUDENT", "TEACHER", "GUARDIAN", "ADMIN")
