@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import saomath.checkusserver.auth.service.AuthService;
 import saomath.checkusserver.common.validation.ValidationUtils;
 import saomath.checkusserver.auth.dto.*;
+import saomath.checkusserver.common.exception.DuplicateResourceException;
 import saomath.checkusserver.user.service.UserRoleService;
 
 @Slf4j
@@ -329,17 +330,34 @@ public ResponseEntity<ResponseBase<LoginResponseSecure>> login(
                 )
             ),
             @ApiResponse(
-                responseCode = "200", 
-                description = "사용자명 이미 사용 중",
+                responseCode = "409", 
+                description = "사용자명 이미 사용 중 (충돌)",
                 content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject(
                         name = "이미 사용 중인 사용자명",
                         value = """
                         {
-                          "success": true,
+                          "success": false,
                           "message": "이미 사용 중인 사용자명입니다.",
-                          "data": false
+                          "data": null
+                        }
+                        """
+                    )
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400", 
+                description = "잘못된 사용자명 형식",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "잘못된 형식",
+                        value = """
+                        {
+                          "success": false,
+                          "message": "사용자명은 3-20자의 영문자, 숫자만 가능합니다.",
+                          "data": null
                         }
                         """
                     )
@@ -352,47 +370,95 @@ public ResponseEntity<ResponseBase<LoginResponseSecure>> login(
             @Parameter(description = "확인할 사용자명") 
             @RequestParam("username") String username) {
         
-        try {
-            // 사용자명 형식 검증
-            if (!ValidationUtils.isValidUsername(username)) {
-                return ResponseEntity.badRequest()
-                        .body(ResponseBase.error(ValidationUtils.getUsernameRequirements()));
-            }
-            
-            boolean available = !authService.isUsernameExists(username);
-            String message = available ? "사용 가능한 사용자명입니다." : "이미 사용 중인 사용자명입니다.";
-            
-            return ResponseEntity.ok(ResponseBase.success(message, available));
-            
-        } catch (Exception e) {
-            log.error("사용자명 중복 확인 실패: {}", username, e);
+        // 사용자명 형식 검증
+        if (!ValidationUtils.isValidUsername(username)) {
             return ResponseEntity.badRequest()
-                    .body(ResponseBase.error(e.getMessage()));
+                    .body(ResponseBase.error(ValidationUtils.getUsernameRequirements()));
         }
+        
+        if (authService.isUsernameExists(username)) {
+            // DuplicateResourceException 발생시키면 GlobalExceptionHandler가 409로 처리
+            throw new DuplicateResourceException("이미 사용 중인 사용자명입니다.");
+        }
+        
+        // 사용 가능한 경우
+        return ResponseEntity.ok(ResponseBase.success("사용 가능한 사용자명입니다.", true));
     }
 
-    @Operation(summary = "전화번호 중복 확인", description = "회원가입 전 전화번호 중복 여부 확인")
+    @Operation(
+        summary = "전화번호 중복 확인", 
+        description = "회원가입 전 전화번호 중복 여부 확인",
+        responses = {
+            @ApiResponse(
+                responseCode = "200", 
+                description = "전화번호 사용 가능",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "사용 가능한 전화번호",
+                        value = """
+                        {
+                          "success": true,
+                          "message": "사용 가능한 전화번호입니다.",
+                          "data": true
+                        }
+                        """
+                    )
+                )
+            ),
+            @ApiResponse(
+                responseCode = "409", 
+                description = "전화번호 이미 등록됨 (충돌)",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "이미 등록된 전화번호",
+                        value = """
+                        {
+                          "success": false,
+                          "message": "이미 등록된 전화번호입니다.",
+                          "data": null
+                        }
+                        """
+                    )
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400", 
+                description = "잘못된 전화번호 형식",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        name = "잘못된 형식",
+                        value = """
+                        {
+                          "success": false,
+                          "message": "전화번호는 010-XXXX-XXXX 형식이어야 합니다.",
+                          "data": null
+                        }
+                        """
+                    )
+                )
+            )
+        }
+    )
     @GetMapping("/check-phone")
     public ResponseEntity<ResponseBase<Boolean>> checkPhoneNumber(
             @Parameter(description = "확인할 전화번호") 
             @RequestParam("phoneNumber") String phoneNumber) {
         
-        try {
-            // 전화번호 형식 검증
-            if (!ValidationUtils.isValidPhoneNumber(phoneNumber)) {
-                return ResponseEntity.badRequest()
-                        .body(ResponseBase.error(ValidationUtils.getPhoneNumberRequirements()));
-            }
-            
-            boolean available = !authService.isPhoneNumberExists(phoneNumber);
-            String message = available ? "사용 가능한 전화번호입니다." : "이미 등록된 전화번호입니다.";
-            
-            return ResponseEntity.ok(ResponseBase.success(message, available));
-            
-        } catch (Exception e) {
-            log.error("전화번호 중복 확인 실패: {}", phoneNumber, e);
+        // 전화번호 형식 검증
+        if (!ValidationUtils.isValidPhoneNumber(phoneNumber)) {
             return ResponseEntity.badRequest()
-                    .body(ResponseBase.error(e.getMessage()));
+                    .body(ResponseBase.error(ValidationUtils.getPhoneNumberRequirements()));
         }
+        
+        if (authService.isPhoneNumberExists(phoneNumber)) {
+            // DuplicateResourceException 발생시키면 GlobalExceptionHandler가 409로 처리
+            throw new DuplicateResourceException("이미 등록된 전화번호입니다.");
+        }
+        
+        // 사용 가능한 경우
+        return ResponseEntity.ok(ResponseBase.success("사용 가능한 전화번호입니다.", true));
     }
 }

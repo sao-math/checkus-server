@@ -234,14 +234,7 @@ class TeacherServiceTest {
                 .name("고3 수학")
                 .build();
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(teacherUser));
-        given(userRoleService.getActiveRoles(1L)).willReturn(roles);
-        given(teacherClassRepository.findByTeacherId(1L)).willReturn(existingClasses);
-        given(classRepository.findById(2L)).willReturn(Optional.of(classEntity2));
-        given(classRepository.findById(3L)).willReturn(Optional.of(classEntity3));
-        given(userRepository.save(any(User.class))).willReturn(teacherUser);
-
-        // getTeacherDetail 호출을 위한 모킹
+        // getTeacherDetail 호출을 위한 모킹 - 새로운 클래스 목록
         List<TeacherClass> newTeacherClasses = Arrays.asList(
                 TeacherClass.builder()
                         .id(new TeacherClass.TeacherClassId(1L, 2L))
@@ -249,7 +242,19 @@ class TeacherServiceTest {
                         .classEntity(classEntity2)
                         .build()
         );
-        given(teacherClassRepository.findByTeacherId(1L)).willReturn(newTeacherClasses);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(teacherUser));
+        given(userRoleService.getActiveRoles(1L)).willReturn(roles);
+        
+        // updateTeacherClasses에서 첫 번째 호출: 기존 클래스 반환
+        // getTeacherDetail에서 두 번째 호출: 새로운 클래스 반환
+        given(teacherClassRepository.findByTeacherId(1L))
+                .willReturn(existingClasses)  // 첫 번째 호출
+                .willReturn(newTeacherClasses); // 두 번째 호출
+                
+        given(classRepository.findById(2L)).willReturn(Optional.of(classEntity2));
+        given(classRepository.findById(3L)).willReturn(Optional.of(classEntity3));
+        given(userRepository.save(any(User.class))).willReturn(teacherUser);
         given(userRoleService.getTeacherRoleStatus(1L)).willReturn(UserRole.RoleStatus.ACTIVE);
 
         // when
