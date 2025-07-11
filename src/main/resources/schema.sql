@@ -5,7 +5,8 @@ CREATE TABLE users (
                        phone_number varchar(20),
                        password varchar(255),
                        discord_id varchar(100),
-                       created_at timestamp DEFAULT CURRENT_TIMESTAMP
+                       created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                       deleted_at timestamp NULL
 );
 
 CREATE TABLE student_profile (

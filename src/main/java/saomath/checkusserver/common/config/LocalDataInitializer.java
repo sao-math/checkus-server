@@ -149,6 +149,9 @@ public class LocalDataInitializer implements CommandLineRunner {
         // 학교 조회
         School ihyeon = schoolRepository.findByName("이현중").orElseThrow();
         School songok = schoolRepository.findByName("손곡중").orElseThrow();
+        School sinbong = schoolRepository.findByName("신봉중").orElseThrow();
+        School suji = schoolRepository.findByName("수지중").orElseThrow();
+        School seowon = schoolRepository.findByName("서원중").orElseThrow();
         
         // 관리자 계정
         User admin = createUserWithRole("admin", "관리자", "010-0000-0000", "Password123!", "admin#1234", RoleConstants.ADMIN);
@@ -156,58 +159,67 @@ public class LocalDataInitializer implements CommandLineRunner {
         // 교사 계정들
         User teacher1 = createUserWithRole("teacher1", "김선생", "010-1111-1111", "Password123!", "teacher1#1234", RoleConstants.TEACHER);
         User teacher2 = createUserWithRole("teacher2", "이선생", "010-1111-2222", "Password123!", "teacher2#5678", RoleConstants.TEACHER);
+        User teacher3 = createUserWithRole("teacher3", "박선생", "010-1111-3333", "Password123!", "teacher3#9012", RoleConstants.TEACHER);
         
-        // 학생 계정들 + 프로필 (환경변수가 있으면 실제 데이터 사용)
-        String studentPhone = hasValue(testStudentPhone) ? testStudentPhone : "010-2222-1111";
-        String studentDiscordId = hasValue(testStudentDiscordId) ? testStudentDiscordId : "student1#1234";
+        // 학생 계정들 20명 생성
+        String[] studentNames = {
+            "김학생", "이학생", "박학생", "최학생", "정학생", "강학생", "조학생", "윤학생", "장학생", "임학생",
+            "한학생", "오학생", "서학생", "신학생", "권학생", "황학생", "안학생", "송학생", "류학생", "전학생"
+        };
         
-        User student1 = createUserWithRole("student1", "박학생", studentPhone, "Password123!", studentDiscordId, RoleConstants.STUDENT);
-        createStudentProfile(student1, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.MALE);
+        School[] schools = {ihyeon, songok, sinbong, suji, seowon};
+        StudentProfile.Gender[] genders = {StudentProfile.Gender.MALE, StudentProfile.Gender.FEMALE};
+        int[] grades = {1, 2, 3};
         
-        User student2 = createUserWithRole("student2", "최학생", "010-2222-2222", "Password123!", "student2#5678", RoleConstants.STUDENT);
-        createStudentProfile(student2, StudentProfile.StudentStatus.ENROLLED, ihyeon, 2, StudentProfile.Gender.FEMALE);
+        User[] students = new User[20];
         
-        User student3 = createUserWithRole("student3", "정학생", "010-2222-3333", "Password123!", "student3#9012", RoleConstants.STUDENT);
-        createStudentProfile(student3, StudentProfile.StudentStatus.ENROLLED, songok, 1, StudentProfile.Gender.MALE);
+        for (int i = 0; i < 20; i++) {
+            String studentPhone = hasValue(testStudentPhone) && i == 0 ? testStudentPhone : String.format("010-2222-%04d", 1111 + i);
+            String studentDiscordId = hasValue(testStudentDiscordId) && i == 0 ? testStudentDiscordId : String.format("student%d#%04d", i + 1, 1234 + i);
         
-        // 학부모 계정들 (환경변수가 있으면 실제 데이터 사용)
+            students[i] = createUserWithRole(
+                String.format("student%d", i + 1), 
+                studentNames[i], 
+                studentPhone, 
+                "Password123!", 
+                studentDiscordId, 
+                RoleConstants.STUDENT
+            );
+            
+            // 학교, 학년, 성별을 다양하게 분산
+            School school = schools[i % schools.length];
+            int grade = grades[i % grades.length];
+            StudentProfile.Gender gender = genders[i % genders.length];
+            
+            createStudentProfile(students[i], StudentProfile.StudentStatus.ENROLLED, school, grade, gender);
+        }
+        
+        // 학부모 계정들 (처음 5명의 학생에 대해서만)
         String guardianPhone = hasValue(testGuardianPhone) ? testGuardianPhone : "010-3333-1111";
-
-        User guardian1 = createUserWithRole("parent1", "박학부모", guardianPhone, "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
-        User guardian2 = createUserWithRole("parent2", "최학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
-        User guardian3 = createUserWithRole("parent3", "정학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
-        User guardian4 = createUserWithRole("parent4", "박어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
+        User guardian1 = createUserWithRole("parent1", "김학부모", guardianPhone, "Password123!", "parent1#1234", RoleConstants.GUARDIAN);
+        User guardian2 = createUserWithRole("parent2", "이학부모", "010-3333-2222", "Password123!", "parent2#5678", RoleConstants.GUARDIAN);
+        User guardian3 = createUserWithRole("parent3", "박학부모", "010-3333-3333", "Password123!", "parent3#9012", RoleConstants.GUARDIAN);
+        User guardian4 = createUserWithRole("parent4", "김어머니", "010-3333-4444", "Password123!", "parent4#3456", RoleConstants.GUARDIAN);
+        User guardian5 = createUserWithRole("parent5", "이어머니", "010-3333-5555", "Password123!", "parent5#7890", RoleConstants.GUARDIAN);
 
         // 활동 종류(학원, 자습)
         Activity academy = activityRepository.save(Activity.builder().name("학원").isStudyAssignable(false).build());
         Activity selfStudy = activityRepository.save(Activity.builder().name("자습").isStudyAssignable(true).build());
 
-//        // 반 정보(월수반)
-//        ClassEntity monWedClass = classEntityRepository.save(ClassEntity.builder().name("월수반").build());
-//        studentClassRepository.save(StudentClass.builder()
-//            .id(new StudentClass.StudentClassId(student1.getId(), monWedClass.getId()))
-//            .student(student1)
-//            .classEntity(monWedClass)
-//            .build());
-        
+        // 처음 5명의 학생에 대해 학부모 관계 설정
+        User[] guardians = {guardian1, guardian2, guardian3, guardian4, guardian5};
+        for (int i = 0; i < 5; i++) {
         studentGuardianRepository.save(StudentGuardian.builder()
-            .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian1.getId()))
-            .student(student1)
-            .guardian(guardian1)
+                .id(new StudentGuardian.StudentGuardianId(students[i].getId(), guardians[i].getId()))
+                .student(students[i])
+                .guardian(guardians[i])
             .relationship("father")
             .build());
-            
-        studentGuardianRepository.save(StudentGuardian.builder()
-            .id(new StudentGuardian.StudentGuardianId(student1.getId(), guardian4.getId()))
-            .student(student1)
-            .guardian(guardian4)
-            .relationship("mother")
-            .build());
+        }
 
-        // 주간 고정 일정(수학 학원, 수학 숙제, 영어 학원, 영어 숙제)
-        // 예시: 월요일(1) 16:00~18:00 수학 학원, 수요일(3) 18:00~19:00 수학 숙제, 수요일(3) 16:00~18:00 영어 학원, 금요일(5) 18:00~19:00 영어 숙제
+        // 첫 번째 학생에게만 주간 고정 일정 추가
         weeklyScheduleRepository.save(WeeklySchedule.builder()
-            .studentId(student1.getId())
+            .studentId(students[0].getId())
             .title("수학 학원")
             .activityId(academy.getId())
             .dayOfWeek(1)
@@ -215,7 +227,7 @@ public class LocalDataInitializer implements CommandLineRunner {
             .endTime(java.time.LocalTime.of(18, 0))
             .build());
         weeklyScheduleRepository.save(WeeklySchedule.builder()
-            .studentId(student1.getId())
+            .studentId(students[0].getId())
             .title("수학 숙제")
             .activityId(academy.getId())
             .dayOfWeek(3)
@@ -223,162 +235,187 @@ public class LocalDataInitializer implements CommandLineRunner {
             .endTime(java.time.LocalTime.of(19, 0))
             .build());
         weeklyScheduleRepository.save(WeeklySchedule.builder()
-            .studentId(student1.getId())
+            .studentId(students[0].getId())
             .title("영어 자습")
             .activityId(selfStudy.getId())
             .dayOfWeek(3)
             .startTime(java.time.LocalTime.of(16, 0))
             .endTime(java.time.LocalTime.of(18, 0))
             .build());
-        weeklyScheduleRepository.save(WeeklySchedule.builder()
-            .studentId(student1.getId())
-            .title("영어 숙제")
-            .activityId(selfStudy.getId())
-            .dayOfWeek(5)
-            .startTime(java.time.LocalTime.of(18, 0))
-            .endTime(java.time.LocalTime.of(19, 0))
-            .build());
 
-        //addActualStudyTime(student1, selfStudy, teacher1, student2, teacher2, student3);
+        // 20명의 학생에게 다양한 스터디 타임 데이터 추가
+        addActualStudyTime(students, selfStudy, teacher1, teacher2, teacher3);
     }
 
-    private void addActualStudyTime(User student1, Activity selfStudy, User teacher1, User student2, User teacher2, User student3) {
-        // 오늘 날짜로 세 학생의 다양한 샘플 데이터 추가
-        LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-        log.info("오늘 날짜 샘플 데이터 추가: {}", today.toLocalDate());
+    private void addActualStudyTime(User[] students, Activity selfStudy, User teacher1, User teacher2, User teacher3) {
+        // 현재 시간을 기준으로 다양한 우선순위 패턴 생성
+        LocalDateTime now = LocalDateTime.now();
+        log.info("현재 시간 기준 샘플 데이터 추가: {}", now);
 
-// ==== 박학생 - 다양한 출석 패턴 ====
+        User[] teachers = {teacher1, teacher2, teacher3};
+        
+        // 20명의 학생을 5가지 우선순위 패턴으로 분배
+        for (int i = 0; i < students.length; i++) {
+            User student = students[i];
+            User assignedTeacher = teachers[i % teachers.length];
+            
+            // 우선순위별로 4명씩 분배
+            int priorityGroup = i / 4; // 0~4 (각 그룹당 4명)
+            int studentInGroup = i % 4; // 그룹 내 순서
+            
+            switch (priorityGroup) {
+                case 0: // Priority 1: 현재 공부해야 하는데 결석인 학생 (4명)
+                    addCurrentlyAbsentPattern(student, selfStudy, assignedTeacher, now, studentInGroup);
+                    break;
+                case 1: // Priority 2: 곧 공부해야 하는 학생 (30분 이내) (4명)
+                    addUpcomingStudyPattern(student, selfStudy, assignedTeacher, now, studentInGroup);
+                    break;
+                case 2: // Priority 3: 현재 공부 중이고 출석한 학생 (4명)
+                    addCurrentlyAttendingPattern(student, selfStudy, assignedTeacher, now, studentInGroup);
+                    break;
+                case 3: // Priority 4: 나머지 다음 공부 시간이 있는 학생 (4명)
+                    addFutureStudyPattern(student, selfStudy, assignedTeacher, now, studentInGroup);
+                    break;
+                case 4: // Priority 5: 공부 시간 할당이 없는 학생 (4명)
+                    addNoAssignmentPattern(student, selfStudy, now, studentInGroup);
+                    break;
+            }
+        }
 
-// 1. 오전 10:00~12:00 수학 자습 (정상 출석)
-        AssignedStudyTime parkMorning = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
-                .studentId(student1.getId())
-                .title("수학 자습")
-                .activityId(selfStudy.getId())
-                .startTime(today.withHour(10).withMinute(0))
-                .endTime(today.withHour(12).withMinute(0))
-                .assignedBy(teacher1.getId())
-                .build());
+        log.info("현재 시간 기준 샘플 데이터 추가 완료");
+        log.info("Priority 1(현재 결석) 4명, Priority 2(곧 시작) 4명, Priority 3(현재 출석) 4명, Priority 4(미래 할당) 4명, Priority 5(할당 없음) 4명");
+    }
 
-// 10:05~11:45 접속 (정상 출석)
+    // Priority 1: 현재 공부해야 하는데 결석인 학생
+    private void addCurrentlyAbsentPattern(User student, Activity selfStudy, User teacher, LocalDateTime now, int index) {
+        // 현재 시간 기준으로 30분 전부터 30분 후까지의 시간대에 할당
+        LocalDateTime startTime = now.minusMinutes(30 + (index * 10)); // 30분 전부터 10분씩 차이
+        LocalDateTime endTime = startTime.plusHours(2);
+        
+        AssignedStudyTime assigned = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+            .studentId(student.getId())
+            .title("수학 자습 (현재 결석)")
+            .activityId(selfStudy.getId())
+            .startTime(startTime)
+            .endTime(endTime)
+            .assignedBy(teacher.getId())
+            .build());
+
+        // 접속 기록 없음 (완전 결석)
+        log.info("Priority 1 - 학생 {}: 현재 공부해야 하는데 결석 ({} ~ {})", 
+                student.getName(), startTime.toLocalTime(), endTime.toLocalTime());
+    }
+
+    // Priority 2: 곧 공부해야 하는 학생 (30분 이내)
+    private void addUpcomingStudyPattern(User student, Activity selfStudy, User teacher, LocalDateTime now, int index) {
+        // 5분~25분 후에 시작하는 시간대
+        LocalDateTime startTime = now.plusMinutes(5 + (index * 5)); // 5, 10, 15, 20분 후
+        LocalDateTime endTime = startTime.plusHours(2);
+        
+        assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+            .studentId(student.getId())
+            .title("영어 자습 (곧 시작)")
+            .activityId(selfStudy.getId())
+            .startTime(startTime)
+            .endTime(endTime)
+            .assignedBy(teacher.getId())
+            .build());
+
+        // 미래 시간이므로 접속 기록 없음
+        log.info("Priority 2 - 학생 {}: 곧 공부 시작 ({} ~ {})", 
+                student.getName(), startTime.toLocalTime(), endTime.toLocalTime());
+    }
+
+    // Priority 3: 현재 공부 중이고 출석한 학생
+    private void addCurrentlyAttendingPattern(User student, Activity selfStudy, User teacher, LocalDateTime now, int index) {
+        // 현재 시간을 포함하는 시간대
+        LocalDateTime startTime = now.minusMinutes(60 + (index * 10)); // 1시간 전부터
+        LocalDateTime endTime = now.plusMinutes(60 + (index * 10)); // 1시간 후까지
+        
+        AssignedStudyTime assigned = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+            .studentId(student.getId())
+            .title("과학 자습 (현재 출석)")
+            .activityId(selfStudy.getId())
+            .startTime(startTime)
+            .endTime(endTime)
+            .assignedBy(teacher.getId())
+            .build());
+
+        // 시작 시간부터 현재까지 접속 중
         actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student1.getId())
-                .assignedStudyTimeId(parkMorning.getId())
-                .startTime(today.withHour(10).withMinute(5))
-                .endTime(today.withHour(11).withMinute(45))
+            .studentId(student.getId())
+            .assignedStudyTimeId(assigned.getId())
+            .startTime(startTime.plusMinutes(5)) // 5분 늦게 시작
+            .endTime(null) // 아직 접속 중 (종료 시간 없음)
+            .source("discord")
+            .build());
+
+        log.info("Priority 3 - 학생 {}: 현재 출석 중 ({} ~ {})", 
+                student.getName(), startTime.toLocalTime(), endTime.toLocalTime());
+    }
+
+    // Priority 4: 나머지 다음 공부 시간이 있는 학생
+    private void addFutureStudyPattern(User student, Activity selfStudy, User teacher, LocalDateTime now, int index) {
+        // 1시간~3시간 후에 시작하는 시간대
+        LocalDateTime startTime = now.plusHours(1 + index); // 1, 2, 3, 4시간 후
+        LocalDateTime endTime = startTime.plusHours(2);
+        
+        assignedStudyTimeRepository.save(AssignedStudyTime.builder()
+            .studentId(student.getId())
+            .title("국어 자습 (미래 할당)")
+            .activityId(selfStudy.getId())
+            .startTime(startTime)
+            .endTime(endTime)
+            .assignedBy(teacher.getId())
+            .build());
+
+        // 과거 시간대에 완료된 접속 기록 추가 (선택적)
+        if (index < 2) {
+            LocalDateTime pastStart = now.minusHours(3 + index);
+            LocalDateTime pastEnd = pastStart.plusHours(1);
+            
+            actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student.getId())
+                .assignedStudyTimeId(null) // 자유 접속
+                .startTime(pastStart)
+                .endTime(pastEnd)
                 .source("discord")
                 .build());
+        }
 
-// 2. 오후 2:00~4:00 영어 자습 (중간 이탈 후 재접속)
-        AssignedStudyTime parkAfternoon = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
-                .studentId(student1.getId())
-                .title("영어 자습")
-                .activityId(selfStudy.getId())
-                .startTime(today.withHour(14).withMinute(0))
-                .endTime(today.withHour(16).withMinute(0))
-                .assignedBy(teacher1.getId())
-                .build());
+        log.info("Priority 4 - 학생 {}: 미래 할당 ({} ~ {})", 
+                student.getName(), startTime.toLocalTime(), endTime.toLocalTime());
+    }
 
-// 첫 번째 접속: 14:03~14:45 (42분)
+    // Priority 5: 공부 시간 할당이 없는 학생
+    private void addNoAssignmentPattern(User student, Activity selfStudy, LocalDateTime now, int index) {
+        // 할당된 시간 없음, 과거의 자유 접속 기록만
+        LocalDateTime pastStart = now.minusHours(2 + index);
+        LocalDateTime pastEnd = pastStart.plusMinutes(45);
+        
         actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student1.getId())
-                .assignedStudyTimeId(parkAfternoon.getId())
-                .startTime(today.withHour(14).withMinute(3))
-                .endTime(today.withHour(14).withMinute(45))
-                .source("discord")
-                .build());
+            .studentId(student.getId())
+            .assignedStudyTimeId(null) // 자유 접속
+            .startTime(pastStart)
+            .endTime(pastEnd)
+            .source("discord")
+            .build());
 
-// 두 번째 접속: 15:10~15:50 (40분)
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student1.getId())
-                .assignedStudyTimeId(parkAfternoon.getId())
-                .startTime(today.withHour(15).withMinute(10))
-                .endTime(today.withHour(15).withMinute(50))
-                .source("discord")
-                .build());
-
-// 3. 할당되지 않은 자유 접속 (오전 8:30~9:30)
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student1.getId())
+        // 일부 학생은 추가 자유 접속 기록
+        if (index % 2 == 0) {
+            LocalDateTime morningStart = now.minusHours(5 + index);
+            LocalDateTime morningEnd = morningStart.plusMinutes(30);
+            
+            actualStudyTimeRepository.save(ActualStudyTime.builder()
+                .studentId(student.getId())
                 .assignedStudyTimeId(null)
-                .startTime(today.withHour(8).withMinute(30))
-                .endTime(today.withHour(9).withMinute(30))
+                .startTime(morningStart)
+                .endTime(morningEnd)
                 .source("discord")
                 .build());
+        }
 
-// ==== 최학생 - 부분 출석 패턴 ====
-
-// 1. 오전 11:00~13:00 과학 자습 (일부만 출석)
-        AssignedStudyTime choiMorning = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
-                .studentId(student2.getId())
-                .title("과학 자습")
-                .activityId(selfStudy.getId())
-                .startTime(today.withHour(11).withMinute(0))
-                .endTime(today.withHour(13).withMinute(0))
-                .assignedBy(teacher2.getId())
-                .build());
-
-// 11:30~12:00만 접속 (30분/120분)
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student2.getId())
-                .assignedStudyTimeId(choiMorning.getId())
-                .startTime(today.withHour(11).withMinute(30))
-                .endTime(today.withHour(12).withMinute(0))
-                .source("discord")
-                .build());
-
-// 2. 오후 3:00~5:00 수학 자습 (완전 결석)
-        AssignedStudyTime choiAfternoon = assignedStudyTimeRepository.save(AssignedStudyTime.builder()
-                .studentId(student2.getId())
-                .title("수학 자습")
-                .activityId(selfStudy.getId())
-                .startTime(today.withHour(15).withMinute(0))
-                .endTime(today.withHour(17).withMinute(0))
-                .assignedBy(teacher2.getId())
-                .build());
-// 이 시간에는 접속하지 않음 (완전 결석)
-
-// 3. 할당되지 않은 자유 접속 (오후 6:00~7:00)
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student2.getId())
-                .assignedStudyTimeId(null)
-                .startTime(today.withHour(18).withMinute(0))
-                .endTime(today.withHour(19).withMinute(0))
-                .source("discord")
-                .build());
-
-// ==== 정학생 - 할당된 시간 없음, 자유 접속만 ====
-
-// 1. 자유 접속: 오전 9:00~10:30
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student3.getId())
-                .assignedStudyTimeId(null)
-                .startTime(today.withHour(9).withMinute(0))
-                .endTime(today.withHour(10).withMinute(30))
-                .source("discord")
-                .build());
-
-// 2. 자유 접속: 오후 1:00~2:30
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student3.getId())
-                .assignedStudyTimeId(null)
-                .startTime(today.withHour(13).withMinute(0))
-                .endTime(today.withHour(14).withMinute(30))
-                .source("discord")
-                .build());
-
-// 3. 자유 접속: 오후 4:00~5:45
-        actualStudyTimeRepository.save(ActualStudyTime.builder()
-                .studentId(student3.getId())
-                .assignedStudyTimeId(null)
-                .startTime(today.withHour(16).withMinute(0))
-                .endTime(today.withHour(17).withMinute(45))
-                .source("discord")
-                .build());
-
-        log.info("오늘 날짜 샘플 데이터 추가 완료");
-        log.info("박학생: 할당된 공부시간 2개(정상출석 + 중간이탈후재접속), 자유접속 1개");
-        log.info("최학생: 할당된 공부시간 2개(일부출석 + 완전결석), 자유접속 1개");
-        log.info("정학생: 할당된 공부시간 없음, 자유접속 3개");
+        log.info("Priority 5 - 학생 {}: 할당 없음 (자유 접속만)", student.getName());
     }
 
     // Helper methods - 모든 계정을 동일한 간단한 방식으로 생성

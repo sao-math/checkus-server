@@ -351,4 +351,148 @@ public class StudentController {
                     .body(ResponseBase.error("학생 정보 수정에 실패했습니다: " + e.getMessage()));
         }
     }
+
+    @Operation(
+            summary = "학생 삭제",
+            description = "학생을 논리적으로 삭제합니다. 실제 데이터는 삭제되지 않고 비활성 상태로 변경됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "학생 삭제 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "학생 삭제 응답",
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "학생 삭제 성공",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "학생을 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "학생을 찾을 수 없습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "인증이 필요합니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ResponseBase<Void>> deleteStudent(
+            @PathVariable("id") Long studentId) {
+
+        try {
+            log.info("학생 삭제 요청 - studentId: {}", studentId);
+
+            studentService.deleteStudent(studentId);
+
+            log.info("학생 삭제 성공 - studentId: {}", studentId);
+            
+            return ResponseEntity.ok(ResponseBase.success("학생 삭제 성공", null));
+
+        } catch (ResourceNotFoundException e) {
+            log.warn("학생 삭제 실패 - studentId: {}, 이유: {}", studentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("학생 삭제 실패 - studentId: {}", studentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("학생 삭제에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "학생 복구",
+            description = "삭제된 학생을 복구합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "학생 복구 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "학생 복구 응답",
+                                            value = """
+                                {
+                                  "success": true,
+                                  "message": "학생 복구 성공",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "학생을 찾을 수 없음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                {
+                                  "success": false,
+                                  "message": "학생을 찾을 수 없습니다.",
+                                  "data": null
+                                }
+                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    @PostMapping("/{id}/restore")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ResponseBase<Void>> restoreStudent(
+            @PathVariable("id") Long studentId) {
+
+        try {
+            log.info("학생 복구 요청 - studentId: {}", studentId);
+
+            studentService.restoreStudent(studentId);
+
+            log.info("학생 복구 성공 - studentId: {}", studentId);
+            
+            return ResponseEntity.ok(ResponseBase.success("학생 복구 성공", null));
+
+        } catch (ResourceNotFoundException e) {
+            log.warn("학생 복구 실패 - studentId: {}, 이유: {}", studentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseBase.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("학생 복구 실패 - studentId: {}", studentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBase.error("학생 복구에 실패했습니다: " + e.getMessage()));
+        }
+    }
 }
