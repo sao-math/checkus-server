@@ -459,8 +459,8 @@ public class StudyTimeService {
         
         LocalDateTime now = LocalDateTime.now();
         
-        // 1. 모든 학생 조회 (1개 쿼리)
-        List<User> allStudents = userRepository.findAllStudents();
+        // 1. 모든 재원 중인 학생 조회 (1개 쿼리) - 스터디 모니터링용
+        List<User> allStudents = userRepository.findAllEnrolledStudents();
         if (allStudents.isEmpty()) {
             return createEmptyResponse(startTime, endTime);
         }
@@ -537,7 +537,7 @@ public class StudyTimeService {
         response.setEndTime(endTime);
         response.setStudents(studentInfos);
         
-        log.info("모니터링 데이터 조회 완료: 학생 {}명, 배치 {}개", 
+        log.info("재원 중인 학생 모니터링 데이터 조회 완료: 재원생 {}명, 배치 {}개", 
                 allStudents.size(), studentIdBatches.size());
         
         return response;

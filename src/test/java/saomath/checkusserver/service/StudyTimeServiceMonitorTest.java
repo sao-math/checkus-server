@@ -115,7 +115,7 @@ class StudyTimeServiceMonitorTest {
         // given
         LocalDate targetDate = LocalDate.parse("2025-06-18");
         
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L)))
                 .thenReturn(Arrays.asList(testStudentGuardian));
         when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
@@ -176,7 +176,7 @@ class StudyTimeServiceMonitorTest {
     void getStudyTimeMonitorByDate_EmptyStudentList() {
         // given
         LocalDate targetDate = LocalDate.parse("2025-06-18");
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList());
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList());
 
         // when
         StudyTimeMonitorResponse result = studyTimeService.getStudyTimeMonitorByDate(targetDate);
@@ -193,7 +193,7 @@ class StudyTimeServiceMonitorTest {
         // given
         LocalDate targetDate = LocalDate.parse("2025-06-18");
         
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
         when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
                 eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -240,7 +240,7 @@ class StudyTimeServiceMonitorTest {
                 .source("discord")
                 .build();
 
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
         when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
                 eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -276,7 +276,7 @@ class StudyTimeServiceMonitorTest {
                 .endTime(now.plusHours(1))     // 1시간 후 종료
                 .build();
 
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
         when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
                 eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -308,7 +308,7 @@ class StudyTimeServiceMonitorTest {
                 .phoneNumber("010-2222-3333")
                 .build();
 
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent, student2));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent, student2));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L, 2L)))
                 .thenReturn(Arrays.asList(testStudentGuardian)); // 첫 번째 학생만 보호자 있음
         
@@ -357,7 +357,7 @@ class StudyTimeServiceMonitorTest {
                 .source("discord")
                 .build();
 
-        when(userRepository.findAllStudents()).thenReturn(Arrays.asList(testStudent));
+        when(userRepository.findAllEnrolledStudents()).thenReturn(Arrays.asList(testStudent));
         when(studentGuardianRepository.findByStudentIds(Arrays.asList(1L))).thenReturn(Arrays.asList());
         when(assignedStudyTimeRepository.findByStudentIdsAndDateRangeWithDetails(
                 eq(Arrays.asList(1L)), any(LocalDateTime.class), any(LocalDateTime.class)))

@@ -47,6 +47,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "WHERE r.name = 'STUDENT' AND ur.status = 'ACTIVE'")
     List<User> findAllStudents();
 
+    // 모든 재원 중인 학생 조회 (스터디 모니터링용)
+    @Query("SELECT DISTINCT u FROM User u " +
+           "JOIN UserRole ur ON u.id = ur.user.id " +
+           "JOIN Role r ON ur.role.id = r.id " +
+           "LEFT JOIN StudentProfile sp ON u.id = sp.user.id " +
+           "WHERE r.name = 'STUDENT' AND ur.status = 'ACTIVE' " +
+           "AND sp.status = 'ENROLLED'")
+    List<User> findAllEnrolledStudents();
+
     // 교사 상태별 조회
     @Query("SELECT DISTINCT u FROM User u " +
            "JOIN UserRole ur ON u.id = ur.user.id " +
