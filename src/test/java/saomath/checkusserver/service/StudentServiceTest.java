@@ -153,7 +153,7 @@ class StudentServiceTest {
     @DisplayName("학생 상세 정보 조회 - 성공")
     void getStudentDetail_Success() {
         // Given
-        when(userRepository.findById(4L))
+        when(userRepository.findByIdAndNotDeleted(4L))
                 .thenReturn(Optional.of(mockStudent));
         when(userRoleService.getActiveRoles(4L))
                 .thenReturn(Arrays.asList(RoleConstants.STUDENT));
@@ -184,7 +184,7 @@ class StudentServiceTest {
     @DisplayName("학생 상세 정보 조회 - 학생을 찾을 수 없음")
     void getStudentDetail_StudentNotFound() {
         // Given
-        when(userRepository.findById(999L))
+        when(userRepository.findByIdAndNotDeleted(999L))
                 .thenReturn(Optional.empty());
 
         // When & Then
@@ -197,7 +197,7 @@ class StudentServiceTest {
     @DisplayName("학생 상세 정보 조회 - 학생 역할이 없음")
     void getStudentDetail_NotStudent() {
         // Given
-        when(userRepository.findById(4L))
+        when(userRepository.findByIdAndNotDeleted(4L))
                 .thenReturn(Optional.of(mockStudent));
         when(userRoleService.getActiveRoles(4L))
                 .thenReturn(Arrays.asList(RoleConstants.TEACHER)); // 학생이 아님
@@ -212,7 +212,7 @@ class StudentServiceTest {
     @DisplayName("학생 상세 정보 조회 - 학생 프로필이 없음")
     void getStudentDetail_StudentProfileNotFound() {
         // Given
-        when(userRepository.findById(4L))
+        when(userRepository.findByIdAndNotDeleted(4L))
                 .thenReturn(Optional.of(mockStudent));
         when(userRoleService.getActiveRoles(4L))
                 .thenReturn(Arrays.asList(RoleConstants.STUDENT));

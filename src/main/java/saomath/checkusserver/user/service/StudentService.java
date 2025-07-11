@@ -85,8 +85,8 @@ public class StudentService {
     public StudentDetailResponse getStudentDetail(Long studentId) {
         log.debug("학생 상세 정보 조회 - studentId: {}", studentId);
 
-        // 학생 존재 여부 확인
-        User student = userRepository.findById(studentId)
+        // 학생 존재 여부 확인 (논리삭제된 사용자 제외)
+        User student = userRepository.findByIdAndNotDeleted(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: " + studentId));
 
         // 학생 역할 확인
@@ -152,8 +152,8 @@ public class StudentService {
     public StudentDetailResponse updateStudent(Long studentId, StudentUpdateRequest updateRequest) {
         log.debug("학생 정보 수정 - studentId: {}", studentId);
 
-        // 학생 존재 여부 확인
-        User student = userRepository.findById(studentId)
+        // 학생 존재 여부 확인 (논리삭제된 사용자 제외)
+        User student = userRepository.findByIdAndNotDeleted(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: " + studentId));
 
         // 학생 역할 확인
@@ -199,6 +199,64 @@ public class StudentService {
 
         // 수정된 정보 반환
         return getStudentDetail(studentId);
+    }
+
+    /**
+     * 학생을 논리적으로 삭제합니다.
+     * 
+     * @param studentId 삭제할 학생 ID
+     * @throws ResourceNotFoundException 학생을 찾을 수 없는 경우
+     */
+    @Transactional
+    public void deleteStudent(Long studentId) {
+        log.debug("학생 삭제 - studentId: {}", studentId);
+
+        // 학생 존재 여부 확인
+        User student = userRepository.findByIdAndNotDeleted(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: " + studentId));
+
+        // 학생 역할 확인
+        List<String> roles = userRoleService.getActiveRoles(studentId);
+        if (!roles.contains(RoleConstants.STUDENT)) {
+            throw new ResourceNotFoundException("해당 사용자는 학생이 아닙니다. ID: " + studentId);
+        }
+
+        // 이미 삭제된 학생인지 확인
+        if (student.isDeleted()) {
+            throw new ResourceNotFoundException("이미 삭제된 학생입니다. ID: " + studentId);
+        }
+
+        // 논리적 삭제 수행
+        student.markAsDeleted();
+        userRepository.save(student);
+
+        log.info("학생 삭제 성공 - studentId: {}, name: {}", studentId, student.getName());
+    }
+
+    /**
+     * 삭제된 학생을 복구합니다.
+     * 
+     * @param studentId 복구할 학생 ID
+     * @throws ResourceNotFoundException 학생을 찾을 수 없는 경우
+     */
+    @Transactional
+    public void restoreStudent(Long studentId) {
+        log.debug("학생 복구 - studentId: {}", studentId);
+
+        // 학생 존재 여부 확인 (삭제된 사용자 포함)
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("학생을 찾을 수 없습니다. ID: " + studentId));
+
+        // 삭제되지 않은 학생인지 확인
+        if (!student.isDeleted()) {
+            throw new ResourceNotFoundException("삭제되지 않은 학생입니다. ID: " + studentId);
+        }
+
+        // 복구 수행
+        student.restore();
+        userRepository.save(student);
+
+        log.info("학생 복구 성공 - studentId: {}, name: {}", studentId, student.getName());
     }
 
     /**

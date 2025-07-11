@@ -39,8 +39,32 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    /**
+     * 사용자가 삭제되었는지 확인
+     */
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    /**
+     * 사용자를 논리적으로 삭제
+     */
+    public void markAsDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 사용자 삭제를 복구
+     */
+    public void restore() {
+        this.deletedAt = null;
     }
 }
